@@ -12,7 +12,7 @@ local idet = ID("HC3.templ")
 local lfs = require("lfs")
 local sdkFile = "TQAE.lua"
 
-local urlEmu = "http://127.0.0.1:6872/web/main"
+local urlEmu = "http://127.0.0.1:8976/web/main"
 local urlHC3Help = "https://forum.fibaro.com/topic/55045-tiny-quickapp-emulator-tqae/"
 local urlHC3QAHelp = "https://manuals.fibaro.com/home-center-3-quick-apps/"
 local urlHC3ScHelp = "https://manuals.fibaro.com/home-center-3-lua-scenes/"
@@ -586,6 +586,7 @@ local function downloadContent(fdef)
         for fn,p in pairs(fdef.files) do
           printf("Downloading %s",fn)
           local src,code = getWebContent(fdef.urldir..fn)
+          if code >= 300 then error("Can't read "..fdef.urldir..fn) end
           local f = io.open(ide.config.path.projectdir..ps..fdef.pathdir..ps..p,"w+")
           printf("Writing %s",fdef.pathdir..ps..p)
           f:write(src)
@@ -593,7 +594,8 @@ local function downloadContent(fdef)
         end
       end
     end)
-  if not stat then printf("Error downloading %s - %s",fdef.url or fdef.urldir,res) end
+  if not stat then printf("Error downloading %s - %s",fdef.url or fdef.urldir,res) 
+  else printf("Done") end
 end
 
 local function sendCommandToEmulator(cmd)
@@ -601,7 +603,7 @@ local function sendCommandToEmulator(cmd)
   local ltn12 = require("ltn12")
   local socket = require("socket")
   local http = require("socket.http")
-  local url = "http://127.0.0.1:6872/web/"
+  local url = "http://127.0.0.1:8976/web/main"
   local resp = {}
   local req = { method = "GET", url = url, headers = { ["Content-Length"]=0 }, sink = ltn12.sink.table(resp) }
   local res,status,headers = http.request(req)
@@ -754,9 +756,9 @@ local interpreter = {
       end
 
       menu = ide:FindTopMenu("&Project")
-      menu:AppendSeparator()
-      menu:Append(ide_deploy, "Deploy QuickApp/Scene"..KSC(ide_deploy))
-      ide:GetMainFrame():Connect(ide_deploy, wx.wxEVT_COMMAND_MENU_SELECTED, deployQA)
+--      menu:AppendSeparator()
+--      menu:Append(ide_deploy, "Deploy QuickApp/Scene"..KSC(ide_deploy))
+--      ide:GetMainFrame():Connect(ide_deploy, wx.wxEVT_COMMAND_MENU_SELECTED, deployQA)
 
       menu = ide:FindTopMenu("&Edit")
       templSubMenu = ide:MakeMenu()
