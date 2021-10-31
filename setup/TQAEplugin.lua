@@ -55,8 +55,8 @@ local function checkAndReport(t,name)
   printf("%s %s",n,name)
 end
 
-local codeTemplates = readLuaFile("hc3CodeTemplates.lua")
-local downLoads = readLuaFile("hc3Downloads.lua")
+local codeTemplates = readLuaFile("codeTemplates.lua")
+local downLoads = readLuaFile("fileDownloads.lua")
 if codeTemplates then checkAndReport(codeTemplates.templates,"code templates") end
 if downLoads then checkAndReport((downLoads or {}).files,"download links") end
 
