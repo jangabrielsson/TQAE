@@ -660,19 +660,13 @@ function Module.autopatch.init(self)
     ["EventRunner4Engine.lua"] = {
       version = _version, 
       files = {
-        ['EventRunner']="EventRunner4Engine.lua",
-        ['Toolbox']="Toolbox/Toolbox_basic.lua",
-        ['Toolbox_events']="Toolbox/Toolbox_events.lua",        
-        ['Toolbox_child']="Toolbox/Toolbox_child.lua",
-        ['Toolbox_triggers']="Toolbox/Toolbox_triggers.lua",
-        ['Toolbox_files']="Toolbox/Toolbox_files.lua",
-        ['Toolbox_rpc']="Toolbox/Toolbox_rpc.lua",
-        ['Toolbox_pubsub']="Toolbox/Toolbox_pubsub.lua",
+        ['EventRunner']="QAs/EventRunner/EventRunner4Engine.lua",
+        ['fibaroExtra']="Libs/fibaroExtra.lua",
       }
     },
   }
   local versionInfo = nil
-  local __VERSION = "https://raw.githubusercontent.com/jangabrielsson/EventRunner/master/VERSION4.json"
+  local __VERSION = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/VERSIONS.json"
   function Util.checkForUpdates()
     local req = net.HTTPClient()
     req:request(__VERSION,{
@@ -691,7 +685,7 @@ function Module.autopatch.init(self)
 
   local function fetchFile(file,path,files,mn,cont)
     local req = net.HTTPClient()
-    req:request("https://raw.githubusercontent.com/jangabrielsson/EventRunner/master/"..path,{
+    req:request("https://raw.githubusercontent.com/jangabrielsson/TQAE/master/"..path,{
         options = {method = 'GET', checkCertificate = false, timeout=20000},
         success=function(data) 
           if data.status == 200 then
