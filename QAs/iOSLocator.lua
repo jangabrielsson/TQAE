@@ -15,10 +15,10 @@ _=loadfile and loadfile("TQAE.lua"){
 ---------------------- Setup users -----------------------------
 local version = "V0.2"
 local USERS = {      -- Fill in with iOS credentials
-  {name='Bob',   device='iPhone', home=true, icloud="XXXX1"},
-  {name='Ann',   device='iPhone', home=true, icloud="XXXX2"},
-  {name='Tim',   device='iPhone', home=true, icloud="XXXX3"},
-  {name='Alice', device='iPhone', home=false,icloud="XXXX4"},  -- Family member not living at home (not counted in "all at home")
+  {name='Bob',   device='iPhone', home=true, icloud={user="XXXX1", pwd=".."}},
+  {name='Ann',   device='iPhone', home=true, icloud={user="XXXX2", pwd=".."}},
+  {name='Tim',   device='iPhone', home=true, icloud={user="XXXX3", pwd=".."}},
+  {name='Alice', device='iPhone', home=false,icloud={user="XXXX4", pwd=".."}},  -- Family member not living at home (not counted in "all at home")
 }
 
 --[[
@@ -30,8 +30,8 @@ icloud.pwd = is icloud password
 
 Ex.
 local USERS={
-  {name='User1', home=true, device='iPhone', icloud={user='x2@y.com', pws='xizzy1'}}, 
-  {name='User2', home=true, device='iPhone', icloud={user='x1@y.com', pws='xizzy2'}}, 
+  {name='User1', home=true, device='iPhone', icloud={user='x2@y.com', pwd='xizzy1'}}, 
+  {name='User2', home=true, device='iPhone', icloud={user='x1@y.com', pwd='xizzy2'}}, 
 }
 
 quickAppVariables:
@@ -46,10 +46,10 @@ quickAppVariables:
 ------------------------------------------------------------------
 if hc3_emulator then -- for debugging
   USERS={
-    {name='Jan', id = 2, device='iPhone', home=true, icloud=hc3_emulator.credentials.icloud.jan},
-    {name='Daniela', device='iPhone', home=false, icloud=hc3_emulator.credentials.icloud.daniela},
-    {name='Max', device='iPhone', home=false, icloud=hc3_emulator.credentials.icloud.max},
-    {name='Tim', device='iPhone',home=true,  icloud=hc3_emulator.credentials.icloud.tim},
+    {name='Jan', id = 2, device='iPhone', home=true, icloud=hc3_emulator.EM.cfg.icloud.jan},
+    {name='Daniela', device='iPhone', home=false, icloud=hc3_emulator.EM.cfg.icloud.daniela},
+    {name='Max', device='iPhone', home=false, icloud=hc3_emulator.EM.cfg.icloud.max},
+    {name='Tim', device='iPhone',home=true,  icloud=hc3_emulator.EM.cfg.icloud.tim},
   }
 end
 ---------------------------------------------------------------------
@@ -376,7 +376,7 @@ end
 
 function QuickApp:onInit()
   fibaro.updateFibaroExtra()
-  quickApp2:tracef("iOSLocator, deviceId:%s",self.id)
+  quickApp:tracef("iOSLocator, deviceId:%s",self.id)
   self:setView("version","text","iOSLocator, %s (Users:%d)",version,#USERS)
   self:setView("home","text","Home status: Unknown")
   self:setView("users","text","")

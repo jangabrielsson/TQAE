@@ -7,7 +7,7 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --%%name="iCalendar"
 --%%type="com.fibaro.binarySwitch"
---%%quickVars={['Jan']='$CREDS.googleCal',['Offset']='0',['Jan2']='$CREDS.googleCal',['Offset']='0'}
+--%%quickVars={['Jan']=EM.cfg.googleCal',['Offset']='0',['Jan2']=EM.cfg.googleCal',['Offset']='0'}
 --%%u1={label='name',text=""}
 --%%u2={button='refresh', text='Refresh calendar',onReleased='refreshCalendar'}
 --%%u3={slider='offset',onChanged='offset',min="-2",max="2",value="0"}

@@ -6,7 +6,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%name="ChildrenOfHue"
 --%%proxy=true
 --%%type="com.fibaro.deviceController"
---%%quickVars = {["Hue_IP"]="$CREDS.Hue_IP",["Hue_User"]="$CREDS.Hue_user" }
+--%%quickVars = {["Hue_IP"]=EM.cfg.Hue_IP,["Hue_User"]=EM.cfg.Hue_user }
 --%%u1={label="status", text=""}
 --%%u2={{button='allLightsOff', text='Lights On'},{button='allLightsOff', text='Lights Off'}}
 --%%u3={{button='installLights', text='Install Lights'},{button='removeLights', text='Remove Lights'}}

@@ -100,7 +100,7 @@ local function loadSource(code,fileName) -- Load code and resolve info and --FIL
     info=table.concat(il,",")
   end
   if info then 
-    local icode,res = load("return {"..info.."}")
+    local icode,res = load("return {"..info.."}",nil,nil,{EM=EM,FB=FB,G=_G})
     if not icode then error(res) end
     info,res = icode()
     if res then error(res) end
