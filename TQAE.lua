@@ -170,7 +170,7 @@ local ltn12  = require("ltn12")
 local FB,Devices = {},{}  -- id->Device map
 local Utils=EM.utilities
 local fmt,gID,setTimeout,LOG,DEBUG,loadModules,runQA = string.format,1001
-local deepCopy,merge,member = Utils.deepCopy,Utils.merge,Utils.member
+local format,deepCopy,merge,member = string.format,Utils.deepCopy,Utils.merge,Utils.member
 EM.http,EM.https=http,https
 EM._info = { modules = { ["local"] = {}, global= {} } }
 
@@ -181,13 +181,14 @@ local function httpRequest(reqs,extra)
   local resp,req,status,h,_={},{} 
   for k,v in pairs(extra or {}) do req[k]=v end; for k,v in pairs(reqs) do req[k]=v end
   req.sink,req.headers = ltn12.sink.table(resp), req.headers or {}
-  req.headers["Accept"] = "*/*"
-  req.headers["Content-Type"] = "application/json"
+  req.headers["Accept"] = req.headers["Accept"] or "*/*"
+  req.headers["Content-Type"] = req.headers["Content-Type"] or "application/json"
   if req.method=="PUT" or req.method=="POST" then
     req.data = req.data or "[]"
     req.headers["content-length"] = #req.data
     req.source = ltn12.source.string(req.data)
   else req.headers["Content-Length"]=0 end
+--  req.url = uriEncode(req.url)
   if req.url:sub(1,5)=="https" then
     _,status,h = EM.https.request(req)
   else
@@ -201,7 +202,7 @@ end
 local base = "http://"..(EM.cfg.host or "").."/api"
 local function HC3Request(method,path,data) 
   local res,stat,_ = httpRequest({method=method, url=base..path,
-      user=EM.cfg.user, password=EM.cfg.pwd, data=data and FB.json.encode(data), timeout = 5000, 
+      user=EM.cfg.user, password=EM.cfg.pwd, data=data and FB.json.encode(data), timeout = 15000, 
       headers = {["Accept"] = '*/*',["X-Fibaro-Version"] = 2, ["Fibaro-User-PIN"] = EM.cfg.pin},
     })
   return res~=nil and FB.json.decode(res),stat,nil
@@ -213,6 +214,9 @@ local function __assert_type(value,typeOfValue )
         typeOfValue,tostring(value),type(value)),
       3)
   end
+end
+function EM.escapeURI(str)
+  return str:gsub("[%s%(%)%-%_%/]",function(c) return format("%%% 02X",string.byte(c)) end)
 end
 function FB.__ternary(test, a1, a2) if test then return a1 else return a2 end end
 -- Most __fibaro_x functions defined in api.lua

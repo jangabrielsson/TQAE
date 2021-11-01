@@ -23,7 +23,7 @@ local function createProxy(device)
   local quickVars = properties.quickAppVariables
   local interfaces = device.interfaces
   name = "TProxy "..name
-  local d,_ = api.get("/devices?name="..FB.urlencode(name))
+  local d,_ = api.get("/devices?name="..EM.escapeURI(name))
   if d and #d>0 then
     table.sort(d,function(a,b) return a.id >= b.id end)
     pdevice = d[1]

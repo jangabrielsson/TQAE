@@ -176,5 +176,44 @@ local function uploadFQA(D)
   else LOG.sys("Uploaded '%s', deviceId:%s",res.name,res.id) end
 end
 
+local function patchQA(_,client,ref,_,opts)
+  local device,QA = opts.deviceId,opts.QAid
+  local fs,fileMap = {},EM.Devices[opts.QAid].fileMap
+  for k,v in pairs(opts) do 
+    if k ~= "deviceId" and k ~= "QAid" then 
+      fs[#fs+1]=v 
+    end 
+  end
+  local files = FB.api.get("/quickApp/"..device.."/files","remote") or {}
+  local files2 = {}
+  for _,f in ipairs(files) do
+    files2[f.name]=f
+    if not fileMap[f.name] then
+      local _,code = FB.api.delete("/quickApp/"..device.."/files/"..f.name,"remote")
+      if code > 204 then LOG.error("Failed deleting file '%s' for QA:%s",f,device) end
+      DEBUG("files","sys","Deleting file '%s' for QA:'%s'",f.name,device)
+    end
+  end
+  for _,f in ipairs(fs) do
+    if files2[f] then --Exists
+      local fs = {isMain=false,type='lua',isOpen=false,name=f,content=fileMap[f].content}
+      local _,code = FB.api.put("/quickApp/"..device.."/files/"..f,fs,"remote")
+      if code > 204 then LOG.error("Failed updating file '%s' for QA:%s",f,device) end
+      DEBUG("files","sys","Updating file '%s' for QA:%s",f,device)
+    else -- New
+      local fs = {isMain=false,type='lua',isOpen=false,name=f,content=fileMap[f].content}
+      local _,code = FB.api.post("/quickApp/"..device.."/files",fs,"remote")
+      if code > 204 then LOG.error("Failed creating file '%s' for QA:%s",f,device) end
+      DEBUG("files","sys","Creating file '%s' for QA:%s",f,device)
+    end
+  end
+  client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
+  return true
+end
+
+EM.EMEvents('start',function(_) 
+    EM.addPath("GET/TQAE/updateQA",patchQA)
+  end)
+
 EM.loadFile, EM.saveFQA, EM.uploadFQA, EM.packageFQA = loadFile, saveFQA, uploadFQA, packageFQA
 EM.getDeviceResources = getDeviceResources

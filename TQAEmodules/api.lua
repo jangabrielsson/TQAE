@@ -59,7 +59,7 @@ local GUI_HANDLERS = {
   ["GET/TQAE/lua"] = function(_,client,ref,_,opts)
     local code = load(opts.code,nil,"t",{EM=EM,FB=FB})
     code()
-    client:send("HTTP/1.1 302 Found\nLocation: "..ref.."\n\n")
+    client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
     return true
   end,
   ["GET/TQAE/slider/#id/#name/#id"] = function(_,client,ref,_,_,id,slider,val)
@@ -447,7 +447,7 @@ function aHC3call(method,path,data, remote) -- Intercepts some cmds to handle lo
 end
 
 -- Normal user calls to api will have pass==nil and the cmd will be intercepted if needed. __fibaro_* will always pass
-function api.get(cmd, remote) return aHC3call("GET",cmd, remote) end
+function api.get(cmd, remote) return aHC3call("GET",cmd, nil, remote) end
 function api.post(cmd,data, remote) return aHC3call("POST",cmd,data, remote) end
 function api.put(cmd,data, remote) return aHC3call("PUT",cmd,data, remote) end
 function api.delete(cmd, remote) return aHC3call("DELETE",cmd, remote) end
@@ -478,6 +478,16 @@ EM.EMEvents('start',function(_)
     function FB.__fibaro_get_device_property(id,prop) 
       __assert_type(id,"number") __assert_type(prop,"string")
       return f6("GET","/devices/"..id.."/properties/"..prop,nil,{},id,prop) 
+    end
+
+    local function filterPartitions(filter)
+      local res = {}
+      for _,p in ipairs(api.get("/alarms/v1/partitions") or {}) do if filter(p) then res[#res+1]=p.id end end
+      return res
+    end
+
+    function FB.__fibaro_get_breached_partitions() 
+      return api.get("/alarms/v1/partitions/breached")
     end
 
   end)

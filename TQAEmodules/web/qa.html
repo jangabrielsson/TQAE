@@ -31,6 +31,7 @@ text {
   if EM.Devices[tonumber(opts.id)].dev.parentId== 0 then
    out([[<button type="button" class="btn btn-outline-primary" onclick="window.location.href='/TQAE/lua?code=EM.saveFQA(EM.Devices[%s])'">Save</button>]],opts.id)
    out([[<button type="button" class="btn btn-outline-primary" onclick="window.location.href='/TQAE/lua?code=EM.uploadFQA(EM.Devices[%s])'">Upload</button>]],opts.id)
+   out([[<button type="button" class="btn btn-outline-primary" onclick="window.location.href='/web/updateQA?id=%s'">Update</button>]],opts.id)
   end
 }}}
      <button type="button" class="btn btn-outline-primary" onclick="window.location.href='/web/ui?id={{{out("%s",opts.id)}}}'">UI</button>

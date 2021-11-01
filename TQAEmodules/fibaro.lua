@@ -167,7 +167,7 @@ function fibaro.profile(action, profileId)
   api.post("/profiles/"..availableActions[action].."/"..profileId)
 end
 
-function getPartition(id) 
+function fibaro.getPartition(id) 
   __assert_type(id, "number")
   return __fibaro_get_partition(id)
 end
@@ -201,4 +201,36 @@ function fibaro.error(tag,...) __assert_type(tag,"string") __fibaro_add_debug_me
 function fibaro.useAsyncHandler(value)
   __assert_type(value, "boolean")
   __fibaroUseAsyncHandler(value) 
+end
+
+function fibaro.getHomeArmState()
+  local ps,c = api.get("/alarms/v1/partitions") or {},0
+  for _,p in ipairs(ps) do
+    c = c + (p.armed and 1 or 0)
+  end
+  return c == #ps and "armed" or c == 0 and "disarmed" or "partially_armed"
+end
+
+function fibaro.isHomeBreached()
+  for _,p in ipairs(api.get("/alarms/v1/partitions") or {}) do
+    if p.breached then return true end
+  end
+  return false
+end
+
+function fibaro.isPartitionBreached(id)
+  __assert_type(value, "number")
+  local p = api.get("/alarms/v1/partitions/"..id)
+  return p and p.breached
+end
+
+function fibaro.getPartitionArmState(id)
+  __assert_type(value, "number")
+  local p = api.get("/alarms/v1/partitions/"..id)
+  if not p then error("Bad partitions id: "..tostring(id)) end
+  return p.armed and "armed" or "disarmed"
+end
+
+function fibaro.getPartitions()
+  return api.get("/alarms/v1/partitions") or {}
 end

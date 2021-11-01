@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+ {{{ html.header(out) }}}
+<body>
+
+{{{ html.navbar(out,"/web/main") }}}
+
+<div class="container overflow-hidden">
+  <div class="row gy-5"><h4>Update QuickApp '{{{out(EM.getQA(opts.id).name)}}}'</h4></div>
+</div>
+
+<div class="container">
+  <div class="row">
+  <div class="col-sm-5">
+  <form id="x" action="/TQAE/updateQA" method="GET">
+  
+  <button type="submit" class="btn btn-primary" formaction="/TQAE/updateQA">Update</button>
+    
+{{{
+  local i = 0
+  local function iBoolean(name,rv,descr,value,typ)
+    i=i+1
+    out([[<div class="form-check">
+          <label class="form-check-label" for="%s">%s</label>
+          <input class="form-check-input" value="%s" type="%s" role="switch" name="%s" id="%s" %s>
+          </div>]],i,descr,rv,typ or "checkbox",name,i,value and "checked" or "")
+  end
+      
+  local d,fmt = EM.Devices[tonumber(opts.id)],string.format
+  out("<h5>Files</h5>")
+  iBoolean("main","main","main",true)
+  for n,_ in pairs(d.fileMap) do
+    if n ~= "main" then
+      iBoolean(n,n,n,true)
+    end
+  end
+  
+  out([[<input type="hidden" id="custId" name="QAid" value="%s">]],opts.id)
+  
+  out("<h5>HC3 QuickApp</h5>")
+  
+  --local qas = FB.api.get("/devices?name="..d.name:gsub("%s","%%20"),"remote") or {}
+  local qas = FB.api.get("/devices?name="..EM.escapeURI(d.name),"remote") or {}
+  local state = true
+  for _,dev in ipairs(qas) do
+    iBoolean("deviceId",dev.id,fmt("'%s', deviceId:%s",dev.name,dev.id),state,"radio")
+    state=false
+  end
+}}}
+  </form>
+  </div>
+  </div>
+  </div>
+
+{{{ html.footer(out) }}}
+</body>
+</html>

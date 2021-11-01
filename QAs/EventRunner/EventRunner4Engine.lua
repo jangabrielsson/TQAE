@@ -1626,6 +1626,7 @@ function Module.eventScript.init()
         e=e.event; return e.type=='device' and e.property=='sceneActivationEvent' and e.id==id and e.value.sceneId 
       end
       local function setProfile(id,_,val) if val then fibaro.profile("activateProfile",id) end return val end
+      local function setState(id,cmd,val) fibaro.call(id,"updateProperty","state",val); return val end
       local function profile(id,_) return api.get("/profiles/"..id.."?showHidden=true") end
       local function call(id,cmd) fibaro.call(id,cmd); return true end
       local function set(id,cmd,val) fibaro.call(id,cmd,val); return val end
@@ -1637,6 +1638,7 @@ function Module.eventScript.init()
 
       getFuns={}
       getFuns.value={get,'value',nil,true}
+      getFuns.state={get,'state',nil,true}
       getFuns.bat={get,'batteryLevel',nil,true}
       getFuns.power={get,'power',nil,true}
       getFuns.isOn={on,'value',mapOr,true}
@@ -1728,6 +1730,7 @@ function Module.eventScript.init()
       setFuns.B={set,'setB'}
       setFuns.W={set,'setW'}
       setFuns.value={set,'setValue'}
+      setFuns.state={setState,'setState'}
       setFuns.alarm={setAlarm,'setAlarm'}
       setFuns.armed={setAlarm,'setAlarm'}
       setFuns.profile={setProfile,'setProfile'}

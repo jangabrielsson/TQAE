@@ -52,6 +52,9 @@ function QuickApp:main()    -- EventScript version
   hc3_emulator.create.multilevelSwitch(219,"S2")
   hc3_emulator.create.binarySwitch(30,"S3")
   
+  rule("26:state => log('State %s',env.event)")
+  rule("wait(2); 26:state='Foo'")
+  
   rule("@@00:00:03 => log('Ping')")
   
 --  rule("alarms:armed => log('Some alarm armed')")
