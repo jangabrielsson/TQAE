@@ -119,7 +119,7 @@ end
 
 local win = (os.getenv('WINDIR') or (os.getenv('OS') or ''):match('[Ww]indows')) and not (os.getenv('OSTYPE') or ''):match('cygwin')
 cfg.arch = win and "Windows" or "Linux"
-cfg.pathSeparator = arch == "Windows" and "\\" or "/"
+cfg.pathSeparator = cfg.arch == "Windows" and "\\" or "/"
 local function mkPath(...) return table.concat({...},cfg.pathSeparator) end
 EM.mkPath = mkPath 
 
@@ -256,9 +256,10 @@ function LOG.sys(...)   _LOG("SYS",  ...) end
 function LOG.warn(...)  _LOG("WARN", ...) end
 function LOG.error(...) _LOG("ERROR",...) end
 function LOG.trace(...) _LOG("TRACE",...) end
-function DEBUG(flag,typ,...) LOG.register(flag); if debugFlags[flag] then LOG[typ](...) end end
+function DEBUG(flag,typ,...) LOG.register(flag,LOG.descr[flag]); if debugFlags[flag] then LOG[typ](...) end end
 function LOG.register(fl,descr) LOG.flags[fl]=true LOG.descr[fl]=descr end
 function LOG.registerList(fl) for _,f in ipairs(fl) do LOG.register(f) end end
+
 LOG.register("color","If true will log in ZBS console with color")
 LOG.register("html","If false will strip html formatting from the log output")
 LOG.register("lateTimer","If set to a value will be used to notify if timers are late to execute")
@@ -266,6 +267,11 @@ LOG.register("verboseTimer","If true prints timer reference with extended inform
 LOG.register("onAction","Logs onAction events")
 LOG.register("onUIEvent","Logs UI events")
 LOG.register("traceFibaro","Logs fibaro.* calls")
+LOG.register("module","Log loaded module")
+LOG.register("qa","Log loaded QAs")
+LOG.register("device","Log device creation events")
+LOG.register("lock","Log thread lock operations")
+LOG.register("child","Log QuickAppChild creation events")
 
 function FB.urldecode(str) return str and str:gsub('%%(%x%x)',function (x) return string.char(tonumber(x,16)) end) end
 function FB.urlencode(str) return str and str:gsub("([^% w])",function(c) return string.format("%%% 02X",string.byte(c))  end) end
@@ -489,7 +495,7 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
   LOADLOCK:get()
   DEBUG("module","sys","Loading  %s:%s",info.codeType,info.name)
   for _,f in ipairs(info.files) do                                  -- for every file we got, load it..
-    DEBUG("file","sys","         ...%s",f.name)
+    DEBUG("files","sys","         ...%s",f.name)
     local code = check(env.__TAG,load(f.content,f.fname,"t",env))   -- Load our QA code, check syntax errors
     EM.checkForExit(true,co,pcall(code))                            -- Run the QA code, check runtime errors
   end
@@ -510,13 +516,7 @@ loadModules(EM.cfg.globalModules or {}) -- Load optional user specified modules 
 print(fmt("---------------- Tiny QuickAppEmulator (TQAE) v%s -------------",version)) -- Get going...
 if not HC3online then LOG.warn("No connection to HC3") end
 if pfvs then LOG.sys("Using config file %s",EM.readConfigFile) end
-
-LOG.register("module","Log loaded module")
-LOG.register("qa","Log loaded module")
-LOG.register("device","Log device creation events")
-LOG.register("lock","Log thread lock operations")
-LOG.register("child","Log QuickAppChild creation events")
-
+  
 function EM.startEmulator(cont)
   EM.start(function() EM.postEMEvent{type='start'} 
       if cont then cont() end
