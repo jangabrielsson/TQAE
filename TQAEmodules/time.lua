@@ -109,7 +109,7 @@ local function timerQueue() -- A sorted timer queue...
   end
 
   function tq.dequeue(v) -- remove a timer
-    assert(v.dead==nil,"Dead ptr")
+    if v.dead then LOG.warn("Dead ptr: "..tostring(v)) return end
     local n = v.next
     pcounter[v.tag]=pcounter[v.tag]-1
     if v==ptr then 
@@ -163,7 +163,7 @@ EM.EMEvents('start',function(_) -- Intercept emulator started and check if start
     if EM.cfg.speed then
       local procs = EM.procs
       local timers = timerQueue()
-
+      LOG.sys("Speeding time")
       local function killTimers() timers.reset() end
 
       local function checkForExit(cf,co,stat,res,...)

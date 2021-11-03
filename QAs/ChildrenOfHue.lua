@@ -1,3 +1,9 @@
+-- luacheck: globals ignore QuickAppBase QuickApp QuickAppChild quickApp fibaro class
+-- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
+-- luacheck: globals ignore hc3_emulator
+-- luacheck: globals ignore HueDevice ZLLSwitch ZLLTemperature ZLLLightLevel BinarySensor BinarySwitch 
+-- luacheck: globals ignore Dimmable_light LightGroup Color_light ZLLPresence Extended_color_light
+
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true },
@@ -24,7 +30,7 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --FILE:Libs/fibaroExtra.lua,fibaroExtra;
 ----------- Code -----------------------------------------------------------
-_version = "1.19"
+local _version = "1.19"
 
 local HUE2DEV = {lights={},sensors={}, scenes={}, groups={}} -- -> dev class
 local SCENES = {}
@@ -32,8 +38,10 @@ local HUETIMEOUT,Hue = nil,nil
 local pollingTime = 1
 local pollingFactor = 1
 local POLLALL = 0
+local DIMTIME,DIMSTEP,DIM2OFF,DIMOLD=0,0,true,false
 local format = string.format
 local function Debug(flag,...) if flag then quickApp:debugf(...) end end
+local DEBUG
 local debugFlags = { hue = true, changes=true, children=true, app=true  } 
 
 local CLIPSENSORS = {
@@ -109,7 +117,7 @@ HUE_TYPE_MAP["CLIPTemperature"].props = function() return {} end
 HUE_TYPE_MAP["CLIPHumidity"].props = function() return {} end
 HUE_TYPE_MAP["CLIPPressure"].props = function() return {} end
 
-CLIPSSTATE={
+local CLIPSSTATE={
   ["CLIPPresence"] = {presence = false},
   ["CLIPSwitch"] = {buttonevent = 1000},
   ["CLIPOpenClose"] = {open = false},
@@ -126,7 +134,7 @@ local function checksum(str)
   return 93847148 + 3*v % 1000000
 end
 
-function installCLIP(clip)
+local function installCLIP(clip)
   local payload = {
     state = CLIPSSTATE[clip.type],
     name=clip.name,
@@ -722,7 +730,7 @@ function Extended_color_light:startLevelDecrease() _startLevelDecrease(self) end
 function Extended_color_light:stopLevelChange() _stopLevelChange(self) end
 function Extended_color_light:toggleDim(stop) _toggleDim(self,stop) end
 
-function Extended_color_light:customSettings(setting) 
+function Extended_color_light:customSettings(settings) 
   if settings == nil then settings = self:getVariable("state") end
   if type(settings) ~= 'table' then return end
   self:setValue({startup={customsettings=settings}})
@@ -804,7 +812,7 @@ else
   function Dimmable_light:toggleDim(stop) _toggleDim(self,stop) end
 end
 
-function Dimmable_light:customSettings(setting) 
+function Dimmable_light:customSettings(settings) 
   if settings == nil then settings = self:getVariable("state") end
   if type(settings) ~= 'table' then return end
   self:setValue({startup={customsettings=settings}})
@@ -869,7 +877,7 @@ function LightGroup:toggleDim(stop) _toggleDim(self,stop) end
 
 function LightGroup:changed(data) self.hdata = data; return true end  
 function LightGroup:compoundState(data)
-  self:setVariable("state",state)
+  self:setVariable("state",data)
   local on,bri,n=true,0,0
   for _,id in ipairs(data.lights) do
     n=n+1
@@ -880,9 +888,6 @@ function LightGroup:compoundState(data)
   return {on=on, bri=math.ceil(bri/(n> 0 and n or 1))}
 end
 function LightGroup:update(state)
-  if self.id == 90 then
-    a=9
-  end
   local nstate = self:compoundState(self.hdata)
   if self.isOn ~= nstate.on or self.hueKeys.bri ~= nstate.bri  or self.dirty then
     self.dirty = nil
@@ -915,7 +920,7 @@ function Color_light:setValue(value) -- 0-100
   self:updateHue({bri=keys.bri,on=self.isOn}) 
 end
 function Color_light:setColor(r,g,b)
-  hue,sat,bri=Color.rgb2hsb(r,g,b)
+  local hue,sat,bri=Color.rgb2hsb(r,g,b)
   self:updateHue({hue=hue,sat=sat}) 
 end
 function Color_light:turnOn()
@@ -988,7 +993,7 @@ function QuickApp:connectClicked()
   Hue.request("auth","POST",{devicetype = 'COH#C3'},{type='authOk'},{type='authErr'}) 
 end
 
-function installDev(tp,filter)
+local function installDev(tp,filter)
   for id,dev in pairs(Hue.lastHue[tp] or {}) do
     if filter(dev,id) then installDevice(tp,id,dev) end
   end
@@ -1024,75 +1029,73 @@ end
 function QuickApp:removeCLIPSClicked()
   removeDev('sensors',function(d) return d.type:match("^CLIP") and d.modelid=="HC3CLIP" end) 
 end
-function QuickApp:patchQA() 
-  if self:patchTwins("CoH","010") < 1 then self:trace("No QAs patched") end end
 
-  function QuickApp:setStatus(stat)
-    self:updateView('status','text',format("ChildrenOfHue %s, (%s)",_version,stat))
-  end
+function QuickApp:setStatus(stat)
+  self:updateView('status','text',format("ChildrenOfHue %s, (%s)",_version,stat))
+end
 
-  function QuickApp:setMsg(msg)
-    self:updateView('message','text',msg)
-    setTimeout(function() self:updateView('message','text',"") end,5000)
-  end
+function QuickApp:setMsg(msg)
+  self:updateView('message','text',msg)
+  setTimeout(function() self:updateView('message','text',"") end,5000)
+end
 
 --------------------------------------------------------
 ----------------- Hue commands
 --------------------------------------------------------
 
-  function QuickApp:updateHue(id,payload,url) -- Called from Device Proxy
-    if self.childDevices[id] or id == 0 then
-      local d=self.childDevices[id]
-      if id == 0 then d = {hueId=0} end
-      url = url or "/lights/%s/state"
-      Hue.request(format(url,d.hueId),"PUT",payload) 
-    else self:warningf("Device %s not registered",id) end 
-  end
+function QuickApp:updateHue(id,payload,url) -- Called from Device Proxy
+  if self.childDevices[id] or id == 0 then
+    local d=self.childDevices[id]
+    if id == 0 then d = {hueId=0} end
+    url = url or "/lights/%s/state"
+    Hue.request(format(url,d.hueId),"PUT",payload) 
+  else self:warningf("Device %s not registered",id) end 
+end
 
 --------------------------------------------------------
 ----------------- onInit/Startup -----------------------
 
-  function QuickApp:onInit()
+function QuickApp:onInit()
 
-    self:setStatus("start")
+  self:setStatus("start")
 
-    if not self.config.pollingTime then
-      self:setVariable("pollingTime",pollingTime)
-    else
-      pollingTime = tonumber(self.config.pollingTime)
-    end
-    if not self.config.pollingFactor then
-      self:setVariable("pollingFactor",pollingFactor)
-    else
-      pollingFactor = tonumber(self.config.pollingFactor)
-    end
-    if not self.config.dimtime then
-      DIMTIME = 10
-    else
-      DIMTIME = tonumber(self.config.dimtime)
-    end
-    if not self.config.dimstep then
-      DIMSTEP = 14
-    else
-      DIMSTEP = tonumber(self.config.dimstep)
-    end
-    if self.config.dim2off and string.lower(tostring(self.config.dim2off))=='true' then
-      DIM2OFF = true
-    else
-      DIM2OFF = false
-    end
-    DIMOLD = self.config.dimold
-
-    self:updateView("pollingSlider","value",tostring(math.ceil(pollingTime/11*100)))
-    self:setView("pollingTime","text","pollingTime","text","Polling time: %sms",pollingTime)
-    self:setView("pollingFactor","text","Poll lights slower: %sx",pollingFactor) 
-
-    Hue = createHue(pollingTime)
-    Hue.post({type='start'}) 
-
-    for id,child in pairs(self.childDevices) do
-      HUE2DEV[child.hueType][tostring(child.hueId)]=child
-      child._PROPWARN = false
-    end
-
+  if not self.config.pollingTime then
+    self:setVariable("pollingTime",pollingTime)
+  else
+    pollingTime = tonumber(self.config.pollingTime)
   end
+  if not self.config.pollingFactor then
+    self:setVariable("pollingFactor",pollingFactor)
+  else
+    pollingFactor = tonumber(self.config.pollingFactor)
+  end
+  if not self.config.dimtime then
+    DIMTIME = 10
+  else
+    DIMTIME = tonumber(self.config.dimtime)
+  end
+  if not self.config.dimstep then
+    DIMSTEP = 14
+  else
+    DIMSTEP = tonumber(self.config.dimstep)
+  end
+  if self.config.dim2off and string.lower(tostring(self.config.dim2off))=='true' then
+    DIM2OFF = true
+  else
+    DIM2OFF = false
+  end
+  DIMOLD = self.config.dimold
+
+  self:updateView("pollingSlider","value",tostring(math.ceil(pollingTime/11*100)))
+  self:setView("pollingTime","text","pollingTime","text","Polling time: %sms",pollingTime)
+  self:setView("pollingFactor","text","Poll lights slower: %sx",pollingFactor) 
+
+  Hue = createHue(pollingTime)
+  Hue.post({type='start'}) 
+
+  for id,child in pairs(self.childDevices) do
+    HUE2DEV[child.hueType][tostring(child.hueId)]=child
+    child._PROPWARN = false
+  end
+
+end

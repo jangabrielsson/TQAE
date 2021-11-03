@@ -18,9 +18,19 @@ EM.rsrc = {
   customEvents={},
 }
 
+local function settingsLocation(_,client,ref,_,opts)
+  if EM.cfg.location then return EM.cfg.location,200 end
+  return {
+    city = "Berlin",
+    latitude = 52.520008,
+    longitude = 13.404954,
+    },200      
+end
+
 local function setup()
   EM.create.room{id=219,name="Default Room"}
-  EM.createSection{id=219,name="Default Section"}
+  EM.create.section{id=219,name="Default Section"}
+  EM.addPath("GET/settings/location",settingsLocation)
 end
 
 local roomID = 1001
@@ -50,7 +60,7 @@ function EM.create.room(args)
     sortOrder = 1,
     category = "other"
   }
-  for _,k in (
+  for _,k in ipairs(
     {"id","name","sectionID","isDefault","visible","icon","defaultSensors","meters","defaultThermostat","sortOrder","category"}
     ) do v[k] = args[k] or v[k] 
   end
@@ -64,7 +74,7 @@ function EM.create.section(args)
     name = "Section" ,
     sortOrder = 1
   }
-  for _,k in ({"id","name","sortOrder"}) do v[k] = args[k] or v[k]  end
+  for _,k in ipairs({"id","name","sortOrder"}) do v[k] = args[k] or v[k]  end
   if not v.id then v.id = sectionID sectionID=sectionID+1 end
   EM.rsrc.sections[v.id]=v
   return v

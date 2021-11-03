@@ -69,8 +69,6 @@
     end
     local res = {}
     for flag,_ in pairs(EM.LOG.flags) do res[#res+1]=flag end
-    print(FB.json.encode(EM.LOG.descr))
-    print(FB.json.encode(EM.LOG.flags))
     table.sort(res)
     for _,flag in pairs(res) do
       switch(flag,"debug."..flag)
