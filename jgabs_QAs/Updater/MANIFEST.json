@@ -2,13 +2,12 @@
   "89823459689": {
     "name": "EventRunner4",
     "type":"com.fibaro.deviceController",
-    "quickVars":{},
-    "vars": {
-      "base1": "https://github.com/jangabrielsson/TQAE/raw/bc0cf2007df79877f3b971f516318a3975d93ddf",
-    },
     "versions" : [
     {
       "version": 0.6,
+      "vars": {
+        "base1": "https://github.com/jangabrielsson/TQAE/raw/bc0cf2007df79877f3b971f516318a3975d93ddf",
+      },
       "descr": "New version of EventRunner4",
       "files": {
         "EventRunner": "$base1/jgabs_QAs/EventRunner/EventRunner4Engine.lua",
@@ -173,28 +172,171 @@
     },
     
     {
-      "version": 2.0,
-      "descr": "Second version of example QA",
+      "version": 0.61,
+      "vars": {
+        "base1": "https://github.com/jangabrielsson/TQAE/raw/bc0cf2007df79877f3b971f516318a3975d93ddf",
+      },
+      "descr": "Test version EventRunner4",
       "files": {
-        "main": "$base1/Examples/Example2_v2.lua",
+        "EventRunner": "$base1/jgabs_QAs/EventRunner/EventRunner4Engine.lua",
         "fibaroExtra": "$base1/Libs/fibaroExtra.lua"
       },
       "keep": {
+        "main": "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
       },
       "interfaces": ["quickApp"],
       "quickAppVariables":[],
-      "uiCallbacks": [],
+      "uiCallbacks": [
+        {
+        "callback": "FEventRunner4",
+        "eventType": "onReleased",
+        "name": "debugTrigger"
+        },
+        {
+        "callback": "FEventRunner4",
+        "eventType": "onReleased",
+        "name": "debugPost"
+        },
+        {
+        "callback": "FEventRunner4",
+        "eventType": "onReleased",
+        "name": "debugRule"
+        },
+        {
+        "callback": "FEventRunner4",
+        "eventType": "onReleased",
+        "name": "Test"
+        }
+      ],
       "viewLayout": {
-        "$jason": {
-          "body": {
-            "header": { "style": { "height": "0" },"title": "quickApp_device_613" },
-            "sections": { "items": [] }
+      "$jason": {
+        "body": {
+          "header": {
+            "style": {
+              "height": "250"
+            },
+            "title": "quickApp_device_23"
           },
-         "head": { "title": "quickApp_device_613" }
+          "sections": {
+            "items": [
+              {
+                "components": [
+                  {
+                    "name": "ERname",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "...",
+                    "type": "label"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "debugTrigger",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Triggers:ON",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "debugPost",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Post:ON",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "debugRule",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Rules:ON",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "Test",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Test",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              }
+            ]
+          }
+        },
+        "head": {
+          "title": "quickApp_device_23"
         }
       }
+      }
     }
-    ]
-  }
 }
 
