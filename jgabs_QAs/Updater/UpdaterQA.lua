@@ -11,10 +11,11 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u1={label='info', text='...'}
 --%%u2={{button='PrevU', text='<< Updates', onReleased='PrevU'},{button='Refresh', text='Refresh', onReleased='Refresh'},{button='NextU', text='Updates >>', onReleased='NextU'}}
 --%%u3={label='update', text="..."}
---%%u4={{button='PrevQ', text='<< QA', onReleased='PrevQ'},{button='NextQ', text='QA >>', onReleased='NextQ'}}
---%%u5={label='qa', text="..."}
---%%u6={{button='Update', text='Update', onReleased='Update'},{button='New', text='New', onReleased='New'}}
---%%u7={label='log', text="..."}
+--%%u4={label='updateDescr', text=""}
+--%%u5={{button='PrevQ', text='<< QA', onReleased='PrevQ'},{button='NextQ', text='QA >>', onReleased='NextQ'}}
+--%%u6={label='qa', text="..."}
+--%%u7={{button='Update', text='Update', onReleased='Update'},{button='New', text='New', onReleased='New'}}
+--%%u8={label='log', text="..."}
 
 --FILE:Libs/fibaroExtra.lua,fibaroExtra;
 
@@ -33,7 +34,7 @@ if hc3_emulator then
 end
 
 local serial = "UPD8987578996853"
-local version = 1.0
+local version = 1.1
 local QAs={}
 local manifest = {}
 local updates,updP = {},0
@@ -55,6 +56,13 @@ end
 
 local function logf(...) quickApp:setView("log","text",...) quickApp:debugf(...) end
 local function errorf(...) quickApp:setView("log","text",...) quickApp:errorf(...) end
+local function copy(t)
+  if type(t) == 'table' then
+    local r = {}; for k,v in pairs(t) do r[k]=copy(v) end
+    return r
+  end
+  return t
+end
 
 local function resolve(str,vars)
   for v,sub in pairs(vars) do str=str:gsub("%$"..v,sub) end
@@ -68,6 +76,8 @@ local function process(data)
     local vars = data.vars or {}
     for _,v in ipairs(versions) do
       local descr = fmt("'%s', version:%s",name,v.version)
+      local vars = copy(vars)
+      for k,v in pairs(v.vars or {}) do vars[k]=v end
       local data = v
       local qas = {}
       for q,d in pairs(QAs) do if id == d.serial then qas[#qas+1]=d end end
@@ -83,6 +93,7 @@ local function updateInfo()
   quickApp:setView("info","text","QA Updater, v:%s, (%s)",version,os.date("%x %X"))
   if updP > 0 then
     quickApp:setView("update","text","%s",updates[updP].descr)
+    quickApp:setView("updateDescr","text","%s",updates[updP].data.descr or "")
     if qaP > 0 then
       local q = qaList[qaP]
       quickApp:setView("qa","text","ID:%s, '%s', v:%s",q.id,q.name,q.version)
