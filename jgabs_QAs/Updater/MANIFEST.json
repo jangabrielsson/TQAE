@@ -53,6 +53,205 @@
       }
     }
     ]
+  },
+  
+  "89823459689": {
+    "name": "EventRunner4",
+    "type":"com.fibaro.deviceController",
+    "quickVars":{},
+    "vars": {
+      "base1": "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/Examples",
+      "base2": "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/Libs"
+    },
+    "versions" : [
+    {
+      "version": 0.6,
+      "descr": "New version of EventRunner4",
+      "files": {
+        "EventRunner": "$base1/jgabs_QAs/EvenRunner/EvenRunner4Engine.lua",
+        "fibaroExtra": "$base1/Libs/fibaroExtra.lua"
+      },
+      "keep": {
+        "main": "$base1/jgabs_QAs/EvenRunner/EvenRunner4.lua",
+      },
+      "interfaces": ["quickApp"],
+      "quickAppVariables":[],
+      "uiCallbacks": [
+        {
+        "callback": "FEventRunner4",
+        "eventType": "onReleased",
+        "name": "debugTrigger"
+        },
+        {
+        "callback": "FEventRunner4",
+        "eventType": "onReleased",
+        "name": "debugPost"
+        },
+        {
+        "callback": "FEventRunner4",
+        "eventType": "onReleased",
+        "name": "debugRule"
+        },
+        {
+        "callback": "FEventRunner4",
+        "eventType": "onReleased",
+        "name": "Test"
+        }
+      ],
+      "viewLayout": {
+      "$jason": {
+        "body": {
+          "header": {
+            "style": {
+              "height": "250"
+            },
+            "title": "quickApp_device_23"
+          },
+          "sections": {
+            "items": [
+              {
+                "components": [
+                  {
+                    "name": "ERname",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "...",
+                    "type": "label"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "debugTrigger",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Triggers:ON",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "debugPost",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Post:ON",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "debugRule",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Rules:ON",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "Test",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Test",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              }
+            ]
+          }
+        },
+        "head": {
+          "title": "quickApp_device_23"
+        }
+      }
+      }
+    },
+    
+    {
+      "version": 2.0,
+      "descr": "Second version of example QA",
+      "files": {
+        "main": "$base1/Example2_v2.lua",
+        "fibaroExtra": "$base2/fibaroExtra.lua"
+      },
+      "keep": {
+      },
+      "interfaces": ["quickApp"],
+      "quickAppVariables":[],
+      "uiCallbacks": [],
+      "viewLayout": {
+        "$jason": {
+          "body": {
+            "header": { "style": { "height": "0" },"title": "quickApp_device_613" },
+            "sections": { "items": [] }
+          },
+         "head": { "title": "quickApp_device_613" }
+        }
+      }
+    }
+    ]
   }
 }
 

@@ -18,7 +18,7 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --FILE:Libs/fibaroExtra.lua,fibaroExtra;
 
-local url = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/QAs/Updater/MANIFEST.json"
+local url = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/jgabs_QAs/Updater/MANIFEST.json"
 local intercepturl = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/(.*)"
 
 if hc3_emulator then 

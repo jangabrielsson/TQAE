@@ -147,7 +147,7 @@ local function packageFQA(D)
     initialProperties = {
       apiVersion="1.2",
       viewLayout=dev.properties.viewLayout,
-    --  uiCallbacks = dev.properties.uiCallbacks,
+      uiCallbacks = dev.properties.uiCallbacks,
       quickAppVariables = dev.properties.quickAppVariables,
       typeTemplateInitialized=true,
     },

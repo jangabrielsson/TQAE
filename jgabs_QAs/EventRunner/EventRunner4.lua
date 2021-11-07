@@ -3,7 +3,7 @@
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { 
-    onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true -- timersSched=true
+    onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true, -- timersSched=true
   },
   --startTime="10:00:00 5/12/2020",
   --speed = 48,
@@ -14,13 +14,13 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%name="EventRunner4"
 --%%type="com.fibaro.genericDevice"
 --%%u1={label='ERname',text="..."}
---%%u2={button='debugTrigger', text='Triggers:ON'}
---%%u3={button='debugPost', text='Post:ON'}
---%%u4={button='debugRule', text='Rules:ON'}
---%%u5={button='Test', text='Test'}
+--%%u2={button='debugTrigger', text='Triggers:ON', onReleased='FEventRunner4'}
+--%%u3={button='debugPost', text='Post:ON', onReleased='FEventRunner4'}
+--%%u4={button='debugRule', text='Rules:ON', onReleased='FEventRunner4'}
+--%%u5={button='Test', text='Test', onReleased='FEventRunner4'}
 
 --FILE:Libs/fibaroExtra.lua,fibaroExtra;
---FILE:QAs/EventRunner/EventRunner4Engine.lua,EventRunner;
+--FILE:jgabs_QAs/EventRunner/EventRunner4Engine.lua,EventRunner;
 
 ----------- Code -----------------------------------------------------------
 _debugFlags.trigger = true -- log incoming triggers
@@ -49,15 +49,14 @@ function QuickApp:main()    -- EventScript version
 
   rule("log('Current version is %s - %s',E_VERSION,E_FIX)")
 
-  hc3_emulator.create.binarySwitch(26,"S1")
-  hc3_emulator.create.multilevelSwitch(219,"S2")
-  hc3_emulator.create.binarySwitch(30,"S3")
-  
-  rule("26:state => log('State %s',env.event)")
-  rule("wait(2); 26:state='Foo'")
-  
-  rule("@@00:00:03 => log('Ping')")
-  
+  if hc3_emulator then -- fake devices for the emulator
+    hc3_emulator.create.binarySwitch(26,"S1")
+    hc3_emulator.create.multilevelSwitch(219,"S2")
+    hc3_emulator.create.binarySwitch(30,"S3")
+  end
+
+--  rule("@@00:00:03 => log('Ping')")
+
 --  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")
 --  rule("alarms:disarmed => log('All disarmed')")

@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_VERSION,QuickApp.E_FIX = 0.5,"fix78"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD89823459689",0.6,""
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  } 
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -131,20 +131,8 @@ function Module.device.init(selfM)
 
   local dev = { deviceID = selfM.id }
 
-  function selfM:UIHandler(event)
-    local obj = self
-    if self.id ~= event.deviceId then obj = (self.childDevices or {})[event.deviceId] end
-    if not obj then return end
-    local elm,etyp = event.elementName, event.eventType
-    local cb = obj.uiCallbacks or {}
-    if obj[elm] then return obj:callAction(elm, event) end
-    if cb[elm] and cb[elm][etyp] and self[cb[elm][etyp]] then return obj:callAction(cb[elm][etyp], event) end
-    if obj[elm.."Clicked"] then return obj:callAction(elm.."Clicked", event) end
-    if self.EM then
-      self:post({type='UI',id=event.deviceId,name=event.elementName,event=event.eventType,value=event.values})
-    else
-      self:warning("UI callback for element:", elm, " not found.")
-    end
+  function selfM:FEventRunner4(ev)
+    self:post({type='UI',id=ev.deviceId,name=ev.elementName,event=ev.eventType,value=ev.values})
   end
 
   -- Patch fibaro.call to track manual switches
@@ -159,6 +147,7 @@ function Module.device.init(selfM)
     if switchMap[id] then action=({...})[1] and 'turnOn' or 'turnOff' end
     return oldFibaroCall(id,action,...)
   end
+
   local function lastHandler(ev)
     if ev.type=='device' and ev.property=='value' then
       local last = lastID[ev.id]
@@ -169,6 +158,7 @@ function Module.device.init(selfM)
       end
     end
   end
+
   fibaro.registerSourceTriggerCallback(lastHandler)
   function selfM.lastManual(_,id)
     local last = lastID[id]
@@ -812,7 +802,7 @@ function Module.extras.init(self)
         _debugFlags[tname] = not _debugFlags[tname]
         local name = trigger..":"..(_debugFlags[tname] and "ON" or "OFF")
         self:updateView(env.event.name,"text",name)
-        return self._Events.BREAK
+        return fibaro.EM.BREAK
       end
     end)
 
@@ -2318,6 +2308,13 @@ function Module.nodered.init(self)
   return nr
 end
 
+local function setVersion(model,serial,version)
+  local m = model..":"..serial.."/"..version
+  if __fibaro_get_device_property(quickApp.id,'model') ~= m then
+    quickApp:updateProperty('model',m) 
+  end
+end
+
 local modules = {
   "utilities","autopatch","objects","device","extras","eventScript","nodered",--"doc"
 }
@@ -2329,6 +2326,7 @@ function QuickApp:enableTriggerType(triggers) fibaro.enableSourceTriggers(trigge
 
 QuickApp._SILENT = true
 function QuickApp:onInit()
+  setVersion("EventRunner4",self.E_SERIAL,self.E_VERSION)
   fibaro.initEvents()
   for _,name in ipairs(modules) do
     local res = Module[name].init(self)

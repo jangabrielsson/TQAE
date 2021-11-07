@@ -505,7 +505,8 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
   procs[co]=info
   LOADLOCK:get()
   DEBUG("module","sys","Loading  %s:%s",info.codeType,info.name)
-  for _,f in pairs(info.fileMap) do                                  -- for every file we got, load it..
+  local fs = {}; for n,f in pairs(info.fileMap) do  if not f.isMain then table.insert(fs,1,f) else fs[#fs+1]=f end end
+  for _,f in pairs(fs) do                                  -- for every file we got, load it..
     DEBUG("files","sys","         ...%s",f.name)
     local code = check(env.__TAG,load(f.content,f.fname,"t",env))   -- Load our QA code, check syntax errors
     EM.checkForExit(true,co,pcall(code))                            -- Run the QA code, check runtime errors
