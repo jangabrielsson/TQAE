@@ -11,11 +11,11 @@
       "version": 0.6,
       "descr": "New version of EventRunner4",
       "files": {
-        "EventRunner": "$base1/jgabs_QAs/EventRunner/EvenRunner4Engine.lua",
+        "EventRunner": "$base1/jgabs_QAs/EventRunner/EventRunner4Engine.lua",
         "fibaroExtra": "$base1/Libs/fibaroExtra.lua"
       },
       "keep": {
-        "main": "$base1/jgabs_QAs/EvenRunner/EventRunner4.lua",
+        "main": "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
       },
       "interfaces": ["quickApp"],
       "quickAppVariables":[],
