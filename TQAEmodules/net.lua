@@ -2,6 +2,7 @@ local EM,FB=...
 
 local httpRequest = EM.httpRequest
 local LOG,DEBUG,encode = EM.LOG,EM.DEBUG,EM.utilities.encodeFast
+local interceptors = {}
 local net = {}
 
 local httpMeta = { __tostring = function(http) return "HTTPClient object: "..http._str end }
@@ -9,11 +10,18 @@ function net.HTTPClient(i_options)
   local self2 = {}                   
   function self2.request(_,url,args)
     local args2,res,status,headers = args.options or {}
+    args2.method = args2.method or "GET"
     args2.url=url
-    if EM.interceptHTTP then
-      res,status,headers = EM.interceptHTTP(args2,i_options)
+    for _,h in ipairs(interceptors) do
+      if h.method == args2.method then
+        local match = {url:match(h.url)}
+        if #match>0 then 
+          res,status,headers = h.handler(match,args2)
+          if status == 200 then break end
+        end
+      end
     end
-    if res == -42 then
+    if status ~= 200 then
       local ctx = EM.getContext()
       EM.systemTimer(function()
           res,status,headers = httpRequest(args2,i_options)
@@ -33,6 +41,8 @@ function net.HTTPClient(i_options)
   setmetatable(self2,httpMeta)
   return self2
 end
+
+function EM.registerURL(method,url,handler) interceptors[#interceptors+1]={method=method,url=url,handler=handler} end
 
 function net.TCPSocket(opts2) 
   local self2 = { opts = opts2 or {} }

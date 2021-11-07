@@ -55,7 +55,7 @@ end
 
 --%%name="My QA"
 --%%type="com.fibaro.deviceController"
---!%%proxy=true
+-- %%proxy=true
 
 --FILE:Libs/fibaroExtra.lua,fibaroExtra;
 

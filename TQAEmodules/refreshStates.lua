@@ -149,8 +149,8 @@ local function pollEvents(interval)
   poll(cb)
 end
 
-local function interceptHTTP(args,_) -- Intercept http calls to refreshStates to get events from our queue
-  local last = args.url:match("127.0.0.1:11111/api/refreshStates.-last=(%d+)")
+local function interceptHTTP(matches,args) -- Intercept http calls to refreshStates to get events from our queue
+  local last = matches[1]
   if last then
     return json.encode(refreshStatesQueue.getEvents(tonumber(last))),200
   end
@@ -164,9 +164,12 @@ EM.addAPI("GET/refreshStates",function(_,_,_,prop) -- Intercept /api/refreshStat
     return refreshStatesQueue.getEvents(tonumber(prop.last) or 0)
   end)
 
-EM.interceptHTTP = interceptHTTP
+EM.interceptHTTP = EM.interceptHTTP or {} 
+EM.interceptHTTP[#EM.interceptHTTP+1]=interceptHTTP
+
 EM.EMEvents('start',function()
     httpR = EM.cfg.copas and EM.copas.http or http
+    EM.registerURL("GET","127.0.0.1:11111/api/refreshStates.-last=(%d+)",interceptHTTP)
     if EM.cfg.refreshStates then pollEvents(EM.cfg.refreshStates) end 
   end)
 

@@ -17,6 +17,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u2={button='debugTrigger', text='Triggers:ON'}
 --%%u3={button='debugPost', text='Post:ON'}
 --%%u4={button='debugRule', text='Rules:ON'}
+--%%u5={button='Test', text='Test'}
 
 --FILE:Libs/fibaroExtra.lua,fibaroExtra;
 --FILE:QAs/EventRunner/EventRunner4Engine.lua,EventRunner;

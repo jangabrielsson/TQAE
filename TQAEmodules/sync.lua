@@ -67,7 +67,11 @@ end
 
 local function createLock() return { release=IDF, get=IDF } end
 
-local function restartQA(D) timers.clearTimers(D.dev.id) EM.runQA(D.id,D.cont) coroutine.yield() end
+local function restartQA(D) 
+  timers.clearTimers(D.dev.id) 
+  EM.runQA(D.id,D.cont)
+  coroutine.yield()
+end
 
 local function start(fun) 
   timers = EM.utilities.timerQueue()

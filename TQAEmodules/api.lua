@@ -83,14 +83,15 @@ local GUI_HANDLERS = {
     local stat,err = pcall(function()
         local qa,env = EM.getQA(id)
         if not qa.parent then 
-          env.onUIEvent(id,{deviceId=id,elementName=btn,eventType='onReleased',values={}})
+          FB.__fibaro_call_UI(id,btn,'onReleased',{})
+          --env.onUIEvent(id,{deviceId=id,elementName=btn,eventType='onReleased',values={}})
         else
           local action = qa.uiCallbacks[btn]['onReleased']
           env.onAction(id,{deviceId=id,actionName=action,args={}})
         end
       end)
     if not stat then LOG.error("%s",err) end
-    client:send("HTTP/1.1 302 Found\nLocation: "..ref.."\n\n")
+    client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
     return true
   end,
   ["POST/TQAE/action/#id"] = function(_,client,ref,body,_,id) 
@@ -380,6 +381,15 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       return files,200
     else return HC3Request(method,path,data) end
   end,
+  ["POST/quickApp/#id/files"] = function(method,path,data,_,id)                        --Create file
+    local D = Devices[id]
+    if D then
+      local f,files = D.fileMap or {},{}
+      if f[data.name] then return nil,404 end
+      f[data.name] = data
+      return data,200
+    else return HC3Request(method,path,data) end
+  end,
   ["GET/quickApp/#id/files/#name"] = function(method,path,data,_,id,name)         --Get specific file
     local D = Devices[id]
     if D then
@@ -393,7 +403,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       if (D.fileMap or {})[name] then
         local args = type(data)=='string' and json.decode(data) or data
         D.fileMap[name] = args
-        D:restartQA()
+        EM.restartQA(D)
         return D.fileMap[name],200
       else return nil,404 end
     else return HC3Request(method,path,data) end
@@ -405,7 +415,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       for _,f in ipairs(args) do
         if D.fileMap[f.name] then D.fileMap[f.name]=f end
       end
-      D:restartQA()
+      EM.restartQA(D)
       return true,200
     else return HC3Request(method,path,data) end
   end,
@@ -426,7 +436,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     if D then
       if D.fileMap[name] then
         D.fileMap[name]=nil
-        D:restartQA()
+        EM.restartQA(D)
         return true,200
       else return nil,404 end
     else return HC3Request(method,path,data) end

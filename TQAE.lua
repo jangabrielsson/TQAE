@@ -225,10 +225,15 @@ function FB.__fibaroUseAsyncHandler(_) end -- TBD
 -- Non standard
 function FB.__fibaro_call(id,name,path,data)
   local args, D = data.args or {},Devices[id]
-  if D then
-    -- sim. call in another process/QA
+  if D then -- sim. call in another process/QA
     return setTimeout(function() D.env.onAction(id,{deviceId=id,actionName=name,args=args}) end,0,nil,D) 
   else return HC3Request("POST",path,data) end
+end
+function FB.__fibaro_call_UI(id,name,typ,values)
+  local D = Devices[id]
+  if D then -- sim. call in another process/QA -- onUIEvent(id,{deviceId=id,elementName=btn,eventType='onReleased',values={}})
+    return setTimeout(function() D.env.onUIEvent(id,{deviceId=id,elementName=name,eventType=typ,values=values}) end,0,nil,D) 
+  end
 end
 
 function FB.__fibaro_local(bool) local l = EM.locl==true; EM.locl = bool; return l end
@@ -480,6 +485,7 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
     hc3_emulator={
       getmetatable=getmetatable,setmetatable=setmetatable,io=io,installQA=EM.installQA,EM=EM,IPaddress=EM.IPAddress,
       os={setTimer=setTimeout, exit=os.exit},trigger=EM.trigger,create=EM.create,rawset=rawset,rawget=rawget,
+      registerURL = EM.registerURL,
     },
     coroutine=EM.userCoroutines,
     table=table,select=select,pcall=pcall,xpcall=xpcall,print=print,string=string,error=error,
@@ -499,7 +505,7 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
   procs[co]=info
   LOADLOCK:get()
   DEBUG("module","sys","Loading  %s:%s",info.codeType,info.name)
-  for _,f in ipairs(info.files) do                                  -- for every file we got, load it..
+  for _,f in pairs(info.fileMap) do                                  -- for every file we got, load it..
     DEBUG("files","sys","         ...%s",f.name)
     local code = check(env.__TAG,load(f.content,f.fname,"t",env))   -- Load our QA code, check syntax errors
     EM.checkForExit(true,co,pcall(code))                            -- Run the QA code, check runtime errors
