@@ -176,8 +176,8 @@
       "version": 2.0,
       "descr": "Second version of example QA",
       "files": {
-        "main": "$base1/Example2_v2.lua",
-        "fibaroExtra": "$base2/fibaroExtra.lua"
+        "main": "$base1/Examples/Example2_v2.lua",
+        "fibaroExtra": "$base1/Libs/fibaroExtra.lua"
       },
       "keep": {
       },
