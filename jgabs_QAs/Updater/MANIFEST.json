@@ -60,8 +60,7 @@
     "type":"com.fibaro.deviceController",
     "quickVars":{},
     "vars": {
-      "base1": "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/Examples",
-      "base2": "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/Libs"
+      "base1": "https://github.com/jangabrielsson/TQAE/blob/bc0cf2007df79877f3b971f516318a3975d93ddf",
     },
     "versions" : [
     {
