@@ -86,12 +86,16 @@ function QuickApp:onInit()
   self:debug(self.name, self.id)
   EM.cfg.noFileError = true
   local file = io.open("jgabs_QAs/Updater/MANIFEST.lua","r+")
-  local data,res = file:read("*all")
+  local data,res = file:read("*all") file:close()
   data,res = load(data,nil,"t",_G)
   if data then data = data() else print(res) end
 
   local out = {}
   for id,e in pairs(data) do out[id]=generateAppEntry(id,e) end
   print("\n"..EM.utilities.encodeFormated(out,keyCompare))
+  
+  file = io.open("jgabs_QAs/Updater/MANIFEST.json","w+")
+  file:write(EM.utilities.encodeFormated(out,keyCompare))
+  file:close()
 end
 
