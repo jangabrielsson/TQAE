@@ -95,7 +95,8 @@ function QuickApp:onInit()
   print("\n"..EM.utilities.encodeFormated(out,keyCompare))
   
   file = io.open("jgabs_QAs/Updater/MANIFEST.json","w+")
-  file:write(EM.utilities.encodeFormated(out,keyCompare))
+  local res = { date=os.date("%x %X"), updates = out }
+  file:write(EM.utilities.encodeFormated(res,keyCompare))
   file:close()
 end
 

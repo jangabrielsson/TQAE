@@ -19,6 +19,7 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --FILE:Libs/fibaroExtra.lua,fibaroExtra;
 
+local Date = "---"
 local url = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/jgabs_QAs/Updater/MANIFEST.json"
 local intercepturl = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/(.*)"
 
@@ -53,7 +54,7 @@ local function isUpdatable(qa)
   local s,v = m:match(":UPD(%w+)/([%w%.]+)")
   if s then return {serial=s, version=tonumber(v), name = qa.name, id = qa.id} 
   elseif m=="Toolboxuser" and qa.name:match("[Rr]unner") then
-    {serial="896661234567892", version=0.5, name = qa.name, id = qa.id}
+    return {serial="896661234567892", version=0.5, name = qa.name, id = qa.id}
   end
 end
 
@@ -73,7 +74,8 @@ local function resolve(str,vars)
 end
 
 local function process(data)
-  manifest = data
+  manifest = data.updates
+  Date = data.date
   for id,data in pairs(manifest) do
     local name,versions,typ = data.name,data.versions,data.type
     logf("Update[%s]=%s",id,name)
@@ -101,7 +103,7 @@ local function process(data)
 end
 
 local function updateInfo()
-  quickApp:setView("info","text","QA Updater, v:%s, (%s)",version,os.date("%x %X"))
+  quickApp:setView("info","text","QA Updater, v:%s, (%s)",version,Date)
   if updP > 0 then
     quickApp:setView("update","text","%s",updates[updP].descr)
     quickApp:setView("updateDescr","text","%s",updates[updP].data.descr or "")
@@ -126,7 +128,10 @@ function QuickApp:Refresh()
   logf("Refreshing...")
   local qas = api.get("/devices?interface=quickApp")
   QAs = {}
-  for _,qa in ipairs(qas or {}) do QAs[qa.id]=isUpdatable(qa) end
+  for _,qa in ipairs(qas or {}) do 
+    QAs[qa.id]=isUpdatable(qa) 
+    if QAs[qa.id] then logf("Updatable QA:%s - '%s'",qa.id,qa.name) end
+  end
   net.HTTPClient():request(url,{
       options = {method = 'GET', checkCertificate = false, timeout=20000},
       success = function(res) 
