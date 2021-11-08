@@ -1,1 +1,1 @@
-tar -czvf TQAE.tar.gz TQAE.lua TQAE_QA.lua TQAEconfigs.example Examples/ TQAEmodules/ QAs/ setup/ Libs/
+tar -czvf TQAE.tar.gz TQAE.lua TQAE_QA.lua TQAEconfigs.example Examples/ TQAEmodules/ jgabs_QAs/ setup/ Libs/
