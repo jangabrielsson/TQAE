@@ -99,3 +99,137 @@ function QuickApp:onInit()
   file:close()
 end
 
+OldEventRunner = [[
+{
+   "uiCallbacks": [
+      {
+        "callback": "debugTriggerClicked",
+        "eventType": "onReleased",
+        "name": "debugTrigger"
+      },
+      {
+        "callback": "debugPostClicked",
+        "eventType": "onReleased",
+        "name": "debugPost"
+      },
+      {
+        "callback": "debugRuleClicked",
+        "eventType": "onReleased",
+        "name": "debugRule"
+      }
+    ],
+   "viewLayout": {
+      "$jason": {
+        "body": {
+          "header": {
+            "style": {
+              "height": "0"
+            },
+            "title": "quickApp_device_53"
+          },
+          "sections": {
+            "items": [
+              {
+                "components": [
+                  {
+                    "name": "ERname",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "...",
+                    "type": "label"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "debugTrigger",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Triggers:ON",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "debugPost",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Post:ON",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "debugRule",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Rules:ON",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              }
+            ]
+          }
+        },
+        "head": {
+          "title": "quickApp_device_53"
+        }
+      }
+    }
+}
+  ]]
+
+--OldEventRunner = json.decode(OldEventRunner)
+--print(json.encode(OldEventRunner.uiCallbacks))
+--print()
+--print(json.encode(OldEventRunner.viewLayout))
+--_=0
