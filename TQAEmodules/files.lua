@@ -33,8 +33,9 @@ local function crc16(bytes)
   return tonumber(crc)
 end
 
-local function readFile(file) 
-  local f = io.open(file); assert(f,"No such file:"..file) local c = f:read("*all"); f:close() return c
+local function readFile(file,err) 
+  local f = io.open(file); assert(f or EM.cfg.noFileError,"No such file:"..file) 
+  if f then local c = f:read("*all"); f:close() return c end
 end
 
 local firstTemp = true 
@@ -88,7 +89,7 @@ local function loadSource(code,fileName) -- Load code and resolve info and --FIL
   matchContinousLines(code,[[%-%-%s*FILE:%s*(.-)%s*,%s*(.-);]],[[%-%-FILE:%s*(.-)%s*,%s*(.-);]],
     function(file,name)
       file = file:gsub("/",EM.cfg.pathSeparator)
-      files[#files+1]={name=name,type='lua',isOpen=false,content=readFile(file),isMain=false,fname=file}
+      files[#files+1]={name=name,type='lua',isOpen=false,content=readFile(file,EM.cfg.noFileError),isMain=false,fname=file}
       return ""
     end)
   table.insert(files,{name="main",type='lua',isOpen=false,content=code,isMain=true,fname=fileName})

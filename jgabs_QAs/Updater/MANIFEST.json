@@ -177,56 +177,166 @@
         "base1": "https://github.com/jangabrielsson/TQAE/raw/1117a60af5e05fa3196f2c2cfc5766126c4272c3"
       },
       "descr": "Test version EventRunner4",
+      "ref": 0.6
+    }
+  ]
+  },
+  
+  "896667578996853": {
+    "name": "ChildrenOfHue",
+    "type":"com.fibaro.deviceController",
+    "versions" : [
+    {
+      "version": 1.19,
+      "vars": {
+        "base1": "https://github.com/jangabrielsson/TQAE/raw/bc0cf2007df79877f3b971f516318a3975d93ddf"
+      },
+      "descr": "Stable version",
       "files": {
-        "EventRunner": "$base1/jgabs_QAs/EventRunner/EventRunner4Engine.lua",
+        "main": "$base1/jgabs_QAs/ChildrenOfHue.lua",
         "fibaroExtra": "$base1/Libs/fibaroExtra.lua"
       },
       "keep": {
-        "main": "$base1/jgabs_QAs/EventRunner/EventRunner4.lua"
       },
       "interfaces": ["quickApp"],
-      "quickAppVariables":[],
+      "quickAppVariables": [
+      {
+        "name": "Hue_User",
+        "value": "q6eLpWdYiMGq0kdQWFZB1NZHSlLvKL0GsNPJeEa-"
+      },
+      {
+        "name": "Hue_IP",
+        "value": "192.168.1.153"
+      },
+      {
+        "name": "CoH",
+        "value": "010"
+      },
+      {
+        "name": "pollingTime",
+        "value": 1
+      },
+      {
+        "name": "pollingFactor",
+        "value": 1
+      }
+      ],
       "uiCallbacks": [
-        {
-        "callback": "FEventRunner4",
+      {
+        "callback": "allLightsOnClicked",
         "eventType": "onReleased",
-        "name": "debugTrigger"
-        },
-        {
-        "callback": "FEventRunner4",
+        "name": "allLightsOn"
+      },
+      {
+        "callback": "allLightsOffClicked",
         "eventType": "onReleased",
-        "name": "debugPost"
-        },
-        {
-        "callback": "FEventRunner4",
+        "name": "allLightsOff"
+      },
+      {
+        "callback": "installLightsClicked",
         "eventType": "onReleased",
-        "name": "debugRule"
-        },
-        {
-        "callback": "FEventRunner4",
+        "name": "installLights"
+      },
+      {
+        "callback": "removeLightsClicked",
         "eventType": "onReleased",
-        "name": "Test"
-        }
+        "name": "removeLights"
+      },
+      {
+        "callback": "installSensorsClicked",
+        "eventType": "onReleased",
+        "name": "installSensors"
+      },
+      {
+        "callback": "removeSensorsClicked",
+        "eventType": "onReleased",
+        "name": "removeSensors"
+      },
+      {
+        "callback": "installGroupsClicked",
+        "eventType": "onReleased",
+        "name": "installGroups"
+      },
+      {
+        "callback": "removeGroupsClicked",
+        "eventType": "onReleased",
+        "name": "removeGroups"
+      },
+      {
+        "callback": "installCLIPSClicked",
+        "eventType": "onReleased",
+        "name": "installCLIPS"
+      },
+      {
+        "callback": "removeCLIPSClicked",
+        "eventType": "onReleased",
+        "name": "removeCLIPS"
+      },
+      {
+        "callback": "debugClicked",
+        "eventType": "onReleased",
+        "name": "debug"
+      },
+      {
+        "callback": "listClicked",
+        "eventType": "onReleased",
+        "name": "list"
+      },
+      {
+        "callback": "connectClicked",
+        "eventType": "onReleased",
+        "name": "connect"
+      },
+      {
+        "callback": "polling",
+        "eventType": "onChanged",
+        "name": "pollingSlider"
+      },
+      {
+        "callback": "pollFactor",
+        "eventType": "onReleased",
+        "name": "b1x"
+      },
+      {
+        "callback": "pollFactor",
+        "eventType": "onReleased",
+        "name": "b2x"
+      },
+      {
+        "callback": "pollFactor",
+        "eventType": "onReleased",
+        "name": "b3x"
+      },
+      {
+        "callback": "pollFactor",
+        "eventType": "onReleased",
+        "name": "b4x"
+      },
+      {
+        "callback": "patchQA",
+        "eventType": "onReleased",
+        "name": "patch"
+      }
       ],
       "viewLayout": {
       "$jason": {
         "body": {
           "header": {
             "style": {
-              "height": "250"
+              "height": "0"
             },
-            "title": "quickApp_device_23"
+            "title": "quickApp_device_20"
           },
           "sections": {
             "items": [
               {
                 "components": [
                   {
-                    "name": "ERname",
+                    "name": "status",
                     "style": {
                       "weight": "1.2"
                     },
-                    "text": "...",
+                    "text": "",
                     "type": "label"
                   },
                   {
@@ -244,11 +354,241 @@
               {
                 "components": [
                   {
-                    "name": "debugTrigger",
+                    "components": [
+                      {
+                        "name": "allLightsOn",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "Lights On",
+                        "type": "button",
+                        "visible": true
+                      },
+                      {
+                        "name": "allLightsOff",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "Lights Off",
+                        "type": "button",
+                        "visible": true
+                      }
+                    ],
                     "style": {
                       "weight": "1.2"
                     },
-                    "text": "Triggers:ON",
+                    "type": "horizontal"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "components": [
+                      {
+                        "name": "installLights",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "Install Lights",
+                        "type": "button"
+                      },
+                      {
+                        "name": "removeLights",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "Remove Lights",
+                        "type": "button"
+                      }
+                    ],
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "type": "horizontal"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "components": [
+                      {
+                        "name": "installSensors",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "Install Sensors",
+                        "type": "button"
+                      },
+                      {
+                        "name": "removeSensors",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "Remove Sensors",
+                        "type": "button"
+                      }
+                    ],
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "type": "horizontal"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "components": [
+                      {
+                        "name": "installGroups",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "Install Groups",
+                        "type": "button"
+                      },
+                      {
+                        "name": "removeGroups",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "Remove Groups",
+                        "type": "button"
+                      }
+                    ],
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "type": "horizontal"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "components": [
+                      {
+                        "name": "installCLIPS",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "Install CLIP sensors",
+                        "type": "button"
+                      },
+                      {
+                        "name": "removeCLIPS",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "Remove CLIP sensors",
+                        "type": "button"
+                      }
+                    ],
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "type": "horizontal"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "components": [
+                      {
+                        "name": "debug",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "Debug On",
+                        "type": "button"
+                      },
+                      {
+                        "name": "list",
+                        "style": {
+                          "weight": "0.50"
+                        },
+                        "text": "List",
+                        "type": "button"
+                      }
+                    ],
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "type": "horizontal"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "connect",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Authenticate",
                     "type": "button"
                   },
                   {
@@ -266,12 +606,12 @@
               {
                 "components": [
                   {
-                    "name": "debugPost",
+                    "name": "message",
                     "style": {
                       "weight": "1.2"
                     },
-                    "text": "Post:ON",
-                    "type": "button"
+                    "text": "",
+                    "type": "label"
                   },
                   {
                     "style": {
@@ -288,12 +628,12 @@
               {
                 "components": [
                   {
-                    "name": "debugRule",
+                    "name": "pollingTime",
                     "style": {
                       "weight": "1.2"
                     },
-                    "text": "Rules:ON",
-                    "type": "button"
+                    "text": "Polling time: 1000ms",
+                    "type": "label"
                   },
                   {
                     "style": {
@@ -310,11 +650,111 @@
               {
                 "components": [
                   {
-                    "name": "Test",
+                    "max": "100",
+                    "min": "0",
+                    "name": "pollingSlider",
                     "style": {
                       "weight": "1.2"
                     },
-                    "text": "Test",
+                    "text": "",
+                    "type": "slider"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "pollingFactor",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Poll lights slower: 1x",
+                    "type": "label"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "components": [
+                      {
+                        "name": "b1x",
+                        "style": {
+                          "weight": "0.25"
+                        },
+                        "text": "1x",
+                        "type": "button"
+                      },
+                      {
+                        "name": "b2x",
+                        "style": {
+                          "weight": "0.25"
+                        },
+                        "text": "2x",
+                        "type": "button"
+                      },
+                      {
+                        "name": "b3x",
+                        "style": {
+                          "weight": "0.25"
+                        },
+                        "text": "3x",
+                        "type": "button"
+                      },
+                      {
+                        "name": "b4x",
+                        "style": {
+                          "weight": "0.25"
+                        },
+                        "text": "4x",
+                        "type": "button"
+                      }
+                    ],
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "type": "horizontal"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "patch",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "patchQA",
                     "type": "button"
                   },
                   {
@@ -333,12 +773,13 @@
           }
         },
         "head": {
-          "title": "quickApp_device_23"
+          "title": "quickApp_device_20"
         }
       }
       }
     }
-  ]
-}
+   ]
+  }
+  
 }
 

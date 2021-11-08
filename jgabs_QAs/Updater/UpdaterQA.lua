@@ -50,7 +50,7 @@ end
 
 local function isUpdatable(qa)
   local m = qa.properties.model or ""
-  local s,v = m:match(":UPD(%w+)/(%w+)")
+  local s,v = m:match(":UPD(%w+)/([%w%.]+)")
   if s then return {serial=s, version=tonumber(v), name = qa.name, id = qa.id} end
 end
 
@@ -76,17 +76,24 @@ local function process(data)
     local vars = data.vars or {}
     for _,v in ipairs(versions) do
       local descr = fmt("'%s', version:%s",name,v.version)
-      local vars = copy(vars)
+      local vars,ref = copy(vars)
+      if v.ref then
+        for _,vr in ipairs(updates) do
+          if vr.serial == id and vr.version == v.ref then ref=vr break end
+        end
+        if not ref then errorf("Ref %s for %s not found",v.ref,id) return end
+        for k,d in pairs(ref.data) do if not v[k] then v[k]=d end end
+      end
       for k,v in pairs(v.vars or {}) do vars[k]=v end
       local data = v
       local qas = {}
       for q,d in pairs(QAs) do if id == d.serial then qas[#qas+1]=d end end
       for n,u in pairs(data.files) do data.files[n]=resolve(u,vars) end
       for n,u in pairs(data.keep) do data.keep[n]=resolve(u,vars) end
-      updates[#updates+1]={name=name, type=typ, descr=descr, data=data, version=v.version, QAs=qas}
+      updates[#updates+1]={name=name, serial=id, type=typ, descr=descr, data=data, version=v.version, QAs=qas}
     end
   end
-  UpdP = 0; quickApp:NextU()
+  updP = 0; quickApp:NextU()
 end
 
 local function updateInfo()
@@ -112,12 +119,15 @@ end
 
 function QuickApp:Refresh()
   logf("Refreshing...")
+  local qas = api.get("/devices?interface=quickApp")
+  QAs = {}
+  for _,qa in ipairs(qas or {}) do QAs[qa.id]=isUpdatable(qa) end
   net.HTTPClient():request(url,{
       options = {method = 'GET', checkCertificate = false, timeout=20000},
       success = function(res) 
         if res.status == 200 then 
           local stat,data = pcall(json.decode,res.data)
-          if stat then process(data) else self:error(data) process({}) end
+          if stat then process(data) else errorf(data) process({}) end
         else errorf("%s fetching %s",res.status,url) process({}) end
       end,
       error  = function(res) 
@@ -133,7 +143,7 @@ function QuickApp:PrevU()
     qaList = updates[updP].QAs
     qaP = #qaList > 0 and 1 or 0
   end
-  self:updateInfo()
+  updateInfo()
 end
 
 function QuickApp:NextU()
@@ -177,39 +187,44 @@ local function fetchFiles(fs,n,cont)
 end
 
 function QuickApp:Update(ev)
-  self:debug(ev.elementName)
+  logf(ev.elementName)
   if not(qaP > 0 and #qaList > 0) then return end
   local upd = updates[updP]
   local data = upd.data
   local qa = qaList[qaP]
   local action = "upgraded"
   if upd.version == qa.version then action="reinstalled" elseif upd.version < qa.version then action = "downgraded" end
-  local fs,keeps,files = {},data.keep or {},data.files or {}
+  local fs,keeps,files = {},{},data.files or {}
+  for _,k in ipairs(data.keep or {}) do keeps[k]=true end
   local device = api.get("/devices/"..qa.id)
-  if not device then self:errorf("No such QA:%s",qa.id) return end
+  if not device then errorf("No such QA:%s",qa.id) return end
   local deviceFiles = api.get("/quickApp/"..qa.id.."/files")
   for n,u in pairs(files or {}) do fs[#fs+1]={name=n, url=u} end
-  print("X",json.encode(fs))
-  print("Y",json.encode(deviceFiles))
   fetchFiles(fs,1,function()
-      for _,f in ipairs(deviceFiles) do
+      for _,f in ipairs(deviceFiles) do -- delete old files unless keep
         if not keeps[f.name] then
           api.delete("/quickApp/"..qa.id.."/files/"..f.name)
           logf("Deleting file %s",f.name)
         end
       end
       for _,f in ipairs(fs) do
-        local fd = {isMain=false,type='lua',isOpen=false,name=f.name,content=f.content}
-        local _,code = api.post("/quickApp/"..qa.id.."/files",fd)
-        if code > 204 then 
-          errorf("Failed creating file '%s' for QA:%s",f.name,qa.id) 
-        else
-          logf("Writing file %s",f.name)
+        if not keeps[f.name] then
+          local fd = {isMain=false,type='lua',isOpen=false,name=f.name,content=f.content}
+          local _,code = api.post("/quickApp/"..qa.id.."/files",fd)
+          if code > 204 then 
+            errorf("Failed creating file '%s' for QA:%s",f.name,qa.id) 
+          else
+            logf("Writing file %s",f.name)
+          end
         end
       end
-      if upd.data.viewLayout and upd.data.uiCallbacks then
+      if data.viewLayout and data.uiCallbacks then
+        if type(data.viewLayout) == 'string' then data.viewLayout = json.decode(data.viewLayout) end
+        if type(data.uiCallbacks) == 'string' then data.uiCallbacks = json.decode(data.uiCallbacks) end
         api.put("/devices/"..qa.id,{ properties = { viewLayout=data.viewLayout, uiCallbacks=data.uiCallbacks }})
       end
+      -- Set interfaces
+      -- Set quickAppVariables
       plugin.restart(qa.id)
       logf("QuickApp %s",action)
     end)
@@ -217,18 +232,18 @@ end
 
 function QuickApp:New()
   logf("New QA")
-  if not(qaP > 0 and #qaList > 0) then return end
   local upd = updates[updP]
   local data = upd.data
   local fs = {}
   for n,u in pairs(data.files or {}) do fs[#fs+1]={name=n,url=u} end
-  for n,u in pairs(data.keep or {}) do fs[#fs+1]={name=n,url=u} end
   fetchFiles(fs,1,function()
       local files = {}
       for _,f in ipairs(fs) do
         files[#files+1] = {isMain=false,type='lua',isOpen=false,name=f.name,content=f.content}
         if f.name=='main' then files[#files].isMain=true end
       end
+      if type(data.viewLayout) == 'string' then data.viewLayout = json.decode(data.viewLayout) end
+      if type(data.uiCallbacks) == 'string' then data.uiCallbacks = json.decode(data.uiCallbacks) end
       local fqa = {
         name = upd.name,
         type = upd.type,
@@ -255,21 +270,24 @@ end
 function QuickApp:onInit()
   setTimeout(function()
       self:debugf("%s, deviceId:%s",self.name ,self.id)
-      setVersion("Updater",serial,version)
+      --setVersion("Updater",serial,version)
+      fibaro.enableSourceTriggers('deviceEvent')
 
-      local qas = api.get("/devices?interface=quickApp")
-      for _,qa in ipairs(qas or {}) do QAs[qa.id]=isUpdatable(qa) end
-
-      self:event({type='deviceEvent', value='removed'},function(env) QAs[env.event.id]=nil end)
+      self:event({type='deviceEvent', value='removed'},function(env) 
+          if QAs[env.event.id] then logf("Deleted QA:%s",env.event.id) end
+          QAs[env.event.id]=nil
+        end)
 
       self:event({type='deviceEvent', value='created'},function(env)
           local qa = api.get("/devices/"..env.event.id)
           QAs[env.event.id]=isUpdatable(qa)
+          if QAs[env.event.id] then logf("Created QA:%s",env.event.id) end
         end)
 
       self:event({type='deviceEvent', value='modified'},function(env) 
           local qa = api.get("/devices/"..env.event.id)
           QAs[env.event.id]=isUpdatable(qa)
+          if QAs[env.event.id] then logf("Modified QA:%s",env.event.id) end
         end)
 
       self:Refresh()

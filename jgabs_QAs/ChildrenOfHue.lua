@@ -30,7 +30,8 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --FILE:Libs/fibaroExtra.lua,fibaroExtra;
 ----------- Code -----------------------------------------------------------
-local _version = "1.19"
+local _version = 1.19
+local serial = "UPD896667578996853"
 
 local HUE2DEV = {lights={},sensors={}, scenes={}, groups={}} -- -> dev class
 local SCENES = {}
@@ -1053,10 +1054,18 @@ function QuickApp:updateHue(id,payload,url) -- Called from Device Proxy
 end
 
 --------------------------------------------------------
+local function setVersion(model,serial,version)
+  local m = model..":"..serial.."/"..version
+  if __fibaro_get_device_property(quickApp.id,'model') ~= m then
+    quickApp:updateProperty('model',m) 
+  end
+end
+
 ----------------- onInit/Startup -----------------------
 
 function QuickApp:onInit()
-
+  setVersion("ChildrenOfHue",serial,_version)
+  
   self:setStatus("start")
 
   if not self.config.pollingTime then

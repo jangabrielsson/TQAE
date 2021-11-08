@@ -163,7 +163,8 @@ do -- Used for print device table structs - sortorder for device structs
     return av < bv
   end
 
-  local function prettyJsonStruct(t0)
+  local function prettyJsonStruct(t0,compare)
+    compare = compare or keyCompare
     local res = {}
     local function isArray(t) return type(t)=='table' and t[1] end
     local function isEmpty(t) return type(t)=='table' and next(t)==nil end
@@ -183,7 +184,7 @@ do -- Used for print device table structs - sortorder for device structs
         end
         local r = {}
         for k,_ in pairs(t) do r[#r+1]=k end
-        table.sort(r,keyCompare)
+        table.sort(r,compare)
         printf(key and tab or 0,"{\n")
         for i,k in ipairs(r) do
           printf(tab+1,'"%s":',k)

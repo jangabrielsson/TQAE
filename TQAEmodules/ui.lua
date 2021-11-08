@@ -194,4 +194,6 @@ EM.EMEvents('QACreated',function(ev) -- Intercept QA created and add viewLayout 
 
 EM.UI = {}
 EM.UI.uiStruct2uiCallbacks = uiStruct2uiCallbacks
+EM.UI.transformUI = transformUI
 EM.UI.mkViewLayout = mkViewLayout
+

@@ -493,8 +493,9 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
     next=next,pairs=pairs,ipairs=ipairs,tostring=tostring,tonumber=tonumber,math=math,assert=assert
   }
   if info.fullLUA then
-    for _,f in ipairs({"require","load","loadfile","dofile","io","socket","coroutine"}) do env[f]=_G[f] end
-    env.os.execure,env.os.getenv = os.execute,os.getenv
+    EM._createQA = createQA
+    for _,f in ipairs({"require","load","dofile","io","socket"}) do env[f]=_G[f] end
+    env.os.execute,env.os.getenv = os.execute,os.getenv
   end
   info.env,env._G=env,env
   for s,v in pairs(FB) do env[s]=v end                        -- Copy local exports to QA environment
