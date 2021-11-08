@@ -1,5 +1,5 @@
 return {
-  ["898234596893120"] = {
+  ["896661234567892"] = {
     name = "EventRunner4",
     type = "com.fibaro.deviceController",
     versions = {
@@ -37,7 +37,7 @@ return {
     }
   },
 
-  ["896667578996853"] = {
+  ["896661234567893"] = {
     name = "ChildrenOfHue",
     type = "com.fibaro.deviceController",
     versions = {

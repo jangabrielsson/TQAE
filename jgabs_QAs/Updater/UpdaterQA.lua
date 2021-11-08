@@ -51,7 +51,10 @@ end
 local function isUpdatable(qa)
   local m = qa.properties.model or ""
   local s,v = m:match(":UPD(%w+)/([%w%.]+)")
-  if s then return {serial=s, version=tonumber(v), name = qa.name, id = qa.id} end
+  if s then return {serial=s, version=tonumber(v), name = qa.name, id = qa.id} 
+  elseif m=="Toolboxuser" and qa.name:match("[Rr]unner") then
+    {serial="896661234567892", version=0.5, name = qa.name, id = qa.id}
+  end
 end
 
 local function logf(...) quickApp:setView("log","text",...) quickApp:debugf(...) end
@@ -73,6 +76,7 @@ local function process(data)
   manifest = data
   for id,data in pairs(manifest) do
     local name,versions,typ = data.name,data.versions,data.type
+    logf("Update[%s]=%s",id,name)
     local vars = data.vars or {}
     for _,v in ipairs(versions) do
       local descr = fmt("'%s', version:%s",name,v.version)
@@ -109,6 +113,7 @@ local function updateInfo()
       quickApp:setView("Update","text",txt)
     else
       quickApp:setView("Update","text","...")
+      quickApp:setView("qa","text","...")
     end
   else 
     quickApp:setView("update","text","...")
