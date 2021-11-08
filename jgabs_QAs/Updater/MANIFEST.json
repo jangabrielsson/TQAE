@@ -1,5 +1,71 @@
 {
- "896667578996853":{
+ "896661234567892":{
+  "name":"EventRunner4",  
+  "type":"com.fibaro.deviceController",  
+  "versions":[
+   {
+    "version":0.5,    
+    "vars":{
+     "base1":"https://raw.githubusercontent.com/jangabrielsson/EventRunner/master"     
+    },    
+    "descr":"Old version of EventRunner4",    
+    "files":{
+     "EventRunner":"$base1/EventRunner4Engine.lua",     
+     "EventRunnerDoc":"$base1/EventRunnerDoc.lua",     
+     "Toolbox":"$base1/Toolbox/Toolbox_basic.lua",     
+     "Toolbox_child":"$base1/Toolbox/Toolbox_child.lua",     
+     "Toolbox_events":"$base1/Toolbox/Toolbox_events.lua",     
+     "Toolbox_files":"$base1/Toolbox/Toolbox_files.lua",     
+     "Toolbox_profiler":"$base1/Toolbox/Toolbox_profiler.lua",     
+     "Toolbox_pubsub":"$base1/Toolbox/Toolbox_pubsub.lua",     
+     "Toolbox_rpc":"$base1/Toolbox/Toolbox_rpc.lua",     
+     "Toolbox_triggers":"$base1/Toolbox/Toolbox_triggers.lua",     
+     "main":"$base1/EventRunner4.lua"     
+    },    
+    "keep":[
+     "main"     
+    ],    
+    "quickAppVariables":[],    
+    "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"50\"}},\"sections\":{\"items\":[{\"components\":[{\"components\":[{\"name\":\"__turnon\",\"type\":\"button\",\"text\":\"Turn On\",\"style\":{\"weight\":\"0.50\"}},{\"name\":\"__turnoff\",\"type\":\"button\",\"text\":\"Turn Off\",\"style\":{\"weight\":\"0.50\"}}],\"type\":\"horizontal\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}}]}}}}",    
+    "uiCallbacks":"[{\"name\":\"__turnon\",\"callback\":\"turnOn\",\"eventType\":\"onReleased\"},{\"name\":\"__turnoff\",\"callback\":\"turnOff\",\"eventType\":\"onReleased\"}]",    
+    "interfaces":[
+     "quickApp"     
+    ],    
+    "mainfile":"$base1/EventRunner4.lua"    
+   },   
+   {
+    "version":0.6,    
+    "vars":{
+     "base1":"https://github.com/jangabrielsson/TQAE/raw/bc0cf2007df79877f3b971f516318a3975d93ddf"     
+    },    
+    "descr":"New version of EventRunner4",    
+    "files":{
+     "EventRunner":"$base1/jgabs_QAs/EventRunner/EventRunner4Engine.lua",     
+     "fibaroExtra":"$base1/Libs/fibaroExtra.lua",     
+     "main":"$base1/jgabs_QAs/EventRunner/EventRunner4.lua"     
+    },    
+    "keep":[
+     "main"     
+    ],    
+    "quickAppVariables":[],    
+    "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"250\"}},\"sections\":{\"items\":[{\"components\":[{\"name\":\"ERname\",\"type\":\"label\",\"text\":\"...\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"name\":\"debugTrigger\",\"type\":\"button\",\"text\":\"Triggers:ON\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"name\":\"debugPost\",\"type\":\"button\",\"text\":\"Post:ON\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"name\":\"debugRule\",\"type\":\"button\",\"text\":\"Rules:ON\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"name\":\"Test\",\"type\":\"button\",\"text\":\"Test\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}}]}}}}",    
+    "uiCallbacks":"[{\"name\":\"debugTrigger\",\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\"},{\"name\":\"debugPost\",\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\"},{\"name\":\"debugRule\",\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\"},{\"name\":\"Test\",\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\"}]",    
+    "interfaces":[
+     "quickApp"     
+    ],    
+    "mainfile":"$base1/jgabs_QAs/EventRunner/EventRunner4.lua"    
+   },   
+   {
+    "version":0.61,    
+    "vars":{
+     "base1":"https://github.com/jangabrielsson/TQAE/raw/1117a60af5e05fa3196f2c2cfc5766126c4272c3"     
+    },    
+    "descr":"Test version EventRunner4",    
+    "ref":0.6    
+   }   
+  ]  
+ }, 
+ "896661234567893":{
   "name":"ChildrenOfHue",  
   "type":"com.fibaro.deviceController",  
   "versions":[
@@ -36,78 +102,12 @@
       "value":1      
      }     
     ],    
-    "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"700\"}},\"sections\":{\"items\":[{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"name\":\"status\",\"style\":{\"weight\":\"1.2\"},\"type\":\"label\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\",\"components\":[{\"name\":\"allLightsOff\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Lights On\"},{\"name\":\"allLightsOff\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Lights Off\"}]},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\",\"components\":[{\"name\":\"installLights\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Install Lights\"},{\"name\":\"removeLights\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Remove Lights\"}]},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\",\"components\":[{\"name\":\"installSensors\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Install Sensors\"},{\"name\":\"removeSensors\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Remove Sensors\"}]},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\",\"components\":[{\"name\":\"installGroups\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Install Groups\"},{\"name\":\"removeGroups\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Remove Groups\"}]},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\",\"components\":[{\"name\":\"installCLIPS\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Install CLIP sensors\"},{\"name\":\"removeCLIPS\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Remove CLIP sensors\"}]},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\",\"components\":[{\"name\":\"debug\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Debug On\"},{\"name\":\"list\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"List\"}]},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"name\":\"connect\",\"style\":{\"weight\":\"1.2\"},\"type\":\"button\",\"text\":\"Authenticate\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"name\":\"message\",\"style\":{\"weight\":\"1.2\"},\"type\":\"label\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"name\":\"pollingTime\",\"style\":{\"weight\":\"1.2\"},\"type\":\"label\",\"text\":\"Polling time: 1000ms\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"type\":\"slider\",\"min\":\"nil\",\"value\":\"nil\",\"name\":\"pollingSlider\",\"style\":{\"weight\":\"1.2\"},\"step\":\"nil\",\"max\":\"nil\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"name\":\"pollingFactor\",\"style\":{\"weight\":\"1.2\"},\"type\":\"label\",\"text\":\"Poll lights slower: 1x\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\",\"components\":[{\"name\":\"b1x\",\"style\":{\"weight\":\"0.25\"},\"type\":\"button\",\"text\":\"1x\"},{\"name\":\"b2x\",\"style\":{\"weight\":\"0.25\"},\"type\":\"button\",\"text\":\"2x\"},{\"name\":\"b3x\",\"style\":{\"weight\":\"0.25\"},\"type\":\"button\",\"text\":\"3x\"},{\"name\":\"b4x\",\"style\":{\"weight\":\"0.25\"},\"type\":\"button\",\"text\":\"4x\"}]},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"name\":\"patch\",\"style\":{\"weight\":\"1.2\"},\"type\":\"button\",\"text\":\"patchQA\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]}]}}}}",    
-    "uiCallbacks":"[{\"name\":\"allLightsOff\",\"eventType\":\"onReleased\",\"callback\":\"allLightsOffClicked\"},{\"name\":\"allLightsOff\",\"eventType\":\"onReleased\",\"callback\":\"allLightsOffClicked\"},{\"name\":\"installLights\",\"eventType\":\"onReleased\",\"callback\":\"installLightsClicked\"},{\"name\":\"removeLights\",\"eventType\":\"onReleased\",\"callback\":\"removeLightsClicked\"},{\"name\":\"installSensors\",\"eventType\":\"onReleased\",\"callback\":\"installSensorsClicked\"},{\"name\":\"removeSensors\",\"eventType\":\"onReleased\",\"callback\":\"removeSensorsClicked\"},{\"name\":\"installGroups\",\"eventType\":\"onReleased\",\"callback\":\"installGroupsClicked\"},{\"name\":\"removeGroups\",\"eventType\":\"onReleased\",\"callback\":\"removeGroupsClicked\"},{\"name\":\"installCLIPS\",\"eventType\":\"onReleased\",\"callback\":\"installCLIPSClicked\"},{\"name\":\"removeCLIPS\",\"eventType\":\"onReleased\",\"callback\":\"removeCLIPSClicked\"},{\"name\":\"debug\",\"eventType\":\"onReleased\",\"callback\":\"debugClicked\"},{\"name\":\"list\",\"eventType\":\"onReleased\",\"callback\":\"listClicked\"},{\"name\":\"connect\",\"eventType\":\"onReleased\",\"callback\":\"connectClicked\"},{\"name\":\"pollingSlider\",\"eventType\":\"onChanged\",\"callback\":\"polling\"},{\"name\":\"b1x\",\"eventType\":\"onReleased\",\"callback\":\"pollFactor\"},{\"name\":\"b2x\",\"eventType\":\"onReleased\",\"callback\":\"pollFactor\"},{\"name\":\"b3x\",\"eventType\":\"onReleased\",\"callback\":\"pollFactor\"},{\"name\":\"b4x\",\"eventType\":\"onReleased\",\"callback\":\"pollFactor\"},{\"name\":\"patch\",\"eventType\":\"onReleased\",\"callback\":\"patchQA\"}]",    
+    "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"700\"}},\"sections\":{\"items\":[{\"components\":[{\"name\":\"status\",\"type\":\"label\",\"text\":\"\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"components\":[{\"name\":\"allLightsOff\",\"type\":\"button\",\"text\":\"Lights On\",\"style\":{\"weight\":\"0.50\"}},{\"name\":\"allLightsOff\",\"type\":\"button\",\"text\":\"Lights Off\",\"style\":{\"weight\":\"0.50\"}}],\"type\":\"horizontal\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"components\":[{\"name\":\"installLights\",\"type\":\"button\",\"text\":\"Install Lights\",\"style\":{\"weight\":\"0.50\"}},{\"name\":\"removeLights\",\"type\":\"button\",\"text\":\"Remove Lights\",\"style\":{\"weight\":\"0.50\"}}],\"type\":\"horizontal\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"components\":[{\"name\":\"installSensors\",\"type\":\"button\",\"text\":\"Install Sensors\",\"style\":{\"weight\":\"0.50\"}},{\"name\":\"removeSensors\",\"type\":\"button\",\"text\":\"Remove Sensors\",\"style\":{\"weight\":\"0.50\"}}],\"type\":\"horizontal\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"components\":[{\"name\":\"installGroups\",\"type\":\"button\",\"text\":\"Install Groups\",\"style\":{\"weight\":\"0.50\"}},{\"name\":\"removeGroups\",\"type\":\"button\",\"text\":\"Remove Groups\",\"style\":{\"weight\":\"0.50\"}}],\"type\":\"horizontal\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"components\":[{\"name\":\"installCLIPS\",\"type\":\"button\",\"text\":\"Install CLIP sensors\",\"style\":{\"weight\":\"0.50\"}},{\"name\":\"removeCLIPS\",\"type\":\"button\",\"text\":\"Remove CLIP sensors\",\"style\":{\"weight\":\"0.50\"}}],\"type\":\"horizontal\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"components\":[{\"name\":\"debug\",\"type\":\"button\",\"text\":\"Debug On\",\"style\":{\"weight\":\"0.50\"}},{\"name\":\"list\",\"type\":\"button\",\"text\":\"List\",\"style\":{\"weight\":\"0.50\"}}],\"type\":\"horizontal\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"name\":\"connect\",\"type\":\"button\",\"text\":\"Authenticate\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"name\":\"message\",\"type\":\"label\",\"text\":\"\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"name\":\"pollingTime\",\"type\":\"label\",\"text\":\"Polling time: 1000ms\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"type\":\"slider\",\"max\":\"nil\",\"value\":\"nil\",\"name\":\"pollingSlider\",\"min\":\"nil\",\"step\":\"nil\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"name\":\"pollingFactor\",\"type\":\"label\",\"text\":\"Poll lights slower: 1x\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"components\":[{\"name\":\"b1x\",\"type\":\"button\",\"text\":\"1x\",\"style\":{\"weight\":\"0.25\"}},{\"name\":\"b2x\",\"type\":\"button\",\"text\":\"2x\",\"style\":{\"weight\":\"0.25\"}},{\"name\":\"b3x\",\"type\":\"button\",\"text\":\"3x\",\"style\":{\"weight\":\"0.25\"}},{\"name\":\"b4x\",\"type\":\"button\",\"text\":\"4x\",\"style\":{\"weight\":\"0.25\"}}],\"type\":\"horizontal\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}},{\"components\":[{\"name\":\"patch\",\"type\":\"button\",\"text\":\"patchQA\",\"style\":{\"weight\":\"1.2\"}},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"type\":\"vertical\",\"style\":{\"weight\":\"1.2\"}}]}}}}",    
+    "uiCallbacks":"[{\"name\":\"allLightsOff\",\"callback\":\"allLightsOffClicked\",\"eventType\":\"onReleased\"},{\"name\":\"allLightsOff\",\"callback\":\"allLightsOffClicked\",\"eventType\":\"onReleased\"},{\"name\":\"installLights\",\"callback\":\"installLightsClicked\",\"eventType\":\"onReleased\"},{\"name\":\"removeLights\",\"callback\":\"removeLightsClicked\",\"eventType\":\"onReleased\"},{\"name\":\"installSensors\",\"callback\":\"installSensorsClicked\",\"eventType\":\"onReleased\"},{\"name\":\"removeSensors\",\"callback\":\"removeSensorsClicked\",\"eventType\":\"onReleased\"},{\"name\":\"installGroups\",\"callback\":\"installGroupsClicked\",\"eventType\":\"onReleased\"},{\"name\":\"removeGroups\",\"callback\":\"removeGroupsClicked\",\"eventType\":\"onReleased\"},{\"name\":\"installCLIPS\",\"callback\":\"installCLIPSClicked\",\"eventType\":\"onReleased\"},{\"name\":\"removeCLIPS\",\"callback\":\"removeCLIPSClicked\",\"eventType\":\"onReleased\"},{\"name\":\"debug\",\"callback\":\"debugClicked\",\"eventType\":\"onReleased\"},{\"name\":\"list\",\"callback\":\"listClicked\",\"eventType\":\"onReleased\"},{\"name\":\"connect\",\"callback\":\"connectClicked\",\"eventType\":\"onReleased\"},{\"name\":\"pollingSlider\",\"callback\":\"polling\",\"eventType\":\"onChanged\"},{\"name\":\"b1x\",\"callback\":\"pollFactor\",\"eventType\":\"onReleased\"},{\"name\":\"b2x\",\"callback\":\"pollFactor\",\"eventType\":\"onReleased\"},{\"name\":\"b3x\",\"callback\":\"pollFactor\",\"eventType\":\"onReleased\"},{\"name\":\"b4x\",\"callback\":\"pollFactor\",\"eventType\":\"onReleased\"},{\"name\":\"patch\",\"callback\":\"patchQA\",\"eventType\":\"onReleased\"}]",    
     "interfaces":[
      "quickApp"     
     ],    
     "mainfile":"$base1/jgabs_QAs/ChildrenOfHue.lua"    
-   }   
-  ]  
- }, 
- "898234596893120":{
-  "name":"EventRunner4",  
-  "type":"com.fibaro.deviceController",  
-  "versions":[
-   {
-    "version":0.5,    
-    "vars":{
-     "base1":"https://raw.githubusercontent.com/jangabrielsson/EventRunner/master"     
-    },    
-    "descr":"Old version of EventRunner4",    
-    "files":{
-     "EventRunner":"$base1/EventRunner4Engine.lua",     
-     "EventRunnerDoc":"$base1/EventRunnerDoc.lua",     
-     "Toolbox":"$base1/Toolbox/Toolbox_basic.lua",     
-     "Toolbox_child":"$base1/Toolbox/Toolbox_child.lua",     
-     "Toolbox_events":"$base1/Toolbox/Toolbox_events.lua",     
-     "Toolbox_files":"$base1/Toolbox/Toolbox_files.lua",     
-     "Toolbox_profiler":"$base1/Toolbox/Toolbox_profiler.lua",     
-     "Toolbox_pubsub":"$base1/Toolbox/Toolbox_pubsub.lua",     
-     "Toolbox_rpc":"$base1/Toolbox/Toolbox_rpc.lua",     
-     "Toolbox_triggers":"$base1/Toolbox/Toolbox_triggers.lua",     
-     "main":"$base1/EventRunner4.lua"     
-    },    
-    "keep":[
-     "main"     
-    ],    
-    "quickAppVariables":[],    
-    "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"50\"}},\"sections\":{\"items\":[{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\",\"components\":[{\"name\":\"__turnon\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Turn On\"},{\"name\":\"__turnoff\",\"style\":{\"weight\":\"0.50\"},\"type\":\"button\",\"text\":\"Turn Off\"}]},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]}]}}}}",    
-    "uiCallbacks":"[{\"name\":\"__turnon\",\"eventType\":\"onReleased\",\"callback\":\"turnOn\"},{\"name\":\"__turnoff\",\"eventType\":\"onReleased\",\"callback\":\"turnOff\"}]",    
-    "interfaces":[
-     "quickApp"     
-    ],    
-    "mainfile":"$base1/EventRunner4.lua"    
-   },   
-   {
-    "version":0.6,    
-    "vars":{
-     "base1":"https://github.com/jangabrielsson/TQAE/raw/bc0cf2007df79877f3b971f516318a3975d93ddf"     
-    },    
-    "descr":"New version of EventRunner4",    
-    "files":{
-     "EventRunner":"$base1/jgabs_QAs/EventRunner/EventRunner4Engine.lua",     
-     "fibaroExtra":"$base1/Libs/fibaroExtra.lua",     
-     "main":"$base1/jgabs_QAs/EventRunner/EventRunner4.lua"     
-    },    
-    "keep":[
-     "main"     
-    ],    
-    "quickAppVariables":[],    
-    "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"250\"}},\"sections\":{\"items\":[{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"name\":\"ERname\",\"style\":{\"weight\":\"1.2\"},\"type\":\"label\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"name\":\"debugTrigger\",\"style\":{\"weight\":\"1.2\"},\"type\":\"button\",\"text\":\"Triggers:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"name\":\"debugPost\",\"style\":{\"weight\":\"1.2\"},\"type\":\"button\",\"text\":\"Post:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"name\":\"debugRule\",\"style\":{\"weight\":\"1.2\"},\"type\":\"button\",\"text\":\"Rules:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]},{\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\",\"components\":[{\"name\":\"Test\",\"style\":{\"weight\":\"1.2\"},\"type\":\"button\",\"text\":\"Test\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}]}]}}}}",    
-    "uiCallbacks":"[{\"name\":\"debugTrigger\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugPost\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugRule\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"Test\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"}]",    
-    "interfaces":[
-     "quickApp"     
-    ],    
-    "mainfile":"$base1/jgabs_QAs/EventRunner/EventRunner4.lua"    
-   },   
-   {
-    "version":0.61,    
-    "vars":{
-     "base1":"https://github.com/jangabrielsson/TQAE/raw/1117a60af5e05fa3196f2c2cfc5766126c4272c3"     
-    },    
-    "descr":"Test version EventRunner4",    
-    "ref":0.6    
    }   
   ]  
  } 
