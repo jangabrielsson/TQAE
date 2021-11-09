@@ -1,5 +1,5 @@
 # TQAE
-Forum documentation here <link>
+Forum documentation here <https://forum.fibaro.com/topic/55045-tiny-quickapp-emulator-tqae/>
 
 The source for the emulator is aviable at the Fibaro forum link or directly from my GitHub <link> (It's a bit messy...)
 
@@ -52,4 +52,4 @@ Go back to ZBS and stop the program (Shift-F5) and run it again:
 It loads the config file and doesn'yt complain that there is no connection to the HC3 anymore.
 
 Great we are up and running!
-Now go to the forum thread and read more <link>
+Now go to the forum thread and read more <https://forum.fibaro.com/topic/55045-tiny-quickapp-emulator-tqae/>
