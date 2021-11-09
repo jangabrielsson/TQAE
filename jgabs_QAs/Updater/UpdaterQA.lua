@@ -189,8 +189,11 @@ local function fetchFiles(fs,n,cont)
   local f = fs[n]
   net.HTTPClient():request(f.url,{
       success=function(resp)
-        f.content = resp.data
-        fetchFiles(fs,n+1,cont)
+        if resp.status > 204 then errorf("%s, trying to fetch %s",resp.data,f.url)
+        else 
+          f.content = resp.data
+          fetchFiles(fs,n+1,cont)
+        end
       end,
       error=function(err)
         errorf("%s, trying to fetch %s",err,f.url)
@@ -239,8 +242,11 @@ local function Update(ev)
         if type(data.uiCallbacks) == 'string' then data.uiCallbacks = json.decode(data.uiCallbacks) end
         api.put("/devices/"..qa.id,{ properties = { viewLayout=data.viewLayout, uiCallbacks=data.uiCallbacks }})
       end
-      -- Set interfaces
-      -- Set quickAppVariables
+      if data.quickAppVariables then
+        api.post("/plugins/updateProperty", {deviceId=qa.id, propertyName="quickAppVariables", value=data.quickAppVariables})
+      end
+      data.interfaces = data.interfaces or { "quickApp" }
+      api.post("/devices/addInterface",{devicesId={qa.id},interfaces=data.interfaces})
       plugin.restart(qa.id)
       logf("QuickApp %s",action)
     end)
