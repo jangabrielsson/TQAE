@@ -77,5 +77,25 @@ return {
         }
       }
     }
+  },
+
+  ["896661234567894"] = {
+    name = "QAUpdater",
+    type = "com.fibaro.deviceController",
+    newOnly = true,
+    versions = {
+      { version= 0.5,
+        vars= {
+          base1 = "https://github.com/jangabrielsson/TQAE/raw/bc0cf2007df79877f3b971f516318a3975d93ddf"
+        },
+        descr = "First version",
+        mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      }
+    }
   }
 }

@@ -5,7 +5,7 @@ _=loadfile and loadfile("TQAE.lua"){
   copas=true,
 }
 
---%%name="Updater"
+--%%name="QAUpdater"
 --%%type="com.fibaro.deviceController"
 -- %%proxy=true
 --%%u1={label='info', text='...'}
@@ -34,8 +34,8 @@ if hc3_emulator then
     end)
 end
 
-local serial = "UPD8987578996853"
-local version = 1.1
+local serial = "UPD896661234567894"
+local version = 0.5
 local QAs={}
 local manifest = {}
 local updates,updP = {},0
@@ -79,7 +79,7 @@ local function process(data)
   manifest = data.updates
   Date = data.date
   for id,data in pairs(manifest) do
-    local name,versions,typ = data.name,data.versions,data.type
+    local name,versions,typ,newOnly = data.name,data.versions,data.type,data.newOnly
     logf("Update[%s]=%s",id,name)
     local vars = data.vars or {}
     for _,v in ipairs(versions) do
@@ -98,7 +98,7 @@ local function process(data)
       for q,d in pairs(QAs) do if id == d.serial then qas[#qas+1]=d end end
       for n,u in pairs(data.files) do data.files[n]=resolve(u,vars) end
       for n,u in pairs(data.keep) do data.keep[n]=resolve(u,vars) end
-      updates[#updates+1]={name=name, serial=id, type=typ, descr=descr, data=data, version=v.version, QAs=qas}
+      updates[#updates+1]={name=name, serial=id, type=typ, descr=descr, data=data, version=v.version, newOnly=newOnly, QAs=qas}
     end
   end
   updP = 0; btnHandlers.NextU()
@@ -203,6 +203,10 @@ local function Update(ev)
   if not(qaP > 0 and #qaList > 0) then return end
   local upd = updates[updP]
   local data = upd.data
+  if data.newOnly then
+    logf("Can't be updated, please create New")
+    return
+  end
   local qa = qaList[qaP]
   local action = "upgraded"
   if upd.version == qa.version then action="reinstalled" elseif upd.version < qa.version then action = "downgraded" end
@@ -291,6 +295,7 @@ end
 
 ----------- Code -----------------------------------------------------------
 function QuickApp:onInit()
+  setVersion("Updater",serial,version)
   setTimeout(function()
       self:debugf("%s, deviceId:%s",self.name ,self.id)
       --setVersion("Updater",serial,version)
