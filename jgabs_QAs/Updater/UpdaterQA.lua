@@ -42,7 +42,7 @@ local updates,updP = {},0
 local qaList,qaP = {},0
 local fmt = string.format
 
-function QuickApp:BTN(ev) btnHandlers[ev.elementName]() end -- Avoid (too) global handlers
+function QuickApp:BTN(ev) btnHandlers[ev.elementName](ev) end -- Avoid (too) global handlers
 
 local function setVersion(model,serial,version)
   local m = model..":"..serial.."/"..version
@@ -289,7 +289,7 @@ local function New()
     end)
 end
 
-btnHandlers = { PrevU=PrevU, Refresh=Refresh, NextU=NextU, PreQ=PrevQ, NextQ=NextQ, Update=Update, New=New }
+btnHandlers = { PrevU=PrevU, Refresh=Refresh, NextU=NextU, PrevQ=PrevQ, NextQ=NextQ, Update=Update, New=New }
 
 function QuickApp:updateMe(id)
   local qa = QAs[id]
