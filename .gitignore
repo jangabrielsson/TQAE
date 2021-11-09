@@ -2,3 +2,4 @@ test/
 myQAs/
 dev/
 TQAEconfigs.lua
+~$*.doc*

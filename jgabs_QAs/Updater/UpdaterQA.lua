@@ -9,17 +9,17 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%type="com.fibaro.deviceController"
 -- %%proxy=true
 --%%u1={label='info', text='...'}
---%%u2={{button='PrevU', text='<< Updates', onReleased='PrevU'},{button='Refresh', text='Refresh', onReleased='Refresh'},{button='NextU', text='Updates >>', onReleased='NextU'}}
+--%%u2={{button='PrevU', text='<< Updates', onReleased='BTN'},{button='Refresh', text='Refresh', onReleased='BTN'},{button='NextU', text='Updates >>', onReleased='BTN'}}
 --%%u3={label='update', text="..."}
 --%%u4={label='updateDescr', text=""}
---%%u5={{button='PrevQ', text='<< QA', onReleased='PrevQ'},{button='NextQ', text='QA >>', onReleased='NextQ'}}
+--%%u5={{button='PrevQ', text='<< QA', onReleased='BTN'},{button='NextQ', text='QA >>', onReleased='BTN'}}
 --%%u6={label='qa', text="..."}
---%%u7={{button='Update', text='Update', onReleased='Update'},{button='New', text='New', onReleased='New'}}
+--%%u7={{button='Update', text='Update', onReleased='BTN'},{button='New', text='New', onReleased='BTN'}}
 --%%u8={label='log', text="..."}
 
 --FILE:Libs/fibaroExtra.lua,fibaroExtra;
 
-local Date = "---"
+local btnHandlers,Date = "---"
 local url = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/jgabs_QAs/Updater/MANIFEST.json"
 local intercepturl = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/(.*)"
 
@@ -41,6 +41,8 @@ local manifest = {}
 local updates,updP = {},0
 local qaList,qaP = {},0
 local fmt = string.format
+
+function QuickApp:BTN(ev) btnHandlers[ev.elementName]() end -- Avoid (too) global handlers
 
 local function setVersion(model,serial,version)
   local m = model..":"..serial.."/"..version
@@ -99,7 +101,7 @@ local function process(data)
       updates[#updates+1]={name=name, serial=id, type=typ, descr=descr, data=data, version=v.version, QAs=qas}
     end
   end
-  updP = 0; quickApp:NextU()
+  updP = 0; btnHandlers.NextU()
 end
 
 local function updateInfo()
@@ -124,7 +126,7 @@ local function updateInfo()
   quickApp:setView("log","text","...")
 end
 
-function QuickApp:Refresh()
+local function Refresh()
   logf("Refreshing...")
   local qas = api.get("/devices?interface=quickApp")
   QAs = {}
@@ -146,7 +148,7 @@ function QuickApp:Refresh()
     })
 end
 
-function QuickApp:PrevU()
+local function PrevU()
   logf("Prev U")
   if #updates > 0 then
     updP = updP-1; if updP < 1 then updP = #updates end
@@ -156,7 +158,7 @@ function QuickApp:PrevU()
   updateInfo()
 end
 
-function QuickApp:NextU()
+local function NextU()
   logf("Next U")
   if #updates > 0 then
     updP = updP+1; if updP > #updates then updP = 1 end
@@ -166,7 +168,7 @@ function QuickApp:NextU()
   updateInfo()
 end
 
-function QuickApp:PrevQ()
+local function PrevQ()
   logf("Prev QA")
   if #qaList > 0 then
     qaP = qaP-1; if qaP < 1 then qaP = #qaList end
@@ -174,7 +176,7 @@ function QuickApp:PrevQ()
   updateInfo()
 end
 
-function QuickApp:NextQ()
+local function NextQ()
   logf("Next QA")
   if #qaList > 0 then
     qaP = qaP+1; if qaP > #qaList then qaP = 1 end
@@ -196,7 +198,7 @@ local function fetchFiles(fs,n,cont)
     })
 end
 
-function QuickApp:Update(ev)
+local function Update(ev)
   logf(ev.elementName)
   if not(qaP > 0 and #qaList > 0) then return end
   local upd = updates[updP]
@@ -240,7 +242,7 @@ function QuickApp:Update(ev)
     end)
 end
 
-function QuickApp:New()
+local function New()
   logf("New QA")
   local upd = updates[updP]
   local data = upd.data
@@ -276,6 +278,17 @@ function QuickApp:New()
       end
     end)
 end
+
+btnHandlers = { PrevU=PrevU, Refresh=Refresh, NextU=NextU, PreQ=PrevQ, NextQ=NextQ, Update=Update, New=New }
+
+function QuickApp:updateMe(id)
+  local qa = QAs[id]
+  if not qa then self:warning("Update requested from non-updateble QA") return end
+  for _,upd in pairs(updates) do
+    ----
+  end
+end
+
 ----------- Code -----------------------------------------------------------
 function QuickApp:onInit()
   setTimeout(function()
@@ -300,6 +313,6 @@ function QuickApp:onInit()
           if QAs[env.event.id] then logf("Modified QA:%s",env.event.id) end
         end)
 
-      self:Refresh()
+      Refresh()
     end,0)
 end

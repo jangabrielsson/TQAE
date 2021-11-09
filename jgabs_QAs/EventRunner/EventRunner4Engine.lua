@@ -112,16 +112,7 @@ Missing
 local Toolbox_Module  = {}
 local Module    = Toolbox_Module
 local _MARSHALL = true
-local format    = string.format 
-
------------------ Module objects support -----------------------
-Module.objects = { name="ER Object manager", version="0.1"}
-function Module.objects.init(self)  
-  if Module.objects.inited then return Module.objects.inited end
-  Module.objects.inited = true
-  -- TBD
-  return self
-end
+local format    = string.format
 
 ----------------- Module device support -----------------------
 Module.device = { name="ER Device", version="0.2"}
@@ -951,6 +942,59 @@ function Module.extras.init(self)
   self:event({type='alarm', property='homeBreached'},
     function(env) self:post({type='alarm',property='breached',id=0, value=env.event.value}) 
     end)
+
+
+  --Returns mode - "Manual", "Vacation", "Schedule"
+  function fibaro.getClimateMode(id)
+    return (api.get("/panels/climate/"..id) or {}).mode
+  end
+
+--Returns the currents mode "mode", or sets it - "Auto", "Off", "Cool", "Heat"
+  function fibaro.climateModeMode(id,mode)
+    if mode==nil then return api.get("/panels/climate/"..id).properties.mode end
+    assert(({Auto=true,Off=true,Cool=true,Heat=true})[mode],"Bad climate mode")
+    return api.put("/panels/climate/"..id,{properties={mode=mode}})
+  end
+
+-- Set zone to scheduled mode
+  function fibaro.setClimateZoneToScheduleMode(id)
+    __assert_type(id, "number")
+    return api.put('/panels/climate/'..id, {properties = {
+          handTimestamp     = 0,
+          vacationStartTime = 0,
+          vacationEndTime   = 0
+        }})
+  end
+
+-- Set zone to manual, incl. mode, time ( secs ), heat and cool temp
+  function  fibaro.setClimateZoneToManualMode(id, mode, time, heatTemp, coolTemp)
+    __assert_type(id, "number") __assert_type(mode, "string")
+    assert(({Auto=true,Off=true,Cool=true,Heat=true})[mode],"Bad climate mode")
+    return api.put('/panels/climate/'..id, { properties = { 
+          handMode            = mode, 
+          vacationStartTime   = 0, 
+          vacationEndTime     = 0,
+          handTimestamp       = tonumber(time) and os.time()+time or math.tointeger(2^32-1),
+          handSetPointHeating = tonumber(heatTemp) and heatTemp or nil,
+          handSetPointCooling = tonumber(coolTemp) and coolTemp or nil
+        }})
+  end
+
+-- Set zone to vacation, incl. mode, start (secs from now), stop (secs from now), heat and cool temp
+  function fibaro.setClimateZoneToVacationMode(id, mode, start, stop, heatTemp, coolTemp)
+    __assert_type(id,"number") __assert_type(mode,"string") __assert_type(start,"number") __assert_type(stop,"number")
+    assert(({Auto=true,Off=true,Cool=true,Heat=true})[mode],"Bad climate mode")
+    local now = os.time()
+    return api.put('/panels/climate/'..id, { properties = {
+          vacationMode            = mode,
+          handTimestamp           = 0, 
+          vacationStartTime       = now+start, 
+          vacationEndTime         = now+stop,
+          vacationSetPointHeating = tonumber(heatTemp) and heatTemp or nil,
+          vacationSetPointCooling = tonumber(coolTemp) and coolTemp or nil
+        }})
+  end
+
 end
 
 ----------------- EventScript support -------------------------
