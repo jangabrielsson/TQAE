@@ -44,7 +44,7 @@ return {
     versions = {
       { version= 1.20,
         vars= {
-          base1 = "https://github.com/jangabrielsson/TQAE/raw/19dda8c3ab8704107a1d67f04b227eec8f24812e"
+          base1 = "https://github.com/jangabrielsson/TQAE/raw/2c864af717d93a09ba694c9942a61fade2e717ce"
         },
         descr = "Stable version",
         mainfile = "$base1/jgabs_QAs/ChildrenOfHue.lua",
