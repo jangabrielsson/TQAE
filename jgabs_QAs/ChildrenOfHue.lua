@@ -30,7 +30,7 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --FILE:Libs/fibaroExtra.lua,fibaroExtra;
 ----------- Code -----------------------------------------------------------
-local _version = 1.19
+local _version = 1.20
 local serial = "UPD896661234567893"
 
 local HUE2DEV = {lights={},sensors={}, scenes={}, groups={}} -- -> dev class

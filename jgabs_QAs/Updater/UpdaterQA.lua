@@ -55,8 +55,11 @@ local function isUpdatable(qa)
   local m = qa.properties.model or ""
   local s,v = m:match(":UPD(%w+)/([%w%.]+)")
   if s then return {serial=s, version=tonumber(v), name = qa.name, id = qa.id} 
-  elseif m=="ToolboxUser" and qa.name:match("[Rr]unner") and not qa.name:match("Proxy")  then
-    return {serial="896661234567892", version=0.5, name = qa.name, id = qa.id}
+  elseif m=="ToolboxUser" then
+    if qa.name:match("[Rr]unner") and not qa.name:match("Proxy")  then
+      return {serial="896661234567892", version=0.5, name = qa.name, id = qa.id}
+    elseif qa.name:match("[Cc]hildren") and qa.name:match("[Hh]ue")  then
+      return {serial="896661234567894", version=1.19, name = qa.name, id = qa.id}
   end
 end
 

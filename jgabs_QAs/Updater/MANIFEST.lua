@@ -42,7 +42,7 @@ return {
     name = "ChildrenOfHue",
     type = "com.fibaro.deviceController",
     versions = {
-      { version= 1.19,
+      { version= 1.20,
         vars= {
           base1 = "https://github.com/jangabrielsson/TQAE/raw/19dda8c3ab8704107a1d67f04b227eec8f24812e"
         },
