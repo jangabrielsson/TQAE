@@ -86,7 +86,7 @@ return {
     versions = {
       { version= 0.5,
         vars= {
-          base1 = "https://github.com/jangabrielsson/TQAE/raw/19dda8c3ab8704107a1d67f04b227eec8f24812e"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master"
         },
         descr = "First version",
         mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
