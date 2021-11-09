@@ -206,11 +206,11 @@ local function Update(ev)
   if not(qaP > 0 and #qaList > 0) then return end
   local upd = updates[updP]
   local data = upd.data
-  if data.newOnly then
+  local qa = qaList[qaP]
+  if data.newOnly or qa.id == quickApp.id then
     logf("Can't be updated, please create New")
     return
   end
-  local qa = qaList[qaP]
   local action = "upgraded"
   if upd.version == qa.version then action="reinstalled" elseif upd.version < qa.version then action = "downgraded" end
   local fs,keeps,files = {},{},data.files or {}
