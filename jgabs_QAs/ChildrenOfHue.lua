@@ -10,7 +10,7 @@ _=loadfile and loadfile("TQAE.lua"){
 }
 
 --%%name="ChildrenOfHue"
---%%proxy=true
+-- %%proxy=true
 --%%type="com.fibaro.deviceController"
 --%%quickVars = {["Hue_IP"]=EM.cfg.Hue_IP,["Hue_User"]=EM.cfg.Hue_user }
 --%%u1={label="status", text=""}
