@@ -59,7 +59,7 @@ local function isUpdatable(qa)
     if qa.name:match("[Rr]unner") and not qa.name:match("Proxy")  then
       return {serial="896661234567892", version=0.5, name = qa.name, id = qa.id}
     elseif qa.name:match("[Cc]hildren") and qa.name:match("[Hh]ue")  then
-      return {serial="896661234567894", version=1.19, name = qa.name, id = qa.id}
+      return {serial="896661234567893", version=1.19, name = qa.name, id = qa.id}
   end
 end
 
