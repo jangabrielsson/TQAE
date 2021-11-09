@@ -1,7 +1,7 @@
 # TQAE
 Forum documentation here <https://forum.fibaro.com/topic/55045-tiny-quickapp-emulator-tqae/>
 
-The source for the emulator is aviable at the Fibaro forum link or directly from my GitHub <link> (It's a bit messy...)
+The source for the emulator is aviable at the Fibaro forum link or directly from this GitHub
 
 First time download the archive, TQAE.tar.gz and unpack it in a directory on your PC/Mac.
 On Linux:
@@ -16,6 +16,8 @@ On PC/Mac use suitable archive program to unpack the archive.
 /TQAEmodules/*
 
 /TQAEexamples/*
+
+...or pull the repository from here.
 
 Download ZeroBrane studio <link>
 Open ZBS and open the TQAE_QA.lua file
