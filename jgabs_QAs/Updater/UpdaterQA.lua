@@ -60,6 +60,7 @@ local function isUpdatable(qa)
       return {serial="896661234567892", version=0.5, name = qa.name, id = qa.id}
     elseif qa.name:match("[Cc]hildren") and qa.name:match("[Hh]ue")  then
       return {serial="896661234567893", version=1.19, name = qa.name, id = qa.id}
+    end
   end
 end
 
@@ -231,7 +232,7 @@ local function Update(ev)
       end
       for _,f in ipairs(fs) do
         if not keeps[f.name] then
-          local fd = {isMain=false,type='lua',isOpen=false,name=f.name,content=f.content}
+          local fd = {isMain=f.name=='main',type='lua',isOpen=false,name=f.name,content=f.content}
           local _,code = api.post("/quickApp/"..qa.id.."/files",fd)
           if code > 204 then 
             errorf("Failed creating file '%s' for QA:%s",f.name,qa.id) 
