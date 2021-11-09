@@ -15,7 +15,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u5={{button='PrevQ', text='<< QA', onReleased='BTN'},{button='NextQ', text='QA >>', onReleased='BTN'}}
 --%%u6={label='qa', text="..."}
 --%%u7={{button='Update', text='Update', onReleased='BTN'},{button='New', text='New', onReleased='BTN'}}
---%%u8={label='log', text="..."}
+--%%u8={label='log', text="..."}  
 
 --FILE:Libs/fibaroExtra.lua,fibaroExtra;
 
