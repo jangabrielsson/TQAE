@@ -1102,6 +1102,7 @@ function QuickApp:onInit()
   Hue = createHue(pollingTime)
   Hue.post({type='start'}) 
 
+  self:loadChildren()
   for id,child in pairs(self.childDevices) do
     HUE2DEV[child.hueType][tostring(child.hueId)]=child
     child._PROPWARN = false
