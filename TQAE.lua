@@ -123,6 +123,7 @@ cfg.pathSeparator = cfg.arch == "Windows" and "\\" or "/"
 local function mkPath(...) return table.concat({...},cfg.pathSeparator) end
 EM.mkPath = mkPath 
 
+cfg.root         = DEF(cfg.root,"")
 cfg.modPath      = DEF(cfg.modpath,mkPath("modules",""))   -- directory where TQAE modules are stored
 cfg.temp         = DEF(cfg.temp,os.getenv("TMPDIR") or os.getenv("TEMP") or os.getenv("TMP") or mkPath("temp","")) -- temp directory
 cfg.defaultRoom  = DEF(cfg.defaultRoom,219)
@@ -147,7 +148,7 @@ local localModules  = { -- default local modules loaded into every QA environmen
 --EM.cfg.noweb=true
 local function main(FB) -- For running test examples. Running TQAE.lua directly will run this test.
   if not cfg.NOVERIFY then
-    local et,res = loadfile(cfg.modPath..mkPath("setup","verify.lua")) -- more extensive tests.
+    local et,res = loadfile(cfg.root..mkPath("setup","verify","verify.lua")) -- more extensive tests.
     if et then et(EM,FB) else error(res) end 
   else EM.startEmulator(nil) end
 end

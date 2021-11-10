@@ -12,7 +12,7 @@ printf("Creating globalVariable %s on HC3 with value 'X'",testVar)
 local v = api.post("/globalVariables",{name=testVar,value="X"})
 
 printf("Accessing variable on HC3")
-printf("%s=%s",testVar,fibaro.getGlobalVariable(testVar))
+printf("%s=%s",testVar,fibaro.getGlobalVariable(testVar) or "NONE")
 
 printf("Creating shadowing globalVariable %s locally with value 'Y'",testVar)
 hc3_emulator.create.globalVariable{name=testVar,value="Y"}
@@ -30,7 +30,7 @@ printf("Deleting local variable")
 api.delete("/globalVariables/"..testVar)
 
 printf("Accessing variable on HC3 again")
-printf("%s=%s",testVar,fibaro.getGlobalVariable(testVar))
+printf("%s=%s",testVar,fibaro.getGlobalVariable(testVar) or "NONE")
 
 printf("Deleting variable on HC3")
 api.delete("/globalVariables/"..testVar)
