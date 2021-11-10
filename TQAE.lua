@@ -184,6 +184,13 @@ local function httpRequest(reqs,extra)
   req.sink,req.headers = ltn12.sink.table(resp), req.headers or {}
   req.headers["Accept"] = req.headers["Accept"] or "*/*"
   req.headers["Content-Type"] = req.headers["Content-Type"] or "application/json"
+  if req.timeout then
+    req.create=function()
+      local req_sock = socket.tcp()
+      req_sock:settimeout(req.timeout / 1000,"t")
+      return req_sock
+    end
+  end
   if req.method=="PUT" or req.method=="POST" then
     req.data = req.data or "[]"
     req.headers["content-length"] = #req.data
@@ -201,11 +208,13 @@ local function httpRequest(reqs,extra)
 end
 
 local base = "http://"..(EM.cfg.host or "").."/api"
-local function HC3Request(method,path,data) 
-  local res,stat,_ = httpRequest({method=method, url=base..path,
-      user=EM.cfg.user, password=EM.cfg.pwd, data=data and FB.json.encode(data), timeout = 15000, 
-      headers = {["Accept"] = '*/*',["X-Fibaro-Version"] = 2, ["Fibaro-User-PIN"] = EM.cfg.pin},
-    })
+local function HC3Request(method,path,data,extra) 
+  local req = {method=method, url=base..path,
+    user=EM.cfg.user, password=EM.cfg.pwd, data=data and FB.json.encode(data), timeout = 15000, 
+    headers = {["Accept"] = '*/*',["X-Fibaro-Version"] = 2, ["Fibaro-User-PIN"] = EM.cfg.pin},
+  }
+  for k,v in pairs(extra or {}) do req[k]=v end
+  local res,stat,_ = httpRequest(req)
   return res~=nil and FB.json.decode(res),stat,nil
 end
 
@@ -357,7 +366,7 @@ local function getContext(co) return procs[co or coroutine.running()] end
 EM.getContext,EM.procs = getContext,procs
 
 FB.json = {decode = function(s) return s end } -- Need fake json at this moment, will be replaced when loading json.lua
-local HC3online = HC3Request("GET","/settings/info",nil) 
+local HC3online = HC3Request("GET","/settings/info",nil,{timeout=3000}) 
 
 if EM.cfg.copas then loadfile(EM.cfg.modPath.."async.lua")(EM,FB) else loadfile(EM.cfg.modPath.."sync.lua")(EM,FB) end
 setTimeout = EM.setTimeout
@@ -530,7 +539,7 @@ loadModules(EM.cfg.globalModules or {}) -- Load optional user specified modules 
 print(fmt("---------------- Tiny QuickAppEmulator (TQAE) v%s -------------",version)) -- Get going...
 if not HC3online then LOG.warn("No connection to HC3") end
 if pfvs then LOG.sys("Using config file %s",EM.readConfigFile) end
-  
+
 function EM.startEmulator(cont)
   EM.start(function() EM.postEMEvent{type='start'} 
       if cont then cont() end
