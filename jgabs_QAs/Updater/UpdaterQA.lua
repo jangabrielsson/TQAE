@@ -223,8 +223,10 @@ local function Update(ev)
   local deviceFiles = api.get("/quickApp/"..qa.id.."/files")
   for n,u in pairs(files or {}) do fs[#fs+1]={name=n, url=u} end
   fetchFiles(fs,1,function()
-      for _,f in ipairs(deviceFiles) do -- delete old files unless keep
-        if not keeps[f.name] then
+      local existMap = {}
+      for _,f in ipairs(deviceFiles) do -- delete files not in new QA
+        existMap[f.name]=true
+        if not files[f.name] and not keeps[f.name] then
           api.delete("/quickApp/"..qa.id.."/files/"..f.name)
           logf("Deleting file %s",f.name)
         end
@@ -232,9 +234,16 @@ local function Update(ev)
       for _,f in ipairs(fs) do
         if not keeps[f.name] then
           local fd = {isMain=f.name=='main',type='lua',isOpen=false,name=f.name,content=f.content}
-          local _,code = api.post("/quickApp/"..qa.id.."/files",fd)
+          local _,code,action2
+          if existMap[f.name] then
+            action2="creating"
+            _,code = api.post("/quickApp/"..qa.id.."/files",fd)
+          else 
+            action2="updating"
+            _,code = api.put("/quickApp/"..qa.id.."/files/"..f.name,fd)
+          end
           if code > 204 then 
-            errorf("Failed creating file '%s' for QA:%s",f.name,qa.id) 
+            errorf("Failed %s file '%s' for QA:%s",action2,f.name,qa.id) 
           else
             logf("Writing file %s",f.name)
           end
