@@ -5,3 +5,4 @@ backup/
 temp/
 TQAEconfigs.lua
 ~$*.doc*
+.DS_Store
