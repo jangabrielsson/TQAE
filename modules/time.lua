@@ -71,7 +71,7 @@ end
 local function getTimezone() local now = EM.osTime() return os.difftime(now, EM.osTime(os.date("!*t", now))) end
 
 local function sunCalc(time) 
-  local hc3Location = EM.HC3Request("GET","/settings/location",nil,{timeout=1000})or {}
+  local hc3Location = FB.api.get("/settings/location") or {}
   local lat = hc3Location.latitude or 0
   local lon = hc3Location.longitude or 0
   local utc = getTimezone() / 3600

@@ -137,8 +137,8 @@ local fibColors  = DEF(cfg.fibColors,{ ["DEBUG"] = 'green', ["TRACE"] = 'blue', 
 local logColors  = DEF(cfg.logColors,{ ["SYS"] = 'brown', ["ERROR"]='red', ["WARN"] = 'orange', ["TRACE"] = 'blue' })
 
 local globalModules = { -- default global modules loaded once into emulator environment
-  "net.lua","json.lua","files.lua", "webserver.lua", "api.lua", "proxy.lua", "ui.lua", "time.lua",
-  "refreshStates.lua", "stdQA.lua", "Scene.lua", "offline.lua", "settings.lua",
+  "net.lua","json.lua","files.lua", "webserver.lua", "api.lua", "proxy.lua", "ui.lua", "offline.lua", "time.lua",
+  "refreshStates.lua", "stdQA.lua", "Scene.lua", "settings.lua",
 } 
 local localModules  = { -- default local modules loaded into every QA environment
   {"class.lua","QA"}, "fibaro.lua", "fibaroPatch.lua", {"QuickApp.lua","QA"} 
@@ -237,7 +237,7 @@ function FB.__fibaro_call(id,name,path,data)
   local args, D = data.args or {},Devices[id]
   if D then -- sim. call in another process/QA
     return setTimeout(function() D.env.onAction(id,{deviceId=id,actionName=name,args=args}) end,0,nil,D) 
-  else return HC3Request("POST",path,data) end
+  elseif not cfg.offline then return HC3Request("POST",path,data) else return nil,404 end
 end
 function FB.__fibaro_call_UI(id,name,typ,values)
   local D = Devices[id]
@@ -366,7 +366,7 @@ local function getContext(co) return procs[co or coroutine.running()] end
 EM.getContext,EM.procs = getContext,procs
 
 FB.json = {decode = function(s) return s end } -- Need fake json at this moment, will be replaced when loading json.lua
-local HC3online = HC3Request("GET","/settings/info",nil,{timeout=3000}) 
+if not cfg.offline and not HC3Request("GET","/settings/info",nil,{timeout=3000}) then cfg.offline="NOHC3" end
 
 if EM.cfg.copas then loadfile(EM.cfg.modPath.."async.lua")(EM,FB) else loadfile(EM.cfg.modPath.."sync.lua")(EM,FB) end
 setTimeout = EM.setTimeout
@@ -537,7 +537,8 @@ loadModules(globalModules or {})        -- Load global modules
 loadModules(EM.cfg.globalModules or {}) -- Load optional user specified modules into environment
 
 print(fmt("---------------- Tiny QuickAppEmulator (TQAE) v%s -------------",version)) -- Get going...
-if not HC3online then LOG.warn("No connection to HC3") end
+if cfg.offline=="NOHC3" then LOG.warn("No connection to HC3")  end
+if cfg.offline then LOG.sys("Running offline") end
 if pfvs then LOG.sys("Using config file %s",EM.readConfigFile) end
 
 function EM.startEmulator(cont)

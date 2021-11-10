@@ -12,7 +12,7 @@ local EM,FB = ...
 local json = FB.json
 local HC3Request,LOG,DEBUG,Devices = EM.HC3Request,EM.LOG,EM.DEBUG,EM.Devices
 local __fibaro_call,__assert_type=FB.__fibaro_call,FB.__assert_type
-local copy = EM.utilities.copy
+local copy,cfg = EM.utilities.copy,EM.cfg
 
 LOG.register("api","Log api.* related events")
 
@@ -138,7 +138,7 @@ end
 local aHC3call
 local API_CALLS = { -- Intercept some api calls to the api to include emulated QAs or emulator aspects
   ["GET/devices"] = function(_,_,_,opts)
-    local ds = HC3Request("GET","/devices") or {}
+    local ds = cfg.offline and {} or HC3Request("GET","/devices") or {}
     for _,dev in pairs(Devices) do ds[#ds+1]=dev.dev end -- Add emulated Devices
     if next(opts)==nil then
       return ds,200
@@ -148,12 +148,12 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
 --   api.get("/devices?parentId="..self.id) or {}
   ["GET/devices/#id"] = function(_,path,_,_,id)
-    return Devices[id] and Devices[id].dev or HC3Request("GET",path)
+    return Devices[id] and Devices[id].dev or cfg.offline and {} or HC3Request("GET",path)
   end,
   ["GET/devices/#id/properties/#name"] = function(_,path,_,_,id,prop) 
     local D = Devices[id]  -- Is it a local Device?
     if D then return D.dev.properties[prop] and { value = D.dev.properties[prop], modified=0},200 or nil
-    else return HC3Request("GET",path) end
+    elseif not cfg.offline then return HC3Request("GET",path) end
   end,
   ["POST/devices/#id/action/#name"] = function(_,path,data,_,id,action) 
     return __fibaro_call(tonumber(id),action,path,data) 
@@ -171,15 +171,15 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
 
   ["GET/globalVariables"] = function(_,path,_,_)
-    local globs = EM.cfg.offline and {} or HC3Request("GET",path)
+    local globs = cfg.offline and {} or HC3Request("GET",path)
     for _,v in pairs(EM.rsrc.globalVariables) do globs[#globs+1]=v end
     return globs,200
   end,
   ["GET/globalVariables/#name"] = function(_,path,_,_,name)
-    return EM.rsrc.globalVariables[name] or HC3Request("GET",path)
+    return EM.rsrc.globalVariables[name] or not cfg.offline and HC3Request("GET",path) or nil
   end,
   ["POST/globalVariables"] = function(_,path,data,_)
-    if EM.cfg.offline then
+    if cfg.offline then
       if EM.rsrc.globalVariables[data.name] then return nil,404
       else return EM.create.globalVariable(data),200 end
     else return HC3Request("POST",path,data) end
@@ -195,13 +195,13 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       v.value = data.value
       v.modified = EM.osTime()
       return v,200
-    else return HC3Request("PUT",path,data) end
+    elseif not cfg.offline then return HC3Request("PUT",path,data) end
   end,
   ["DELETE/globalVariables/#name"] = function(_,path,data,_,name)
     if EM.rsrc.globalVariables[name] then
       EM.rsrc.globalVariables[name] = nil
       return nil,200
-    else return HC3Request("DELETE",path,data) end
+    elseif not cfg.offline then return HC3Request("DELETE",path,data) end
   end,
 
   ["GET/rooms"] = function(_,path,_,_)

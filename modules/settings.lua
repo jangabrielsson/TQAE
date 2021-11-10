@@ -17,7 +17,7 @@ local configParams = {
   { cfp='pwd', name="Password", type='str', descr="Password for account used to interact with the HC3 via REST api"},
   { cfp='host', name="IP address", type='str', descr="IP address of HC3 - Ex. 192.168.x.y"},
   { cfp='pin', name="PIN code", type='str', descr="PIN code to set/unset alarms etc"},
-  { cfp='modPath', name="Module path", type='str', descr="Path to TQAE modules. Default \"TQAEmodules\""},
+  { cfp='modPath', name="Module path", type='str', descr="Path to TQAE modules. Default \"modules\""},
   { cfp='temp', name="Temp path", type='str', descr="Path to temp directory. Default \"temp\""},
   { cfp='startTime', name="Start time", type='str', 
     descr=[[Start date for the emulator. Ex. "12/24/2024-07:00" to start emulator at X-mas morning 07:00 2024.

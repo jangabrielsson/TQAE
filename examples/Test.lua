@@ -1,11 +1,12 @@
 _=loadfile and loadfile("TQAE.lua"){
   user="admin", 
   pwd="admin", 
-  host="192.168.1.57",
+  host="192.168.1.59",
 --  refreshStates=true,
   temp = "temp/",
   debug = { traceFibaro = true },
---  copas=true,
+  copas=true,
+--  offline = true,
   --startTime="12/24/2024-07:00",
   ---speed=true
 }

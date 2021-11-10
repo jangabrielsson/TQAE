@@ -30,13 +30,13 @@ end
 local function setup()
   EM.create.room{id=219,name="Default Room"}
   EM.create.section{id=219,name="Default Section"}
-  EM.addPath("GET/settings/location",settingsLocation)
+  EM.addAPI("GET/settings/location",settingsLocation)
 end
 
 local roomID = 1001
 local sectionID = 1001
 
-EM.creat = EM.create or {}
+EM.create = EM.create or {}
 function EM.create.globalVariable(args)
   local v = {
     name=args.name,

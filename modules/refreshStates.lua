@@ -170,7 +170,7 @@ EM.interceptHTTP[#EM.interceptHTTP+1]=interceptHTTP
 EM.EMEvents('start',function()
     httpR = EM.cfg.copas and EM.copas.http or http
     EM.registerURL("GET","127.0.0.1:11111/api/refreshStates.-last=(%d+)",interceptHTTP)
-    if EM.cfg.refreshStates then pollEvents(EM.cfg.refreshStates) end 
+    if EM.cfg.refreshStates and not EM.cfg.offline then pollEvents(EM.cfg.refreshStates) end 
   end)
 
 function EM.addRefreshEvent(event) refreshStatesQueue.addEvents(event) end
