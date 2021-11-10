@@ -11,7 +11,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u2={label='home', text=''}
 --%%u3={label='user', text=''}
 
---FILE:Libs/fibaroExtra.lua,fibaroExtra;
+--FILE:lib/fibaroExtra.lua,fibaroExtra;
 ---------------------- Setup users -----------------------------
 local version = "V0.2"
 local USERS = {      -- Fill in with iOS credentials

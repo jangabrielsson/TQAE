@@ -1,6 +1,7 @@
 test/
 myQAs/
 dev/
+backup/
 temp/
 TQAEconfigs.lua
 ~$*.doc*

@@ -2,7 +2,6 @@ _=loadfile and loadfile("TQAE.lua"){
   user="admin", 
   pwd="admin", 
   host="192.168.1.57",
-  modPath = "TQAEmodules/",
   refreshStates = true,
   debug = { refreshStates=true },
   temp = "temp/",

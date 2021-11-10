@@ -8,7 +8,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%name="TriggerQA"
 --%%type="com.fibaro.deviceController"
 
---FILE:Libs/fibaroExtra.lua,fibaroExtra;
+--FILE:lib/fibaroExtra.lua,fibaroExtra;
 ----------- Code -----------------------------------------------------------
 
 _debugFlags = { trigger= true }

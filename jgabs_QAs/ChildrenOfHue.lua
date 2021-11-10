@@ -28,7 +28,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u13={{button="b1x", text="1x", onReleased='pollFactor'},{button="b2x", text="2x", onReleased='pollFactor'},{button="b3x", text="3x", onReleased='pollFactor'},{button="b4x", text="4x", onReleased='pollFactor'}}
 --%%u14={button="patch", text='patchQA',onReleased="patchQA"}
 
---FILE:Libs/fibaroExtra.lua,fibaroExtra;
+--FILE:lib/fibaroExtra.lua,fibaroExtra;
 ----------- Code -----------------------------------------------------------
 local _version = 1.20
 local serial = "UPD896661234567893"

@@ -7,7 +7,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%quickVars = {["devices"]="21 214 55"}
 --%%type="com.fibaro.motionSensor"
 
---FILE:Libs/fibaroExtra.lua,fibaroExtra;
+--FILE:lib/fibaroExtra.lua,fibaroExtra;
 
 ----------- Code -----------------------------------------------------------
 

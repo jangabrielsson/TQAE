@@ -349,7 +349,7 @@ EM.EMEvents('start',function(e)
       else
         createSyncServer(name,port,GUIhandler)
       end
-      addPagePath("GET/web/#rest",ARGS.web or EM.cfg.modPath.."web/")
+      addPagePath("GET/web/#rest",ARGS.web or (EM.cfg.root or "").."web/")
     end
   end,true)
 

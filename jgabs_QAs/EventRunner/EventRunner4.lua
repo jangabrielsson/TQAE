@@ -19,7 +19,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u4={button='debugRule', text='Rules:ON', onReleased='FEventRunner4'}
 --%%u5={button='Test', text='Test', onReleased='FEventRunner4'}
 
---FILE:Libs/fibaroExtra.lua,fibaroExtra;
+--FILE:lib/fibaroExtra.lua,fibaroExtra;
 --FILE:jgabs_QAs/EventRunner/EventRunner4Engine.lua,EventRunner;
 
 ----------- Code -----------------------------------------------------------

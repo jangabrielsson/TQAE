@@ -16,21 +16,21 @@ local downloads = {
     url="https://raw.githubusercontent.com/jangabrielsson/TQAE/master/setup/fileDownloads.lua",
     path = "setup/fileDownloads.lua"
   },
-  ["Libs/fibaroExtra.lua"] = {
-    url="https://raw.githubusercontent.com/jangabrielsson/TQAE/master/Libs/fibaroExtra.lua",
+  ["libs/fibaroExtra.lua"] = {
+    url="https://raw.githubusercontent.com/jangabrielsson/TQAE/master/lib/fibaroExtra.lua",
     path = "Libs/fibaroExtra.lua"
   },
   ["QAs/EventRunner/EventRunner4.lua"] = {
-    url="https://raw.githubusercontent.com/jangabrielsson/TQAE/master/QAs/EventRunner/EventRunner4.lua",
+    url="https://raw.githubusercontent.com/jangabrielsson/TQAE/master/jgabs_QAs/EventRunner/EventRunner4.lua",
     path = "QAs/EventRunner/EventRunner4.lua"
   },
   ["QAs/EventRunner/EventRunner4Engine.lua"] = {
-    url="https://raw.githubusercontent.com/jangabrielsson/TQAE/master/QAs/EventRunner/EventRunner4Engine.lua",
+    url="https://raw.githubusercontent.com/jangabrielsson/TQAE/master/jgabs_QAs/EventRunner/EventRunner4Engine.lua",
     path = "QAs/EventRunner/EventRunner4Engine.lua"
   },
-  ["TQAEmodules"] = {
-    pathdir = "TQAEmodules",
-    urldir = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/TQAEmodules/",
+  ["modules"] = {
+    pathdir = "modules",
+    urldir = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/modules/",
     files = {
       ["api.lua"]="api.lua",
       ["async.lua"]="async.lua",

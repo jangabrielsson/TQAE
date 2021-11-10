@@ -1,5 +1,4 @@
 _=loadfile and loadfile("TQAE.lua"){
---  modPath = "TQAEmodules/",
 }
 
 --%%name="Test QA"

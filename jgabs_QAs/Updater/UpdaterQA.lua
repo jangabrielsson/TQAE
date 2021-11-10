@@ -1,7 +1,6 @@
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true },
---offline = true,
   copas=true,
 }
 
@@ -17,7 +16,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u7={{button='Update', text='Update', onReleased='BTN'},{button='New', text='New', onReleased='BTN'}}
 --%%u8={label='log', text="..."}  
 
---FILE:Libs/fibaroExtra.lua,fibaroExtra;
+--FILE:lib/fibaroExtra.lua,fibaroExtra;
 
 local btnHandlers,Date = "---"
 local url = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/jgabs_QAs/Updater/MANIFEST.json"

@@ -3,7 +3,6 @@ _=loadfile and loadfile("TQAE.lua"){
   pwd="admin", 
   host="192.168.1.57",
   refreshStates=true,
-  modPath = "TQAEmodules/",
   temp = "temp/",
   debug = { traceFibaro = true },
 --  copas=true,

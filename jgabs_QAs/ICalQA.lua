@@ -16,7 +16,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u6={label='row2',text=""}
 --%%u7={label='row3',text=""}
 
---FILE:Libs/fibaroExtra.lua,fibaroExtra;
+--FILE:lib/fibaroExtra.lua,fibaroExtra;
 
 ----------- Code -----------------------------------------------------------
 _version = "0.11"

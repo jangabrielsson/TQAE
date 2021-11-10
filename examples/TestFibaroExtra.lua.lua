@@ -2,14 +2,13 @@ _=loadfile and loadfile("TQAE.lua"){
   user="admin", 
   pwd="admin", 
   host="192.168.1.57",
-  modPath = "TQAEmodules/",
   refreshStates = true,
   debug = { refreshStates=true },
   temp = "temp/",
   startTime="12/24/2024-07:00",
 }
 
---FILE:fibaroExtra.lua,fibaroExtra;
+--FILE:lib/fibaroExtra.lua,fibaroExtra;
 
 --%%name="Test FibaroExtra"
 --%%type="com.fibaro.sprinkler"
