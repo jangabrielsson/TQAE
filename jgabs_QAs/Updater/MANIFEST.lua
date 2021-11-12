@@ -16,9 +16,9 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.6,
+      { version = 0.61,
         vars= {
-          base1 = "https://github.com/jangabrielsson/TQAE/raw/bc0cf2007df79877f3b971f516318a3975d93ddf"
+          base1 = "https://github.com/jangabrielsson/TQAE/raw/352f026cf2637a1149ce388733a8311b93821d3d"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "New version of EventRunner4",
@@ -28,12 +28,12 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.61,
+      { version = 0.62,
         vars = {
           base1 = "https://github.com/jangabrielsson/TQAE/raw/1117a60af5e05fa3196f2c2cfc5766126c4272c3"
         },
         descr = "Test version EventRunner4",
-        ref = 0.6
+        ref = 0.61
       }
     }
   },

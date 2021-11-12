@@ -1,3 +1,10 @@
+--luacheck: globals ignore hc3_emulator
+--luacheck: globals ignore QuickApp QuickAppChild quickApp fibaro json __TAG net api class plugin
+--luacheck: globals ignore __fibaro_get_device __fibaro_get_device_property 
+--luacheck: globals ignore setTimeout clearTimeout setInterval clearInterval
+--luacheck: ignore 212/self
+--luacheck: ignore 432/self
+
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true },
@@ -23,7 +30,7 @@ local url = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/jgabs_
 local intercepturl = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/(.*)"
 
 if hc3_emulator then 
-  hc3_emulator.installQA{id=88,file='Examples/example2_v1.lua'}
+  hc3_emulator.installQA{id=88,file='examples/example2_v1.lua'}
   hc3_emulator.registerURL("GET",intercepturl,
     function(match,args)
       local file = hc3_emulator.io.open(match[1])
@@ -78,7 +85,10 @@ local function resolve(str,vars)
   return str
 end
 
+local lastData -- cache
 local function process(data)
+  if data then lastData = data else data = lastData end
+  if not data then return end
   manifest = data.updates
   Date = data.date
   for id,data in pairs(manifest) do
@@ -231,22 +241,27 @@ local function Update(ev)
           logf("Deleting file %s",f.name)
         end
       end
+      local updates,updNames = {},{}
       for _,f in ipairs(fs) do
         if not keeps[f.name] then
           local fd = {isMain=f.name=='main',type='lua',isOpen=false,name=f.name,content=f.content}
-          local _,code,action2
-          if existMap[f.name] then
-            action2="creating"
-            _,code = api.post("/quickApp/"..qa.id.."/files",fd)
-          else 
-            action2="updating"
-            _,code = api.put("/quickApp/"..qa.id.."/files/"..f.name,fd)
-          end
-          if code > 204 then 
-            errorf("Failed %s file '%s' for QA:%s",action2,f.name,qa.id) 
+          if not existMap[f.name] then
+            local _,code = api.post("/quickApp/"..qa.id.."/files",fd)
+            if code > 204 then errorf("Failed creating file '%s' for QA:%s",f.name,qa.id)
+            else 
+              logf("Creating file %s",f.name) 
+            end
           else
-            logf("Writing file %s",f.name)
+            updates[#updates+1]=fd
+            updNames[#updNames+1]=f.name
           end
+        end
+      end
+      if #updates>0 then
+        local _,code = api.put("/quickApp/"..qa.id.."/files",updates)
+        if code > 204 then errorf("Failed updating files %s for QA:%s",json.encode(updNames),qa.id)
+        else 
+          logf("Updating files %s",json.encode(updNames)) 
         end
       end
       if data.viewLayout and data.uiCallbacks then
@@ -320,20 +335,21 @@ function QuickApp:onInit()
       fibaro.enableSourceTriggers('deviceEvent')
 
       self:event({type='deviceEvent', value='removed'},function(env) 
-          if QAs[env.event.id] then logf("Deleted QA:%s",env.event.id) end
+          if QAs[env.event.id] then logf("Deleted QA:%s",env.event.id) process() end
           QAs[env.event.id]=nil
+
         end)
 
       self:event({type='deviceEvent', value='created'},function(env)
           local qa = api.get("/devices/"..env.event.id)
           QAs[env.event.id]=isUpdatable(qa)
-          if QAs[env.event.id] then logf("Created QA:%s",env.event.id) end
+          if QAs[env.event.id] then logf("Created QA:%s",env.event.id) process() end
         end)
 
       self:event({type='deviceEvent', value='modified'},function(env) 
           local qa = api.get("/devices/"..env.event.id)
           QAs[env.event.id]=isUpdatable(qa)
-          if QAs[env.event.id] then logf("Modified QA:%s",env.event.id) end
+          if QAs[env.event.id] then logf("Modified QA:%s",env.event.id) process() end
         end)
 
       Refresh()
