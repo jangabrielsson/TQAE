@@ -12,7 +12,7 @@ local EM,FB=...
 
 local LOG,DEBUG,debugFlags = EM.LOG,EM.DEBUG,EM.debugFlags
 EM.copas = dofile(EM.cfg.modPath.."copas.lua")
-
+print"OLOL"
 LOG.register("socketserver","Log (TCP)socketserver related events")
 
 ------------------------ Emulator core ----------------------------------------------------------

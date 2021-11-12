@@ -179,17 +179,16 @@ EM._info = { modules = { ["local"] = {}, global= {} } }
 ------------------------ Builtin functions ------------------------------------------------------
 
 local function httpRequest(reqs,extra)
-  local resp,req,status,h,_={},{} 
+  local resp,req,status,h,resetTimeout,timeout,_={},{} 
   for k,v in pairs(extra or {}) do req[k]=v end; for k,v in pairs(reqs) do req[k]=v end
   req.sink,req.headers = ltn12.sink.table(resp), req.headers or {}
   req.headers["Accept"] = req.headers["Accept"] or "*/*"
   req.headers["Content-Type"] = req.headers["Content-Type"] or "application/json"
-  if req.timeout then
-    req.create=function()
-      local req_sock = socket.tcp()
-      req_sock:settimeout(req.timeout / 1000,"t")
-      return req_sock
-    end
+  if req.timeout then timeout = req.timeout / 1000 end
+  if cfg.copas and EM.copas then
+    req.timeout = timeout
+  else
+    resetTimeout,EM.http.TIMEOUT = EM.http.TIMEOUT,timeout
   end
   if req.method=="PUT" or req.method=="POST" then
     req.data = req.data or "[]"
@@ -202,6 +201,7 @@ local function httpRequest(reqs,extra)
   else
     _,status,h = EM.http.request(req)
   end
+  if resetTimeout then EM.http.TIMEOUT = resetTimeout end
   if tonumber(status) and status < 300 then 
     return resp[1] and table.concat(resp) or nil,status,h 
   else return nil,status,h end

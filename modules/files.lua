@@ -75,6 +75,9 @@ end
 
 local function matchContinousLines(str,pattern1,pattern2,collector)
   local state = 0
+  if str==nil then
+    a=9
+  end
   str:gsub("(.-)[\n\r]+",function(line)
       local m = {line:match(pattern1)}
       if  #m > 0 then
@@ -85,7 +88,7 @@ end
 
 local function loadSource(code,fileName) -- Load code and resolve info and --FILE directives
   local files = {}
-
+  assert(code,"Missing code for "..tostring(fileName))
   matchContinousLines(code,[[%-%-%s*FILE:%s*(.-)%s*,%s*(.-);]],[[%-%-FILE:%s*(.-)%s*,%s*(.-);]],
     function(file,name)
       file = file:gsub("/",EM.cfg.pathSeparator)
