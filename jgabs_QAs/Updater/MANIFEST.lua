@@ -82,13 +82,12 @@ return {
   ["896661234567894"] = {
     name = "QAUpdater",
     type = "com.fibaro.deviceController",
-    newOnly = true,
     versions = {
       { version= 0.5,
         vars= {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master"
         },
-        descr = "First version",
+        descr = "Latest",
         mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
         files = "generate",
         keep = {

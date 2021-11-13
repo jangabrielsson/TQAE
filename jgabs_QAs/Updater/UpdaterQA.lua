@@ -93,7 +93,7 @@ local function process(data)
   Date = data.date
   updates={}
   for id,data in pairs(manifest) do
-    local name,versions,typ,newOnly = data.name,data.versions,data.type,data.newOnly
+    local name,versions,typ,newOnly = data.name,data.versions,data.type,data.noUpgrade
     logf("Update[%s]=%s",id,name)
     local vars = data.vars or {}
     for _,v in ipairs(versions) do
@@ -221,7 +221,7 @@ local function Update(ev)
   local upd = updates[updP]
   local data = upd.data
   local qa = qaList[qaP]
-  if data.newOnly or qa.id == quickApp.id then
+  if data.noUpgrade or qa.id == quickApp.id then
     logf("Can't be updated, please create New")
     return
   end
@@ -234,49 +234,76 @@ local function Update(ev)
   local deviceFiles = api.get("/quickApp/"..qa.id.."/files")
   for n,u in pairs(files or {}) do fs[#fs+1]={name=n, url=u} end
   fetchFiles(fs,1,function()
-      local existMap = {}
-      for _,f in ipairs(deviceFiles) do -- delete files not in new QA
-        existMap[f.name]=true
-        if not files[f.name] and not keeps[f.name] then
-          api.delete("/quickApp/"..qa.id.."/files/"..f.name)
-          logf("Deleting file %s",f.name)
-        end
-      end
-      local updates,updNames = {},{}
-      for _,f in ipairs(fs) do
-        if not keeps[f.name] then
-          local fd = {isMain=f.name=='main',type='lua',isOpen=false,name=f.name,content=f.content}
-          if not existMap[f.name] then
-            local _,code = api.post("/quickApp/"..qa.id.."/files",fd)
-            if code > 204 then errorf("Failed creating file '%s' for QA:%s",f.name,qa.id)
-            else 
-              logf("Creating file %s",f.name) 
+      local existMap,filesAltered = {},{}
+      local stat,res = pcall(function()
+          for _,f in ipairs(deviceFiles) do -- delete files not in new QA
+            existMap[f.name]=f
+            if not files[f.name] and not keeps[f.name] then
+              filesAltered[#filesAltered+1]={'deleted',f}
+              local _,code = api.delete("/quickApp/"..qa.id.."/files/"..f.name)
+              if code > 204 then 
+                errorf("Failed deleting file '%s' for QA:%s",f.name,qa.id) 
+                error("deleting")
+              end
+              logf("Deleting file %s",f.name)
             end
-          else
-            updates[#updates+1]=fd
-            updNames[#updNames+1]=f.name
+          end
+          local updates,updNames = {},{}
+          for _,f in ipairs(fs) do
+            if not keeps[f.name] then
+              local fd = {isMain=f.name=='main',type='lua',isOpen=false,name=f.name,content=f.content}
+              if not existMap[f.name] then
+                filesAltered[#filesAltered+1]={'created',f.name}
+                local _,code = api.post("/quickApp/"..qa.id.."/files",fd)
+                if code > 204 then 
+                  errorf("Failed creating file '%s' for QA:%s",f.name,qa.id) 
+                  error("creating")
+                end 
+                logf("Creating file %s",f.name) 
+              else
+                updates[#updates+1]=fd
+                updNames[#updNames+1]=f.name
+              end
+            end
+          end
+          if #updates>0 then -- Write all updates at ones - minimize restarts
+            local _,code = api.put("/quickApp/"..qa.id.."/files",updates)
+            local oldUs = {}
+            for _,f in ipairs(updates) do
+              oldUs[#oldUs+1]=existMap[f.name]
+            end
+            filesAltered[#filesAltered+1]={'updated',oldUs}
+            if code > 204 then 
+              errorf("Failed updating files %s for QA:%s",json.encode(updNames),qa.id) 
+              error("update")
+            end
+            logf("Updating files %s",json.encode(updNames)) 
+          end
+          if data.viewLayout and data.uiCallbacks then
+            if type(data.viewLayout) == 'string' then data.viewLayout = json.decode(data.viewLayout) end
+            if type(data.uiCallbacks) == 'string' then data.uiCallbacks = json.decode(data.uiCallbacks) end
+            api.put("/devices/"..qa.id,{ properties = { viewLayout=data.viewLayout, uiCallbacks=data.uiCallbacks }})
+          end
+          if data.quickAppVariables then
+            api.post("/plugins/updateProperty", {deviceId=qa.id, propertyName="quickAppVariables", value=data.quickAppVariables})
+          end
+          data.interfaces = data.interfaces or { "quickApp" }
+          api.post("/devices/addInterface",{devicesId={qa.id},interfaces=data.interfaces})
+          plugin.restart(qa.id)
+          logf("QuickApp %s",action)
+        end)
+      if not stat then
+        errorf("Failed updating QA:%s - trying to restore",qa.id)
+        for _,f in ipairs(filesAltered) do
+          if f[1]=='deleted' then
+            api.post("/quickApp/"..qa.id.."/files",f[2])
+          elseif f[1]=='created' then
+            api.delete("/quickApp/"..qa.id.."/files/"..f[2])
+          elseif f[1]=='updated' then
+            api.put("/quickApp/"..qa.id.."/files",f[2])
           end
         end
       end
-      if #updates>0 then
-        local _,code = api.put("/quickApp/"..qa.id.."/files",updates)
-        if code > 204 then errorf("Failed updating files %s for QA:%s",json.encode(updNames),qa.id)
-        else 
-          logf("Updating files %s",json.encode(updNames)) 
-        end
-      end
-      if data.viewLayout and data.uiCallbacks then
-        if type(data.viewLayout) == 'string' then data.viewLayout = json.decode(data.viewLayout) end
-        if type(data.uiCallbacks) == 'string' then data.uiCallbacks = json.decode(data.uiCallbacks) end
-        api.put("/devices/"..qa.id,{ properties = { viewLayout=data.viewLayout, uiCallbacks=data.uiCallbacks }})
-      end
-      if data.quickAppVariables then
-        api.post("/plugins/updateProperty", {deviceId=qa.id, propertyName="quickAppVariables", value=data.quickAppVariables})
-      end
-      data.interfaces = data.interfaces or { "quickApp" }
-      api.post("/devices/addInterface",{devicesId={qa.id},interfaces=data.interfaces})
-      plugin.restart(qa.id)
-      logf("QuickApp %s",action)
     end)
 end
 
