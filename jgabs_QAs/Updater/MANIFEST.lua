@@ -18,7 +18,7 @@ return {
       },
       { version = 0.62,
         vars= {
-          base1 = "https://github.com/jangabrielsson/TQAE/raw/352f026cf2637a1149ce388733a8311b93821d3d"
+          base1 = "https://github.com/jangabrielsson/TQAE/raw/14966638311b6e660ad978793a6eb9a65c5007b0"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "New version of EventRunner4",
