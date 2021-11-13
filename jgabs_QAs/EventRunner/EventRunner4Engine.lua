@@ -164,9 +164,10 @@ Module.utilities = { name="ER Utilities", version="0.6"}
 function Module.utilities.init()
   if Module.utilities.inited then return Module.utilities.inited end
   Module.utilities.inited = true
-
-  local self = {}
-  local midnight,hm2sec,transform,copy,equal=fibaro.midnight,utils.hm2sec,fibaro.EM.transform,utils.copy,utils.equal
+  
+  local self,utils = {},fibaro.utils
+  local midnight,hm2sec,transform,copy,equal=fibaro.midnight,utils.hm2sec,utils.transform,utils.copy,utils.equal
+  local toTime,gensym,notify = utils.gensym,utils.toTime,utils.notify
 
   function self.findEqual(tab,obj)
     for _,o in ipairs(tab) do if equal(o,obj) then return true end end
@@ -336,7 +337,7 @@ function Module.utilities.init()
 
   local cbr = {}
   function self.asyncCall(errstr,timeout)
-    local tag = utils.gensym("CBR")
+    local tag = gensym("CBR")
     cbr[tag]={nil,nil,errstr}
     cbr[tag][1]=setTimeout(function() 
         cbr[tag]=nil 
@@ -626,7 +627,7 @@ function Module.utilities.init()
   end
 
   self.equal,self.copy,self.transform,self.hm2sec,self.midnight  = equal,copy,transform,hm2sec,midnight
-  tojson,self.time2str,self.between = self.prettyJson,time2str,between
+  tojson,self.time2str,self.between,self.gensym,self.notify = self.prettyJson,time2str,between,gensym,notify
   Util = self
   return self
 end -- Utils
@@ -955,7 +956,7 @@ function Module.eventScript.init()
 
   local function makeEventScriptParser()
     local source, tokens, cursor
-    local mkStack,mkStream,toTime,map,mapkk,gensym=Util.mkStack,Util.mkStream,utils.toTime,Util.map,Util.mapkk,utils.gensym
+    local mkStack,mkStream,toTime,map,mapkk,gensym=Util.mkStack,Util.mkStream,Util.toTime,Util.map,Util.mapkk,Util.gensym
     local patterns,self = {},{}
     local opers = {['%neg']={14,1},['t/']={14,1,'%today'},['n/']={14,1,'%nexttime'},['+/']={14,1,'%plustime'},['$']={14,1,'%vglob'},
       ['$$']={14,1,'%vquick'},
@@ -1119,7 +1120,7 @@ function Module.eventScript.init()
       else error("Illegal assignment") end
     end
     postP['%betwo'] = function(e) 
-      local t = utils.gensym("TODAY")
+      local t = Util.gensym("TODAY")
       return {'%and',{'%betw', e[2],e[3]},{'%and',{'~=',{'%var',t,'script'},{'%var','dayname','script'}},{'%set','%var',t,'script',{'%var','dayname','script'}}}}
     end 
     postP['if'] = function(e) local c = {'%and',e[2],{'%always',e[3]}} return self.postParse(#e==3 and c or {'%or',c,e[4]}) end
@@ -1256,7 +1257,7 @@ function Module.eventScript.init()
 
 ---------- Event Script Compiler --------------------------------------
   local function makeEventScriptCompiler(parser)
-    local self,comp,gensym,isVar,isGlob={ parser=parser },{},utils.gensym,Util.isVar,Util.isGlob
+    local self,comp,gensym,isVar,isGlob={ parser=parser },{},Util.gensym,Util.isVar,Util.isGlob
     local function mkOp(o) return o end
     local POP = {mkOp('%pop'),0}
 
@@ -1356,7 +1357,7 @@ function Module.eventScript.init()
     local self,instr={},{}
     local coroutine = Util.coroutine
     local function safeEncode(e) local stat,res = pcall(function() return tojson(e) end) return stat and res or tostring(e) end
-    local toTime,midnight,map,mkStack,copy,coerce,isEvent=utils.toTime,utils.midnight,utils.map,Util.mkStack,utils.copy,fibaro.EM.coerce,fibaro.EM.isEvent
+    local toTime,midnight,map,mkStack,copy,coerce,isEvent=Util.toTime,fibaro.midnight,Util.map,Util.mkStack,Util.copy,fibaro.EM.coerce,fibaro.EM.isEvent
     local _vars,triggerVar = Util._vars,Util.triggerVar
 
     local function getVarRec(var,locs) return locs[var] or locs._next and getVarRec(var,locs._next) end
@@ -1979,7 +1980,7 @@ function Module.eventScript.init()
     local self = {}
     local HOURS24,CATCHUP,RULEFORMAT = 24*60*60,math.huge,"Rule:%s[%s]"
     local map,mapkl,getFuns,midnight,time2str=Util.map,Util.mapkl,ScriptEngine.getFuns,Util.midnight,Util.time2str
-    local transform,isGlob,isVar,triggerVar = fibaro.EM.transform,Util.isGlob,Util.isVar,Util.triggerVar
+    local transform,isGlob,isVar,triggerVar = Util.transform,Util.isGlob,Util.isVar,Util.triggerVar
     local _macros,dailysTab,rCounter= {},{},0
 --    local lblF=function(id,e) return {type='device', id=id, property=format("ui.%s.value",e[3])} end
     local triggFuns={}
@@ -2093,7 +2094,7 @@ function Module.eventScript.init()
       local code = ScriptCompiler.compile({'%and',(_debugFlags.rule or _debugFlags.ruleTrue) and {'%logRule',head,src} or head,body},env.log)
       local action = compileAction(code,src,env.log)
       if #reps>0 then -- @@interval rules
-        local event,env={type=utils.gensym("INTERV")},{code=reps[1]}
+        local event,env={type=Util.gensym("INTERV")},{code=reps[1]}
         events[#events+1] = quickApp:event(event,action,src)
         event._sh=true
         local timeVal,skip = nil,ScriptEngine.eval2(env)
@@ -2106,7 +2107,7 @@ function Module.eventScript.init()
         setTimeout(interval,1000*(skip < 0 and -skip or 0))
       else
         if #dailys > 0 then -- daily rules
-          local event,timers={type=utils.gensym("DAILY"),_sh=true},{}
+          local event,timers={type=Util.gensym("DAILY"),_sh=true},{}
           sdaily={dailys=dailys,event=event,timers=timers}
           dailysTab[#dailysTab+1] = sdaily
           events[#events+1]=quickApp:event(event,action,src)
@@ -2308,7 +2309,7 @@ local function setVersion(model,serial,version)
 end
 
 local modules = {
-  "utilities","autopatch","objects","device","extras","eventScript","nodered",--"doc"
+  "utilities","autopatch","device","extras","eventScript","nodered",--"doc"
 }
 
 ----------------- Main ----------------------------------------
@@ -2336,7 +2337,7 @@ function QuickApp:onInit()
   local _IPADDRESS = fibaro.getIPaddress()
   self:debug("IP:",_IPADDRESS)
   self.main = function(self)
-    utils.notify("info","Started "..os.date("%c"),true)
+    Util.notify("info","Started "..os.date("%c"),true)
     self:tracef("Sunrise:%s,  Sunset:%s",(fibaro.get(1,"sunriseHour")),(fibaro.get(1,"sunsetHour")))
     Util.printBanner("Setting up rules (main)")
     local stat,res = pcall(function()

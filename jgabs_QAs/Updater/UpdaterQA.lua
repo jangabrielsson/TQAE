@@ -7,7 +7,7 @@
 
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
-  debug = { onAction=true, http=false, UIEevent=true },
+  debug = { onAction=true, http=false, UIEevent=true, refreshStates=true },
   copas=true,
 }
 
@@ -20,7 +20,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u4={label='updateDescr', text=""}
 --%%u5={{button='PrevQ', text='<< QA', onReleased='BTN'},{button='NextQ', text='QA >>', onReleased='BTN'}}
 --%%u6={label='qa', text="..."}
---%%u7={{button='Update', text='Update', onReleased='BTN'},{button='New', text='New', onReleased='BTN'}}
+--%%u7={{button='Update', text='Update', onReleased='BTN'},{button='New', text='New install', onReleased='BTN'}}
 --%%u8={label='log', text="..."}  
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
@@ -91,6 +91,7 @@ local function process(data)
   if not data then return end
   manifest = data.updates
   Date = data.date
+  updates={}
   for id,data in pairs(manifest) do
     local name,versions,typ,newOnly = data.name,data.versions,data.type,data.newOnly
     logf("Update[%s]=%s",id,name)

@@ -66,6 +66,7 @@ local numberOfHomeUsers = 0
 local whereIsUser = {}
 local HTTP, pollingextra
 USERS = USERS or {}
+utils = fibaro.utils
 
 -- debug flags for various subsystems...
 local _debugFlags = { post=true  }

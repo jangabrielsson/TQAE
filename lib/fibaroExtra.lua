@@ -4,19 +4,16 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.925"
-FILES = FILES or {}
-FILES['fibaroExtra']=fibaro.FIBARO_EXTRA
+fibaro.FIBARO_EXTRA = "v0.930"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
 local function assertf(test,fmt,...) if not test then error(format(fmt,...),2) end end
-local debugFlags = {}
+local debugFlags,utils = {},{}
 local toTime,copy,equal,member,remove,protectFun
-
+fibaro.utils = utils
 -------------------- Utilities ----------------------------------------------
 do
-  utils = {}
   if not setTimeout then
     function setTimeout(fun,ms) return fibaro.setTimeout(ms,fun) end
     function clearTimeout(ref) fibaro.clearTimeout(ref) end

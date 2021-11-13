@@ -8,11 +8,6 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%fullLUA=true
 
 local EM = hc3_emulator.EM
-local prefix = "https://github.com/jangabrielsson/TQAE/raw/%w+/(.*)"
-
-local function stripPrefix(str)
-  return str:match(prefix)
-end
 
 local function resolve(str,vars)
   for v,sub in pairs(vars) do str=str:gsub("%$"..v,sub) end
