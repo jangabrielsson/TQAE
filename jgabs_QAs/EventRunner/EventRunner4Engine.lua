@@ -167,7 +167,7 @@ function Module.utilities.init()
   
   local self,utils = {},fibaro.utils
   local midnight,hm2sec,transform,copy,equal=fibaro.midnight,utils.hm2sec,utils.transform,utils.copy,utils.equal
-  local toTime,gensym,notify = utils.gensym,utils.toTime,utils.notify
+  local toTime,gensym,notify = utils.toTime,utils.gensym,utils.notify
 
   function self.findEqual(tab,obj)
     for _,o in ipairs(tab) do if equal(o,obj) then return true end end
@@ -628,6 +628,7 @@ function Module.utilities.init()
 
   self.equal,self.copy,self.transform,self.hm2sec,self.midnight  = equal,copy,transform,hm2sec,midnight
   tojson,self.time2str,self.between,self.gensym,self.notify = self.prettyJson,time2str,between,gensym,notify
+  self.toTime = toTime
   Util = self
   return self
 end -- Utils

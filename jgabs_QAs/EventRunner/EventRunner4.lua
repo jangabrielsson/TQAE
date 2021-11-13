@@ -55,8 +55,9 @@ function QuickApp:main()    -- EventScript version
     hc3_emulator.create.binarySwitch(30,"S3")
   end
 
---  rule("@@00:00:03 => log('Ping')")
+  rule("@@00:00:03 => log('Ping')")
 
+--  alarms = 1
 --  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")
 --  rule("alarms:disarmed => log('All disarmed')")
