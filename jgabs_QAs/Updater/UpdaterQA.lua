@@ -17,10 +17,10 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u1={label='info', text='...'}
 --%%u2={{button='PrevU', text='<< Updates', onReleased='BTN'},{button='Refresh', text='Refresh', onReleased='BTN'},{button='NextU', text='Updates >>', onReleased='BTN'}}
 --%%u3={label='update', text="..."}
---%%u4={label='updateDescr', text=""}
---%%u5={{button='PrevQ', text='<< QA', onReleased='BTN'},{button='NextQ', text='QA >>', onReleased='BTN'}}
---%%u6={label='qa', text="..."}
---%%u7={{button='Update', text='Update', onReleased='BTN'},{button='New', text='New install', onReleased='BTN'}}
+--%%u4={{button='PrevV', text='<< Version', onReleased='BTN'},{button='Install', text='Install', onReleased='BTN'},{button='NextV', text='Version >>', onReleased='BTN'}}
+--%%u5={label='version', text="..."}
+--%%u6={{button='PrevQ', text='<< QA', onReleased='BTN'},{button='Update', text='Update', onReleased='BTN'},{button='NextQ', text='QA >>', onReleased='BTN'}}
+--%%u7={label='qa', text="..."}
 --%%u8={label='log', text="..."}  
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
@@ -41,11 +41,12 @@ if hc3_emulator then
 end
 
 local serial = "UPD896661234567894"
-local version = 0.5
+local version = 0.6
 local QAs={}
 local manifest = {}
 local updates,updP = {},0
-local qaList,qaP = {},0
+local veP = 0
+local qaP = 0
 local fmt = string.format
 
 function QuickApp:BTN(ev) btnHandlers[ev.elementName](ev) end -- Avoid (too) global handlers
@@ -92,52 +93,63 @@ local function process(data)
   manifest = data.updates
   Date = data.date
   updates={}
+  local update
   for id,data in pairs(manifest) do
-    local name,versions,typ,newOnly = data.name,data.versions,data.type,data.noUpgrade
+    local name,typ,descr,noUpgrade = data.name,data.type,data.noUpgrade,data.descr
     logf("Update[%s]=%s",id,name)
     local vars = data.vars or {}
-    for _,v in ipairs(versions) do
-      local descr = fmt("'%s', version:%s",name,v.version)
+    local update = { name=name, serial=id, descr=fmt("%s %s",name, descr and "- "..descr or ""), typ=typ, noUpgrade=noUpgrade }
+    local versions = {}
+    for _,v in ipairs(data.versions or {}) do
+      local version = {}
+      version.descr = fmt("v:%s %s",v.version,v.descr or "")
       local vars,ref = copy(vars)
       if v.ref then
-        for _,vr in ipairs(updates) do
+        for _,vr in ipairs(versions) do
           if vr.serial == id and vr.version == v.ref then ref=vr break end
         end
         if not ref then errorf("Ref %s for %s not found",v.ref,id) return end
         for k,d in pairs(ref.data) do if not v[k] then v[k]=d end end
       end
       for k,v in pairs(v.vars or {}) do vars[k]=v end
-      local data = v
-      local qas = {}
+      local data,qas,files,keep = v,{},copy(v.files),copy(v.keep)
       for q,d in pairs(QAs) do if id == d.serial then qas[#qas+1]=d end end
-      for n,u in pairs(data.files) do data.files[n]=resolve(u,vars) end
-      for n,u in pairs(data.keep) do data.keep[n]=resolve(u,vars) end
-      updates[#updates+1]={name=name, serial=id, type=typ, descr=descr, data=data, version=v.version, newOnly=newOnly, QAs=qas}
+      for n,u in pairs(files) do files[n]=resolve(u,vars) end
+      for n,u in pairs(keep) do keep[n]=resolve(u,vars) end
+      version.version = v.version
+      version.QAs = qas
+      version.files = files
+      version.keep = keep
+      version.data = data
+      versions[#versions+1]=version
     end
+    update.versions = versions
+    updates[#updates+1]=update
   end
   updP = 0; btnHandlers.NextU()
 end
 
 local function updateInfo()
   quickApp:setView("info","text","QA Updater, v:%s, (%s)",version,Date)
-  if updP > 0 then
-    quickApp:setView("update","text","%s",updates[updP].descr)
-    quickApp:setView("updateDescr","text","%s",updates[updP].data.descr or "")
-    if qaP > 0 then
-      local q = qaList[qaP]
-      quickApp:setView("qa","text","ID:%s, '%s', v:%s",q.id,q.name,q.version)
-      local uv,txt = updates[updP].version,"Upgrade"
-      if uv == q.version then txt="Reinstall" elseif uv < q.version then txt="Downgrade" end
-      quickApp:setView("Update","text",txt)
-    else
-      quickApp:setView("Update","text","...")
-      quickApp:setView("qa","text","...")
-    end
-  else 
-    quickApp:setView("update","text","...")
-    quickApp:setView("qa","text","...")
-  end
+  quickApp:setView("update","text","...")
+  quickApp:setView("version","text","...")
+  quickApp:setView("qa","text","...")
   quickApp:setView("log","text","...")
+  if updP > 0 then
+    local upd = updates[updP]
+    quickApp:setView("update","text","%s",upd.descr)
+    if veP > 0 then
+      local version = upd.versions[veP]
+      quickApp:setView("version","text","%s",version.descr)
+      if qaP > 0 then
+        local qa = version.QAs[qaP]
+        quickApp:setView("qa","text","ID:%s, '%s', v:%s",qa.id,qa.name,qa.version)
+        local uv,txt = version.version,"Upgrade"
+        if uv == qa.version then txt="Reinstall" elseif uv < qa.version then txt="Downgrade" end
+        quickApp:setView("Update","text",txt)
+      end
+    end
+  end
 end
 
 local function Refresh()
@@ -163,27 +175,43 @@ local function Refresh()
 end
 
 local function PrevU()
-  logf("Prev U")
+--  logf("Prev U")
   if #updates > 0 then
     updP = updP-1; if updP < 1 then updP = #updates end
-    qaList = updates[updP].QAs
-    qaP = #qaList > 0 and 1 or 0
+    veP = 0; btnHandlers.NextV()
   end
-  updateInfo()
 end
 
 local function NextU()
-  logf("Next U")
+--  logf("Next U")
   if #updates > 0 then
     updP = updP+1; if updP > #updates then updP = 1 end
-    qaList = updates[updP].QAs
-    qaP = #qaList > 0 and 1 or 0
+    veP = 0; btnHandlers.NextV()
   end
-  updateInfo()
+end
+
+local function PrevV()
+--  logf("Prev V")
+  local versions = updates[udpP] and updates[udpP].versions or {}
+  if #versions > 0 then
+    veP = veP-1; if veP < 1 then veP = #versions end
+    qaP = 0; btnHandlers.NextQ()
+  end
+end
+
+local function NextV()
+--  logf("Next V")
+  local versions = updates[updP] and updates[updP].versions or {}
+  if #versions > 0 then
+    veP = veP+1; if veP > #versions then veP = 1 end
+    qaP = 0; btnHandlers.NextQ()
+  end
 end
 
 local function PrevQ()
-  logf("Prev QA")
+--  logf("Prev QA")
+  local qaList = updates[udpP] and updates[udpP].versions and updates[udpP].versions[veP] or {}
+  qaList = qas.QAs or {}
   if #qaList > 0 then
     qaP = qaP-1; if qaP < 1 then qaP = #qaList end
   end
@@ -191,7 +219,9 @@ local function PrevQ()
 end
 
 local function NextQ()
-  logf("Next QA")
+--  logf("Next QA")
+  local qaList = updates[updP] and updates[updP].versions and updates[updP].versions[veP] or {}
+  qaList = qaList.QAs or {}
   if #qaList > 0 then
     qaP = qaP+1; if qaP > #qaList then qaP = 1 end
   end
@@ -217,18 +247,21 @@ end
 
 local function Update(ev)
   logf(ev.elementName)
-  if not(qaP > 0 and #qaList > 0) then return end
-  local upd = updates[updP]
-  local data = upd.data
-  local qa = qaList[qaP]
-  if data.noUpgrade or qa.id == quickApp.id then
-    logf("Can't be updated, please create New")
-    return
-  end
+  local upd      = updates[updP]  or {}
+  local versions = upd.versions   or {}
+  local version  = versions[veP]  or {}
+  local qaList   = version.QAs    or {}
+  local qa       = qaList[qaP]
+  if not qa then return end
+
+  local data = version.data
+
+  if upd.noUpgrade then logf("Can't be updated, please create New") return end
+  
   local action = "upgraded"
-  if upd.version == qa.version then action="reinstalled" elseif upd.version < qa.version then action = "downgraded" end
-  local fs,keeps,files = {},{},data.files or {}
-  for _,k in ipairs(data.keep or {}) do keeps[k]=true end
+  if version.version == qa.version then action="reinstalled" elseif version.version < qa.version then action = "downgraded" end
+  local fs,keeps,files = {},{},version.files or {}
+  for _,k in ipairs(version.keep or {}) do keeps[k]=true end
   local device = api.get("/devices/"..qa.id)
   if not device then errorf("No such QA:%s",qa.id) return end
   local deviceFiles = api.get("/quickApp/"..qa.id.."/files")
@@ -307,12 +340,19 @@ local function Update(ev)
     end)
 end
 
-local function New()
+local function Install()
   logf("New QA")
-  local upd = updates[updP]
-  local data = upd.data
+  local upd      = updates[updP]  or {}
+  local versions = upd.versions   or {}
+  local version  = versions[veP]  or {}
+  local qaList   = version.QAs    or {}
+  local qa       = qaList[qaP]
+  if not qa then return end
+
+  local data = version.data
+  
   local fs = {}
-  for n,u in pairs(data.files or {}) do fs[#fs+1]={name=n,url=u} end
+  for n,u in pairs(version.files or {}) do fs[#fs+1]={name=n,url=u} end
   fetchFiles(fs,1,function()
       local files = {}
       for _,f in ipairs(fs) do
@@ -323,7 +363,7 @@ local function New()
       if type(data.uiCallbacks) == 'string' then data.uiCallbacks = json.decode(data.uiCallbacks) end
       local fqa = {
         name = upd.name,
-        type = upd.type,
+        type = upd.typ,
         apiVersion="1.2",
         initialInterfaces = data.interfaces,
         initialProperties = {
@@ -344,7 +384,11 @@ local function New()
     end)
 end
 
-btnHandlers = { PrevU=PrevU, Refresh=Refresh, NextU=NextU, PrevQ=PrevQ, NextQ=NextQ, Update=Update, New=New }
+btnHandlers = { 
+  PrevU=PrevU, Refresh=Refresh, NextU=NextU, 
+  PrevV=PrevV, Install=Install, NextV=NextV, 
+  PrevQ=PrevQ, Update=Update, NextQ=NextQ,
+}
 
 function QuickApp:updateMe(id)
   local qa = QAs[id]
