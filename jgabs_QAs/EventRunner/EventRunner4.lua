@@ -49,7 +49,7 @@ function QuickApp:main()    -- EventScript version
 
   rule("log('Current version is %s - %s',E_VERSION,E_FIX)")
 
-  if hc3_emulator then -- fake devices for the emulator
+  if hc3_emulator then -- fake devices to test with the emulator TQAE
     hc3_emulator.create.binarySwitch(26,"S1")
     hc3_emulator.create.multilevelSwitch(219,"S2")
     hc3_emulator.create.binarySwitch(30,"S3")

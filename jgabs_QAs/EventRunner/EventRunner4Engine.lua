@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.64,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.65,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  } 
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -2321,6 +2321,7 @@ function QuickApp:enableTriggerType(triggers) fibaro.enableSourceTriggers(trigge
 QuickApp._SILENT = true
 function QuickApp:onInit()
   setVersion("EventRunner4",self.E_SERIAL,self.E_VERSION)
+  self:debug(self.name,self.id)
   fibaro.initEvents()
   for _,name in ipairs(modules) do
     local res = Module[name].init(self)
