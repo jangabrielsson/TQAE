@@ -16,9 +16,9 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.64,
+      { version = 0.65,
         vars= {
-          base1 = "https://github.com/jangabrielsson/TQAE/raw/0337bac962c86f46fb25eac267cd77be9dff8cf1"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.65"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "New version of EventRunner4",
@@ -30,10 +30,10 @@ return {
       },
 --      { version = 0.x,
 --        vars = {
---          base1 = "https://github.com/jangabrielsson/TQAE/raw/1117a60af5e05fa3196f2c2cfc5766126c4272c3"
+--          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.XX"
 --        },
 --        descr = "Test version EventRunner4",
---        ref = 0.61
+--        ref = 0.65
 --      }
     }
   },
@@ -44,7 +44,7 @@ return {
     versions = {
       { version= 1.20,
         vars= {
-          base1 = "https://github.com/jangabrielsson/TQAE/raw/2c864af717d93a09ba694c9942a61fade2e717ce"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/COH_1.20"
         },
         descr = "Stable version",
         mainfile = "$base1/jgabs_QAs/ChildrenOfHue.lua",
