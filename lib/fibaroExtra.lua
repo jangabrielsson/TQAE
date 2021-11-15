@@ -237,7 +237,7 @@ do
     return (sg == '-' and -1 or 1)*(tonumber(h)*3600+tonumber(m)*60+(tonumber(s) or 0)+(tonumber(offs or 0))*60)
   end
 
--- toTime("10:00")     -> 10*3600+0*60 secs   
+-- toTime("10:00")     -> 10*3600+0*60 secs
 -- toTime("10:00:05")  -> 10*3600+0*60+5*1 secs
 -- toTime("t/10:00")    -> (t)oday at 10:00. midnight+10*3600+0*60 secs
 -- toTime("n/10:00")    -> (n)ext time. today at 10.00AM if called before (or at) 10.00AM else 10:00AM next day
@@ -967,7 +967,7 @@ do
         local v = queue[1]
         if v then 
           --if _debugFlags.netSync then self:debugf("netSync:Pop %s (%s)",v[3],#queue) end
-          --setTimeout(function() _request(table.unpack(v)) end,1) 
+          --setTimeout(function() _request(table.unpack(v)) end,1)
           _request(table.unpack(v))
         end
       end
@@ -1251,7 +1251,7 @@ do
     api.put("/devices/"..childId,{properties={icon={path=path}}})
   end
 
---Ex. self:callChildren("method",1,2) will call MyClass:method(1,2) 
+--Ex. self:callChildren("method",1,2) will call MyClass:method(1,2)
   function QuickApp:callChildren(method,...)
     for _,child in pairs(self.childDevices or {}) do 
       if child[method] then 
@@ -2128,7 +2128,7 @@ local fileList = {
     file = "main"
   },
   {
-    file = "fibaroExtra", 
+    file = "fibaroExtra",
     url="https://raw.githubusercontent.com/jangabrielsson/EventRunner/master/fibaroExtra.lua",
     manifest="https://raw.githubusercontent.com/jangabrielsson/EventRunner/master/VERSION4.json"
   },

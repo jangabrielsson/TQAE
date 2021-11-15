@@ -1,6 +1,6 @@
 -- luacheck: globals ignore QuickAppBase QuickApp QuickAppChild quickApp fibaro class
 -- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
--- luacheck: globals ignore hc3_emulator
+-- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
 -- luacheck: globals ignore HueDevice ZLLSwitch ZLLTemperature ZLLLightLevel BinarySensor BinarySwitch 
 -- luacheck: globals ignore Dimmable_light LightGroup Color_light ZLLPresence Extended_color_light
 
