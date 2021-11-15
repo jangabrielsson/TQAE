@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.67,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.68,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -2085,6 +2085,18 @@ function Module.eventScript.init()
     quickApp:post({type='%MIDNIGHT',_sh=true},"n/00:00")
     return self
   end -- makeEventScriptRuleCompiler
+
+  function quickApp:printTagAndColor(tag,color,fmt,...)
+    assert(fmt,"print needs tag, color, and args")
+    fmt = string.format(fmt,...)
+    local t = __TAG
+    __TAG = tag or __TAG
+    if hc3_emulator or not color then self:tracef(fmt,...) 
+    else
+      self:trace("<font color="..color..">"..fmt.."</font>") 
+    end
+    __TAG = t
+  end
 
 --- SceneActivation constants
   Util.defvar('S1',Util.S1)

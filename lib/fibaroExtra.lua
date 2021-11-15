@@ -1144,7 +1144,10 @@ do
 
     function QuickApp.post(_,...) return fibaro.post(...) end
     function QuickApp.event(_,...) return fibaro.event(...) end
+    function QuickApp.cancel(_,...) return fibaro.cancel(...) end
     function QuickApp.postRemote(_,...) return fibaro.postRemote(...) end
+    function QuickApp.publish(_,...) return fibaro.publish(...) end
+    function QuickApp.subscribe(_,...) return fibaro.subscribe(...) end
 
     function fibaro.deleteFile(deviceId,file)
       local name = type(file)=='table' and file.name or file
