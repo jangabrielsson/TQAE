@@ -83,9 +83,9 @@ return {
     name = "QAUpdater",
     type = "com.fibaro.deviceController",
     versions = {
-      { version= 0.61,
+      { version= 0.62,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.61"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.62"
         },
         descr = "Latest",
         mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
