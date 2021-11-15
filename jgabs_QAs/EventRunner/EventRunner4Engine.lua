@@ -1,12 +1,12 @@
 --luacheck: globals ignore _debugFlags hc3_emulator Util Rule utils
 --luacheck: globals ignore QuickApp QuickAppChild quickApp fibaro json __TAG net api class
---luacheck: globals ignore __fibaro_get_device setTimeout clearTimeout setInterval clearInterval
+--luacheck: globals ignore __fibaro_get_device setTimeout clearTimeout setInterval clearInterval __fibaro_get_device_property
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.65,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.66,"N/A"
 
---local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  } 
+--local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
 Util,Rule = nil,nil
 local isError, throwError, Debug
@@ -39,16 +39,16 @@ Supported events:
 {type='sceneEvent',  id=<id>, value='instance', instance=d}
 {type='sceneEvent',  id=<id>, value='removed'}
 {type='onlineEvent', value=<bool>}
-    
+
 Missing
 {type='location', property='id', id=<number>, value=<string>}
 {type='se-start', property='start', value='true'}
 {type='climate', ...}
-    
+
     New functions:
     self:profileId(name)                      -- returns id of profile with name
     self:profileName(id)                      -- returns name of profile with id
-    self:activeProfile([id])                  -- activates profile id. If id==nil return active profile. 
+    self:activeProfile([id])                  -- activates profile id. If id==nil return active profile.
     self:getCustomEvent(name)                 -- return userDescription field of customEvent
     self:postCustomEvent(name[,descr])        -- post existing customEvent (descr==nil), or creates and post customEvent (descr~=nil)
     http.get(url,options)                     -- syncronous versions of http commands, only inside eventscript
@@ -62,9 +62,9 @@ Missing
 --  self:enableTriggerType({"device","global-variable","custom-event"}) -- types of events we want
 
 --  HT = {
---    keyfob = 26, 
+--    keyfob = 26,
 --    motion= 21,
---    temp = 22, 
+--    temp = 22,
 --    lux = 23,
 --  }
 
@@ -108,7 +108,7 @@ Missing
 --    dofile("verifyHC3scripts.lua")
 --end
 
-------------------- EventSupport - Don't change! -------------------- 
+------------------- EventSupport - Don't change! --------------------
 local Toolbox_Module  = {}
 local Module    = Toolbox_Module
 local _MARSHALL = true
@@ -164,7 +164,7 @@ Module.utilities = { name="ER Utilities", version="0.6"}
 function Module.utilities.init()
   if Module.utilities.inited then return Module.utilities.inited end
   Module.utilities.inited = true
-  
+
   local self,utils = {},fibaro.utils
   local midnight,hm2sec,transform,copy,equal=fibaro.midnight,utils.hm2sec,utils.transform,utils.copy,utils.equal
   local toTime,gensym,notify = utils.toTime,utils.gensym,utils.notify
@@ -279,7 +279,6 @@ function Module.utilities.init()
     [""]=true,["ER_remoteEvent"]=true,
     ['SUBSCRIBEDEVENT']=true,
     ['SYNCPUBSUB']=true,
-    ['SUBSCRIBEDEVENT']=true
   }
 
   local function patchF(name)
@@ -414,7 +413,7 @@ function Module.utilities.init()
         local v = queue[1]
         if v then 
           Debug(_debugFlags.netSync,"netSync:Pop %s (%s)",v[3],#queue)
-          --setTimeout(function() _request(table.unpack(v)) end,1) 
+          --setTimeout(function() _request(table.unpack(v)) end,1)
           _request(table.unpack(v))
         end
       end
@@ -609,7 +608,7 @@ function Module.utilities.init()
   end
 
   if not hc3_emulator then
-    local _IPADDRESS = _HC3IPADDRESS
+    local _IPADDRESS
     function self.getIPaddress()
       if _IPADDRESS then return _IPADDRESS end
       local nets = api.get("/settings/network").networkConfig or {}
@@ -639,121 +638,13 @@ function Module.autopatch.init(self)
   if Module.autopatch.inited then return Module.autopatch.inited end
   Module.autopatch.inited = true
 
-  local patchFiles = {
-    ["EventRunner4Engine.lua"] = {
-      version = _version, 
-      files = {
-        ['EventRunner']="QAs/EventRunner/EventRunner4Engine.lua",
-        ['fibaroExtra']="Libs/fibaroExtra.lua",
-      }
-    },
-  }
-  local versionInfo = nil
-  local __VERSION = "https://raw.githubusercontent.com/jangabrielsson/TQAE/master/VERSIONS.json"
   function Util.checkForUpdates()
-    local req = net.HTTPClient()
-    req:request(__VERSION,{
-        options = {method = 'GET', checkCertificate = false, timeout=20000},
-        success=function(data)
-          if data.status == 200 then 
-            versionInfo = json.decode(data.data)
-            for file,version in pairs(versionInfo or {}) do
-              if patchFiles[file] and patchFiles[file].version ~= version then
-                self:post({type='File_update',file=file,version=version, _sh=true})
-              end
-            end
-          end
-        end})
-  end
-
-  local function fetchFile(file,path,files,mn,cont)
-    local req = net.HTTPClient()
-    req:request("https://raw.githubusercontent.com/jangabrielsson/TQAE/master/"..path,{
-        options = {method = 'GET', checkCertificate = false, timeout=20000},
-        success=function(data) 
-          if data.status == 200 then
-            files[file]=data.data
-            local n = 0
-            for _,_ in pairs(files) do n=n+1 end
-            if n==mn then cont(files) end
-          end 
-        end,
-        error=function(status) self:errorf("Get src code from Github: %s",status) end
-      })
-    return
   end
 
   function Util.updateFile(file)
-    local finfo = patchFiles[file]
-    assert(file,"PatchFile: No such file "..(file or "nil"))
-    local files = {}
-    local n = 0;
-    for _,_ in pairs(finfo.files) do n=n+1 end
-    local function patcher(nfiles)
-      ---if hc3_emulator then return end  -- not in emulator
-      local id,cfiles = self.id,{}
-      local of = self:getFiles(id)
-      for _,f in pairs(of) do
-        if not f.isMain then 
-          local d = self:getFile(id,f.name)
-          if not(nfiles[f.name] and nfiles[f.name]==d.content) then
-            cfiles[f.name]=d.content
-          else nfiles[f.name]= nil end
-        end 
-      end -- current files
-      local updates,adds,dels = {},{},{}
-      local updates_n,adds_n,dels_n = 0,0,0
-      for f,d in pairs(nfiles) do
-        if d~=cfiles[f] then  -- different
-          if cfiles[f]== nil then adds[f]=d adds_n=adds_n+1 -- missing
-          else updates[f]=d updates_n=updates_n+1 end      -- changed
-        end
-      end
-      for f,d in pairs(cfiles) do if not nfiles[f] then dels[f]=d dels_n=dels_n+1 end end
-      -- Files needing to update
-      self:debugf("%d files needs to be updated",updates_n)
-      self:debugf("%d files needs to be added",adds_n)
-      self:debugf("%d files needs to be deleted",dels_n)
-      for f,_ in pairs(dels) do self:debugf("Deleting %s",f) self:deleteFile(id,f) end
-      for f,d in pairs(adds) do self:debugf("Adding %s",f) self:addFileTo(d,f,id) end
-      local ups = {}
-      for f,d in pairs(updates) do 
-        self:debugf("Updating %s",f)  
-        ups[#ups+1]={
-          name=f,
-          content=d,
-          isMain=false,
-          isOpen=false
-        }
-      end
-      if #ups > 0 then
-        self:updateFiles(id,ups)
-      end
-    end
-    for file,path in pairs(finfo.files) do fetchFile(file,path,files,n,patcher) end
   end
 
   function DOWNLOADSOURCE()
-    local function createDir(dir)
-      local r,err = hc3_emulator.file.make_dir(dir)
-      if not r and err~="File exists" then error(format("Can't create backup directory: %s (%s)",dir,err)) end
-    end
-    createDir("Toolbox")
-    local TP = "https://raw.githubusercontent.com/jangabrielsson/EventRunner/master/"
-    for _,f in ipairs(
-      {
-        "Toolbox_basic.lua",
-        "Toolbox_events.lua",
-        "Toolbox_child.lua",
-        "Toolbox_triggers.lua",
-        "Toolbox_files.lua",
-        "Toolbox_rpc.lua",
-        "Toolbox_pubsub.lua",
-      }
-      ) do
-      hc3_emulator.file.downloadFile(TP.."Toolbox/"..f,"Toolbox/"..f)
-    end
-    hc3_emulator.file.downloadFile(TP.."EventRunner4Engine.lua","EventRunner4Engine.lua")
   end
 end
 
@@ -799,59 +690,18 @@ function Module.extras.init(self)
       end
     end)
 
-  class 'GenericChild'(QuickAppChild)
-  function GenericChild.__init(s,device)
-    QuickAppChild.__init(s,device)
-    s.eid = s:getVariable("eid")
-    function s:callAction(cmd,...)
-      local ev = {type='child',eid=self.eid,cmd=cmd,args={...}}
-      quickApp:post(ev)
-    end
-  end
-
-  local childMap = {}
-  function self:getChild(eid) return childMap[eid] end
-  function self:getChildren() return childMap end
-
-  function self:child(args)
-    assert(args and args.eid,"child missing eid")
-    for _,c in pairs(self.childDevices) do
-      if c.eid == args.eid then childMap[c.eid]=c return c end
-    end
-    local c = self:createChild{
-      type=args.type or "com.fibaro.binarySwitch",
-      name  = args.name or "ER4 child",
-      quickVars = {eid = args.eid},
-      className = "GenericChild"
-    }
-    if c then childMap[args.eid]=c end
-    return c
-  end
-
-  function self:defineChildren(children)
-    local childs = {}
-    for id,dev in pairs(self.childDevices or {}) do childs[id]=dev end
-    for _,args in ipairs(children) do
-      local stat,res = pcall(function() 
-          local c = self:child(args)
-          if c then childs[id]=nil end
-        end)
-      if not stat then self:error(res) end
-    end
-    for id,_ in pairs(childs) do self:removeChildDevice(id) end -- Remove children not in list
-  end
-
   function self:profileName(id) for _,p in ipairs(api.get("/profiles").profiles) do if p.id == id then return p.name end end end
   function self:profileId(name) for _,p in ipairs(api.get("/profiles").profiles) do if p.name == name then return p.id end end end
 
   function self:activeProfile(id) 
     if id then
-      if type(id)=='string' then id = profile.id(id) end
+      if type(id)=='string' then id = self:profileId(id) end
       assert(id,"profile.active(id) - no such id/name")
       return api.put("/profiles",{activeProfile=id}) and id
     end
     return api.get("/profiles").activeProfile 
   end
+
   function self:postCustomEvent(name,descr)
     if descr then 
       if api.get("/customEvents/"..name) then
@@ -1307,13 +1157,13 @@ function Module.eventScript.init()
     comp['%and'] = function(e,ops) 
       compT(e[2],ops)
       local o1,z = {mkOp('%ifnskip'),0,0}
-      ops[#ops+1] = o1 -- true skip 
+      ops[#ops+1] = o1 -- true skip
       z = #ops; ops[#ops+1]= POP; compT(e[3],ops); o1[3] = #ops-z+1
     end
     comp['%or'] = function(e,ops)  
       compT(e[2],ops)
       local o1,z = {mkOp('%ifskip'),0,0}
-      ops[#ops+1] = o1 -- true skip 
+      ops[#ops+1] = o1 -- true skip
       z = #ops; ops[#ops+1]= POP; compT(e[3],ops); o1[3] = #ops-z+1;
     end
     comp['%inc'] = function(e,ops) 
@@ -2023,7 +1873,7 @@ function Module.eventScript.init()
       local s={triggs={},dailys={},scheds={},dailyFlag=false}
       local function traverse(e)
         if type(e) ~= 'table' then return e end
-        if e[1]== '%eventmatch' then -- {'eventmatch',{'quote', ep,ce}} 
+        if e[1]== '%eventmatch' then -- {'eventmatch',{'quote', ep,ce}}
           local ce = e[3]
           s.triggs[tojson(ce)] = ce  
         else
@@ -2321,7 +2171,7 @@ function QuickApp:enableTriggerType(triggers) fibaro.enableSourceTriggers(trigge
 QuickApp._SILENT = true
 function QuickApp:onInit()
   setVersion("EventRunner4",self.E_SERIAL,self.E_VERSION)
-  self:debug(self.name,self.id)
+  self:debugf("%s, deviceId:%s, version:%s",self.name,self.id,self.E_VERSION)
   fibaro.initEvents()
   for _,name in ipairs(modules) do
     local res = Module[name].init(self)
@@ -2334,7 +2184,7 @@ function QuickApp:onInit()
     self:errorf("Bad table tostring: %s",s)
     os.exit()
   end
-  --psys("IP address:%s",Util.getIPaddress())  
+  --psys("IP address:%s",Util.getIPaddress())
   local main = self.main
   local _IPADDRESS = fibaro.getIPaddress()
   self:debug("IP:",_IPADDRESS)
