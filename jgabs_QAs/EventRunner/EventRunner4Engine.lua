@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.66,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.67,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -2195,7 +2195,7 @@ function QuickApp:onInit()
     local stat,res = pcall(function()
         main(quickApp) -- call main
       end)
-    if not stat then error("Main() ERROR:"..res) end
+    if not stat then self:setView("ERname","text","Error in main()") error("Main() ERROR:"..res) end
     Util.printBanner("Running")
     self:setView("ERname","text","EventRunner4 %s",_version)
     quickApp:post({type='%startup%',_sh=true})

@@ -54,7 +54,7 @@ function QuickApp:main()    -- EventScript version
     hc3_emulator.create.multilevelSwitch(219,"S2")
     hc3_emulator.create.binarySwitch(30,"S3")
   end
-
+  
   rule("@@00:00:03 => log('Ping')")
 
 --  alarms = 1
