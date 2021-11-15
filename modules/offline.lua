@@ -27,10 +27,61 @@ local function settingsLocation(_,client,ref,_,opts)
     },200      
 end
 
+local function settingsInfo(_,client,ref,_,opts)
+  if EM.cfg.location then return EM.cfg.location,200 end
+  return {
+    serialNumber = "HC3-00000999",
+    platform = "HC3",
+    zwaveEngineVersion = "2.0",
+    hcName = "HC3-00000999",
+    mac = "ac:17:02:0d:35:c8",
+    zwaveVersion = "4.33",
+    timeFormat = 24,
+    zwaveRegion = "EU",
+    serverStatus = os.time(),
+    defaultLanguage = "en",
+    defaultRoomId = 219,
+    sunsetHour = "15:23",
+    sunriseHour = "07:40",
+    hotelMode = false,
+    temperatureUnit = "C",
+    batteryLowNotification = false,
+    date = "09:53 | 15.11.2021",
+    dateFormat = "dd.mm.yy",
+    decimalMark = ".",
+    timezoneOffset = 3600,
+    currency = "EUR",
+    softVersion = "5.090.17",
+    beta = false,
+    currentVersion = {
+      version = "5.090.17",
+      type = "stable"
+    },
+    installVersion = {
+      version = "",
+      type = "",
+      status = "",
+      progress = 0
+    },
+    timestamp = os.time(),
+    online = false,
+    tosAccepted = true,
+    skin = "light",
+    skinSetting = "manual",
+    updateStableAvailable = false,
+    updateBetaAvailable = false,
+    newestStableVersion = "5.090.17",
+    newestBetaVersion = "5.000.15",
+    isFTIConfigured = true,
+    isSlave = false
+    },200      
+end
+
 local function setup()
   EM.create.room{id=219,name="Default Room"}
   EM.create.section{id=219,name="Default Section"}
   EM.addAPI("GET/settings/location",settingsLocation)
+  EM.addAPI("GET/settings/info",settingsInfo)
 end
 
 local roomID = 1001
