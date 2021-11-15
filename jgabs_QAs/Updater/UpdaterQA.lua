@@ -41,7 +41,7 @@ if hc3_emulator then
 end
 
 local SERIAL = "UPD896661234567894"
-local VERSION = 0.61
+local VERSION = 0.62
 local QAs={}
 local manifest = {}
 local updates,udpP = {},0
@@ -93,6 +93,7 @@ local function process(data)
   manifest = data.updates
   Date = data.date
   updates={}
+  quickApp:setVariable("MANIFEST",data)
   for id,data in pairs(manifest) do
     local name,typ,descr,noUpgrade = data.name,data.type,data.noUpgrade,data.descr
     logf("Update[%s]=%s",id,name)
