@@ -1,6 +1,6 @@
 --luacheck: globals ignore hc3_emulator
 --luacheck: globals ignore QuickApp QuickAppChild quickApp fibaro json __TAG net api class plugin
---luacheck: globals ignore __fibaro_get_device __fibaro_get_device_property 
+--luacheck: globals ignore __fibaro_get_device __fibaro_get_device_property
 --luacheck: globals ignore setTimeout clearTimeout setInterval clearInterval
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
@@ -21,7 +21,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u5={label='version', text="..."}
 --%%u6={{button='PrevQ', text='<< QA', onReleased='BTN'},{button='Update', text='Update', onReleased='BTN'},{button='NextQ', text='QA >>', onReleased='BTN'}}
 --%%u7={label='qa', text="..."}
---%%u8={label='log', text="..."}  
+--%%u8={label='log', text="..."}
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 
@@ -40,11 +40,11 @@ if hc3_emulator then
     end)
 end
 
-local serial = "UPD896661234567894"
-local version = 0.6
+local SERIAL = "UPD896661234567894"
+local VERSION = 0.6
 local QAs={}
 local manifest = {}
-local updates,updP = {},0
+local updates,udpP = {},0
 local veP = 0
 local qaP = 0
 local fmt = string.format
@@ -93,7 +93,6 @@ local function process(data)
   manifest = data.updates
   Date = data.date
   updates={}
-  local update
   for id,data in pairs(manifest) do
     local name,typ,descr,noUpgrade = data.name,data.type,data.noUpgrade,data.descr
     logf("Update[%s]=%s",id,name)
@@ -111,8 +110,8 @@ local function process(data)
         if not ref then errorf("Ref %s for %s not found",v.ref,id) return end
         for k,d in pairs(ref.data) do if not v[k] then v[k]=d end end
       end
-      for k,v in pairs(v.vars or {}) do vars[k]=v end
-      local data,qas,files,keep = v,{},copy(v.files),copy(v.keep)
+      for k,val in pairs(v.vars or {}) do vars[k]=val end
+      local qas,files,keep = {},copy(v.files),copy(v.keep)
       for q,d in pairs(QAs) do if id == d.serial then qas[#qas+1]=d end end
       for n,u in pairs(files) do files[n]=resolve(u,vars) end
       for n,u in pairs(keep) do keep[n]=resolve(u,vars) end
@@ -120,7 +119,7 @@ local function process(data)
       version.QAs = qas
       version.files = files
       version.keep = keep
-      version.data = data
+      version.data = v
       versions[#versions+1]=version
     end
     update.versions = versions
@@ -130,7 +129,7 @@ local function process(data)
 end
 
 local function updateInfo()
-  quickApp:setView("info","text","QA Updater, v:%s, (%s)",version,Date)
+  quickApp:setView("info","text","QA Updater, v:%s, (%s)",VERSION,Date)
   quickApp:setView("update","text","...")
   quickApp:setView("version","text","...")
   quickApp:setView("qa","text","...")
@@ -201,7 +200,7 @@ end
 
 local function NextV()
 --  logf("Next V")
-  local versions = updates[updP] and updates[updP].versions or {}
+  local versions = updates[udpP] and updates[udpP].versions or {}
   if #versions > 0 then
     veP = veP+1; if veP > #versions then veP = 1 end
     qaP = 0; btnHandlers.NextQ()
@@ -211,7 +210,7 @@ end
 local function PrevQ()
 --  logf("Prev QA")
   local qaList = updates[udpP] and updates[udpP].versions and updates[udpP].versions[veP] or {}
-  qaList = qas.QAs or {}
+  qaList = qaList.QAs or {}
   if #qaList > 0 then
     qaP = qaP-1; if qaP < 1 then qaP = #qaList end
   end
@@ -257,7 +256,7 @@ local function Update(ev)
   local data = version.data
 
   if upd.noUpgrade then logf("Can't be updated, please create New") return end
-  
+
   local action = "upgraded"
   if version.version == qa.version then action="reinstalled" elseif version.version < qa.version then action = "downgraded" end
   local fs,keeps,files = {},{},version.files or {}
@@ -268,7 +267,7 @@ local function Update(ev)
   for n,u in pairs(files or {}) do fs[#fs+1]={name=n, url=u} end
   fetchFiles(fs,1,function()
       local existMap,filesAltered = {},{}
-      local stat,res = pcall(function()
+      local stat,_ = pcall(function()
           for _,f in ipairs(deviceFiles) do -- delete files not in new QA
             existMap[f.name]=f
             if not files[f.name] and not keeps[f.name] then
@@ -318,7 +317,15 @@ local function Update(ev)
             api.put("/devices/"..qa.id,{ properties = { viewLayout=data.viewLayout, uiCallbacks=data.uiCallbacks }})
           end
           if data.quickAppVariables then
-            api.post("/plugins/updateProperty", {deviceId=qa.id, propertyName="quickAppVariables", value=data.quickAppVariables})
+            local oldVars,oldVarsMap,newVarsMap = __fibaro_get_device_property(qa.id,"quickAppVariables"),{},{}
+            for n,v in ipairs(oldVars)  do oldVarsMap[n]=v end
+            for n,v in ipairs(data.quickAppVariables)  do newVarsMap[n]=v end
+            for n,v in pairs(newVarsMap) do
+              if not oldVarsMap[n] then 
+                oldVars[#oldVars+1]={name=n,value=v}
+              end
+            end
+            api.post("/plugins/updateProperty", {deviceId=qa.id, propertyName="quickAppVariables", value=oldVars})
           end
           data.interfaces = data.interfaces or { "quickApp" }
           api.post("/devices/addInterface",{devicesId={qa.id},interfaces=data.interfaces})
@@ -350,7 +357,7 @@ local function Install()
   if not qa then return end
 
   local data = version.data
-  
+
   local fs = {}
   for n,u in pairs(version.files or {}) do fs[#fs+1]={name=n,url=u} end
   fetchFiles(fs,1,function()
@@ -400,7 +407,7 @@ end
 
 ----------- Code -----------------------------------------------------------
 function QuickApp:onInit()
-  setVersion("Updater",serial,version)
+  setVersion("Updater",SERIAL,VERSION)
   setTimeout(function()
       self:debugf("%s, deviceId:%s",self.name ,self.id)
       --setVersion("Updater",serial,version)

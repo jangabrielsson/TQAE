@@ -56,7 +56,7 @@ return {
         quickAppVariables = {
           {
             name= "Hue_User",
-            value= "q6eLpWdYiMGq0kdQWFZB1NZHSlLvKL0GsNPJeEa-"
+            value= "q6eL9WdYiM--0kdQWFZB1NZHkvKL0GsNPJppEa-"
           },
           {
             name= "Hue_IP",
