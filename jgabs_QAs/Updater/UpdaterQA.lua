@@ -41,7 +41,7 @@ if hc3_emulator then
 end
 
 local SERIAL = "UPD896661234567894"
-local VERSION = 0.6
+local VERSION = 0.61
 local QAs={}
 local manifest = {}
 local updates,udpP = {},0
