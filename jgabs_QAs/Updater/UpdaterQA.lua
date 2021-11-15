@@ -41,10 +41,10 @@ if hc3_emulator then
 end
 
 local SERIAL = "UPD896661234567894"
-local VERSION = 0.62
+local VERSION = 0.63
 local QAs={}
 local manifest = {}
-local updates,udpP = {},0
+local updates,updP = {},0
 local veP = 0
 local qaP = 0
 local fmt = string.format
@@ -179,7 +179,7 @@ local function PrevU()
   if #updates > 0 then
     updP = updP-1; if updP < 1 then updP = #updates end
     veP = 0; btnHandlers.NextV()
-  end
+  else updateInfo() end
 end
 
 local function NextU()
@@ -187,30 +187,30 @@ local function NextU()
   if #updates > 0 then
     updP = updP+1; if updP > #updates then updP = 1 end
     veP = 0; btnHandlers.NextV()
-  end
+  else updateInfo() end
 end
 
 local function PrevV()
 --  logf("Prev V")
-  local versions = updates[udpP] and updates[udpP].versions or {}
+  local versions = updates[updP] and updates[updP].versions or {}
   if #versions > 0 then
     veP = veP-1; if veP < 1 then veP = #versions end
     qaP = 0; btnHandlers.NextQ()
-  end
+  else updateInfo() end
 end
 
 local function NextV()
 --  logf("Next V")
-  local versions = updates[udpP] and updates[udpP].versions or {}
+  local versions = updates[updP] and updates[updP].versions or {}
   if #versions > 0 then
     veP = veP+1; if veP > #versions then veP = 1 end
     qaP = 0; btnHandlers.NextQ()
-  end
+  else updateInfo() end
 end
 
 local function PrevQ()
 --  logf("Prev QA")
-  local qaList = updates[udpP] and updates[udpP].versions and updates[udpP].versions[veP] or {}
+  local qaList = updates[updP]and updates[updP].versions and updates[updP].versions[veP] or {}
   qaList = qaList.QAs or {}
   if #qaList > 0 then
     qaP = qaP-1; if qaP < 1 then qaP = #qaList end
