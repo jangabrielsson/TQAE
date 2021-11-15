@@ -16,9 +16,9 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.66,
+      { version = 0.67,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.66"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.67"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "New version of EventRunner4",
