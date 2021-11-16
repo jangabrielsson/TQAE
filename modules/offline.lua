@@ -82,6 +82,10 @@ local function setup()
   EM.create.section{id=219,name="Default Section"}
   EM.addAPI("GET/settings/location",settingsLocation)
   EM.addAPI("GET/settings/info",settingsInfo)
+  EM.addAPI("GET/alarms/v1/partitions",settingsInfo)
+  EM.addAPI("GET/settings/info",settingsInfo)
+  EM.addAPI("GET/notificationCenter",settingsInfo)
+  EM.addAPI("POST/notificationCenter",settingsInfo)
 end
 
 local roomID = 1001

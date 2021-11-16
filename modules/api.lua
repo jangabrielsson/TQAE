@@ -446,6 +446,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
 local API_MAP={ GET={}, POST={}, PUT={}, DELETE={} }
 
 function aHC3call(method,path,data, remote) -- Intercepts some cmds to handle local resources
+--  print(method,path)
   if remote == 'remote' then return HC3Request(method,path,data) end
   local fun,args,opts,path2 = EM.lookupPath(method,path,API_MAP)
   if type(fun)=='function' then
