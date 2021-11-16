@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.68,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.69,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -1342,8 +1342,8 @@ function Module.eventScript.init()
     instr['<'] = function(s,_) local y,x=coerce(s.pop(),s.pop()) s.push(x<y) end
     instr['>='] = function(s,_) local y,x=coerce(s.pop(),s.pop()) s.push(x>=y) end
     instr['<='] = function(s,_) local y,x=coerce(s.pop(),s.pop()) s.push(x<=y) end
-    instr['~='] = function(s,_) s.push(tostring(s.pop())~=tostring(s.pop())) end
-    instr['=='] = function(s,_) s.push(tostring(s.pop())==tostring(s.pop())) end
+    instr['~='] = function(s,_) local y,x=coerce(s.pop(),s.pop()) s.push(x~=y) end
+    instr['=='] = function(s,_) local y,x=coerce(s.pop(),s.pop()) s.push(x==y) end
 
 -- ER funs
     local getFuns,setFuns

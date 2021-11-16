@@ -56,7 +56,7 @@ function QuickApp:main()    -- EventScript version
   end
   
   rule("@@00:00:03 => log('Ping')")
-
+  
 --  alarms = 1
 --  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")
