@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.69,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.70,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -1211,6 +1211,16 @@ function Module.eventScript.init()
     local toTime,midnight,map,mkStack,copy,coerce,isEvent=Util.toTime,fibaro.midnight,Util.map,Util.mkStack,Util.copy,fibaro.EM.coerce,fibaro.EM.isEvent
     local _vars,triggerVar = Util._vars,Util.triggerVar
 
+    local function userLogFunction(fmt,...)
+      local args,t1,t0,str,c1 = {...},__TAG,__TAG
+      str = #args==0 and fmt or string.format(fmt,...)
+      str = str:gsub("(#T:)(.-)(#)",function(_,t) t1=t return "" end)
+      str = str:gsub("(#C:)(.-)(#)",function(_,c) c1=c return "" end)
+      if c1 then str=string.format("<font color=%s>%s</font>",c1,str) end
+      __TAG = t1; quickApp:trace(str); __TAG = t0
+      return str
+    end
+    
     local function getVarRec(var,locs) return locs[var] or locs._next and getVarRec(var,locs._next) end
     local function getVar(var,env) local v = getVarRec(var,env.locals); env._lastR = var
       if v then return v[1]
@@ -1622,7 +1632,7 @@ function Module.eventScript.init()
     end
 
     instr['%rule'] = function(s,_,e,_) local b,h=s.pop(),s.pop(); s.push(Rule.compRule({'=>',h,b,e.log},e)) end
-    instr['log'] = function(s,n) s.push(quickApp:tracef(table.unpack(s.lift(n)))) end
+    instr['log'] = function(s,n) s.push(userLogFunction(table.unpack(s.lift(n)))) end
     instr['%logRule'] = function(s,_,_,_) local src,res = s.pop(),s.pop() 
       Debug(_debugFlags.rule or (_debugFlags.ruleTrue and res),"[%s]>>'%s'",tojson(res),src) s.push(res) 
     end
@@ -2176,7 +2186,7 @@ local modules = {
 }
 
 ----------------- Main ----------------------------------------
-local _version = "v"..QuickApp.E_VERSION..QuickApp.E_FIX
+local _version = "v"..QuickApp.E_VERSION.." "..QuickApp.E_FIX
 
 function QuickApp:enableTriggerType(triggers) fibaro.enableSourceTriggers(triggers) end
 
