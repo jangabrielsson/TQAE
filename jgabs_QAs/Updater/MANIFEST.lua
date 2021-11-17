@@ -33,7 +33,7 @@ return {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.70"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "New version of EventRunner4",
+        descr = "log() with colors",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",
