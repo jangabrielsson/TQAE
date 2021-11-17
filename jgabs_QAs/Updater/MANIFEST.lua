@@ -32,8 +32,13 @@ return {
         vars= {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.70"
         },
-        ref=0.69,
-        descr = "log() with colors",
+        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
+        descr = "New version of EventRunner4",
+        files = "generate",
+        keep= { "main" },
+        viewLayout = "generate",
+        interfaces= {"quickApp"},
+        quickAppVariables = {},
       },
 --      { version = 0.x,
 --        vars = {
