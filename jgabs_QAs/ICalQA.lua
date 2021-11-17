@@ -1,3 +1,7 @@
+-- luacheck: globals ignore QuickAppBase QuickApp QuickAppChild quickApp fibaro class
+-- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
+-- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
+
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { 
@@ -19,7 +23,8 @@ _=loadfile and loadfile("TQAE.lua"){
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 
 ----------- Code -----------------------------------------------------------
-_version = "0.11"
+local VERSION = 0.12
+local SERIAL = "UPD896661234567897"
 
 --[[
 Credits:
@@ -30,7 +35,7 @@ Part of the code after "baran" from http://www.zwave-community.it/
 ---  Need url to your google or Apple iCloud calendar file
 ---  Google
 ---   https://calendar.google.com/calendar/ical/XXXXXXXX%40gmail.com/private-googleid/yyyyy.ics
----  Apple 
+---  Apple
 ---   "https://p64-calendars.icloud.com/published/2/MTMxsdfsfsdfsdfsfsfdF01LBw1p8vFrjxFq9NvCD"
 
 --CALURL = "https://calendar.google.com/calendar/ical/jjoe%40gmail.com/private-7ecd64859a57120d541xxxxx5c8/basic.ics"
@@ -49,7 +54,7 @@ local format = string.format
 local function Debug(...) if DEBUG then quickApp:debugf(...) end end
 local STARTPATTERN = "#start:([%w_]+)"
 local ENDPATTERN = "#end:([%w_]+)"
---local REMOVEDELAY = 6 
+--local REMOVEDELAY = 6
 
 function QuickApp:turnOn() 
   self:updateProperty("value",true)
@@ -63,10 +68,10 @@ function QuickApp:addCalendar(name,url)
   end
 end
 function QuickApp:offset(ev)
-  local v = ev.values[1]
+  local val = ev.values[1]
   self:setVariable("Offset",tostring(val))
-  self:updateView("offsetText","text","Time offset: "..v)
-  timeOffset = v
+  self:updateView("offsetText","text","Time offset: "..val)
+  timeOffset = val
   self:refreshCalendar()
 end
 function QuickApp:removeCalendar(name) self:post({type='removeCalendar', name=name}) end
@@ -80,10 +85,10 @@ function QuickApp:dumpCalendar(name)
 end
 
 local function emitEvent(name,value)
-  local a,b = api.delete("/customEvents/"..name)
+  api.delete("/customEvents/"..name)
   local val = json.encode(value)
-  local a,b = api.post("/customEvents",{name=name,userDescription=val})
-  local a,b = api.post("/customEvents/"..name)
+  api.post("/customEvents",{name=name,userDescription=val})
+  api.post("/customEvents/"..name)
   Debug("Emitting custom event:%s - %s",name,value.name)
   if REMOVEDELAY then
     setTimeout(function() api.delete("/customEvents/"..name) end,1000*REMOVEDELAY)
@@ -119,7 +124,7 @@ function QuickApp:main()
       end
       fibaro.postRemote(from,{type='todaysEvents',events=entries})
     end)
-  
+
 --  self:post({type='currentEvents'},10)
 
   self:event({type='start'},function(e) 
@@ -334,7 +339,7 @@ function makeICal(name,url,days,tz)
     l_finish = "No";
 
     for l = 1, #recurance do
-      -- split the lines               
+      -- split the lines
       recurance[l] = string.split(recurance[l], "=");
 
       if recurance[l][1] == "COUNT" then 
@@ -382,8 +387,8 @@ function makeICal(name,url,days,tz)
 --sort to have it in chronological order
     table.sort(myCal,function(a,b) return a.startDate < b.startDate end)
     --for i = 1, #myCal do
-    --  myCal[i].startDate = myCal[i].startDate + timeZone*3600; 
-    --  myCal[i].endDate = myCal[i].endDate + timeZone*3600;        
+    --  myCal[i].startDate = myCal[i].startDate + timeZone*3600;
+    --  myCal[i].endDate = myCal[i].endDate + timeZone*3600;
     --end
     --quickApp:tracef(json.encode(myCal))
     --quickApp:tracef("MyCal #:%s",#myCal)
@@ -410,10 +415,10 @@ function makeICal(name,url,days,tz)
       end
 
       if currentBlock == "VEVENT" then
-        --- get the Cal events START,STOP and 
+        --- get the Cal events START,STOP and
         --- v 1.1 for recurring events - time zone included in the timestamp
         ---       syntax as follows: DTSTART;TZID=America/New_York:20120503T180000
-        --- v 1.2 in case DTSTART/DTEND contains date only - 
+        --- v 1.2 in case DTSTART/DTEND contains date only -
         ---       it is whole/multiple day event. e.g. DTSTART;VALUE=DATE:20170312
 
         if values[1] == "DTSTART" 
@@ -504,6 +509,8 @@ function makeICal(name,url,days,tz)
 end
 
 function QuickApp:onInit()  -- onInit() sets up stuff...
+  self:debugf("%s deviceId:%s, v%s",self.name,self.id,VERSION)
+  self:setVersion("ICalQA",SERIAL,VERSION)
   -- Fibaro quickvariables editor don't allow long strings like an URL... :-(
   self:updateView("name","text","iCalendar v".._version)
   if CALURL then self:setVariable(CALNAME,CALURL) end

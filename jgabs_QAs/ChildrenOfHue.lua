@@ -1064,6 +1064,7 @@ end
 ----------------- onInit/Startup -----------------------
 
 function QuickApp:onInit()
+  self:debugf("%s deviceId:%s, v%s",self.name,self.id,_version)
   setVersion("ChildrenOfHue",serial,_version)
   
   self:setStatus("start")

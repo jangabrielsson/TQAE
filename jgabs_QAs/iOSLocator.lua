@@ -1,3 +1,7 @@
+-- luacheck: globals ignore QuickAppBase QuickApp QuickAppChild quickApp fibaro class
+-- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
+-- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
+
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { 
@@ -5,7 +9,7 @@ _=loadfile and loadfile("TQAE.lua"){
   },
 }
 
---%%name = "iOSLocator" 
+--%%name = "iOSLocator"
 --%%quickVars = {['HomeVar'] = 'iOSHome',['UserLocVars'] = 'Bob:BobLoc,Ann:AnnLoc,Tim:TimLoc,Alice:AliceLoc',['LocationsVar'] = 'iOSLocInfo',['HomeName'] = 'Home',['AwayName'] = 'Away',}
 --%%u1={label='version', text=''}
 --%%u2={label='home', text=''}
@@ -13,7 +17,9 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 ---------------------- Setup users -----------------------------
-local version = "V0.2"
+local VERSION = 0.3
+local SERIAL = "UPD896661234567896"
+
 local USERS = {      -- Fill in with iOS credentials
   {name='Bob',   device='iPhone', home=true, icloud={user="XXXX1", pwd=".."}},
   {name='Ann',   device='iPhone', home=true, icloud={user="XXXX2", pwd=".."}},
@@ -30,15 +36,15 @@ icloud.pwd = is icloud password
 
 Ex.
 local USERS={
-  {name='User1', home=true, device='iPhone', icloud={user='x2@y.com', pwd='xizzy1'}}, 
-  {name='User2', home=true, device='iPhone', icloud={user='x1@y.com', pwd='xizzy2'}}, 
+  {name='User1', home=true, device='iPhone', icloud={user='x2@y.com', pwd='xizzy1'}},
+  {name='User2', home=true, device='iPhone', icloud={user='x1@y.com', pwd='xizzy2'}},
 }
 
 quickAppVariables:
 'HomeName' = name of place that is home
 'HomeVar' = name of global where home status is stored
-'UserLocVars' = Name of global variables for users. 
-     Ex: 'Jan:JanLoc,Daniela:DaniLoc' 
+'UserLocVars' = Name of global variables for users.
+     Ex: 'Jan:JanLoc,Daniela:DaniLoc'
      creates fibaro global 'JanLoc' where the latest place for user Jan is stored
 'LocationsVar' = Name of variable where all location info is stored
 --]]
@@ -56,7 +62,7 @@ end
 
 local format = string.format
 local HOME,LOCATIONS=nil,{}
-local EVENTS,post = nil,nil 
+local EVENTS,post
 local MYHOME,MYAWAY
 local HomeVar = nil
 local LocationsVar = nil
@@ -376,6 +382,8 @@ function post(ev,t)
 end
 
 function QuickApp:onInit()
+  self:debugf("%s deviceId:%s, v%s",self.name,self.id,VERSION)
+  self:setVersion("iOSLOcator",SERIAL,VERSION)
   fibaro.updateFibaroExtra()
   quickApp:tracef("iOSLocator, deviceId:%s",self.id)
   self:setView("version","text","iOSLocator, %s (Users:%d)",version,#USERS)

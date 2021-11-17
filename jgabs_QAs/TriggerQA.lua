@@ -1,3 +1,6 @@
+-- luacheck: globals ignore QuickAppBase QuickApp QuickAppChild quickApp fibaro class
+-- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
+-- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { 
@@ -11,11 +14,11 @@ _=loadfile and loadfile("TQAE.lua"){
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 ----------- Code -----------------------------------------------------------
 
-_debugFlags = { trigger= true }
-if hc3_emulator then hc3_emulator.loadQA("triggerTest.lua"):install() end
+--if hc3_emulator then hc3_emulator.loadQA("triggerTest.lua"):install() end
 
-_version = "0.1"
-modules = { "triggers","events" }
+local VERSION = 1.20
+local SERIAL = "UPD896661234567895"
+
 local TRIGGER_VAR = 'TRIGGER_SUB'
 
 local function notify(id,env)
@@ -50,6 +53,8 @@ local function checkVars(id,vars)
 end
 
 function QuickApp:onInit()
+  self:debugf("%s deviceId:%s, v%s",self.name,self.id,VERSION)
+  self:setVersion("TriggerQA",SERIAL,VERSION)
   self:enableTriggerType({'quickvar','deviceEvent'},true) -- Get events of these types
 
   -- At startup, check all QAs for subscriptions

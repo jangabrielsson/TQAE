@@ -398,12 +398,11 @@ btnHandlers = {
   PrevQ=PrevQ, Update=Update, NextQ=NextQ,
 }
 
-function QuickApp:updateMe(id)
+function QuickApp:updateMe(id,vers)
   local qa = QAs[id]
-  if not qa then self:warning("Update requested from non-updateble QA") return end
-  for _,upd in pairs(updates) do
-    ----
-  end
+  if not qa then self:warning("Update requested from non-updateble QA:%s",id) return end
+  local update = updates[qa.serial]
+  if update == nil then self:warning("No update for QA:%s",id) return end
 end
 
 ----------- Code -----------------------------------------------------------

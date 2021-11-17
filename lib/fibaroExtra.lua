@@ -1149,6 +1149,13 @@ do
     function QuickApp.publish(_,...) return fibaro.publish(...) end
     function QuickApp.subscribe(_,...) return fibaro.subscribe(...) end
 
+    function QuickApp:setVersion(model,serial,version)
+      local m = model..":"..serial.."/"..version
+      if __fibaro_get_device_property(self.id,'model') ~= m then
+        quickApp:updateProperty('model',m) 
+      end
+    end
+
     function fibaro.deleteFile(deviceId,file)
       local name = type(file)=='table' and file.name or file
       return api.delete("/quickApp/"..(deviceId or MID).."/files/"..name)
