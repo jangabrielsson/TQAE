@@ -28,6 +28,13 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
+      { version = 0.70,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.70"
+        },
+        ref=0.69,
+        descr = "log() with colors",
+      },
 --      { version = 0.x,
 --        vars = {
 --          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.XX"
