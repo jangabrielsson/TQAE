@@ -9,7 +9,8 @@ fibaro.FIBARO_EXTRA = "v0.930"
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
 local function assertf(test,fmt,...) if not test then error(format(fmt,...),2) end end
-local debugFlags,utils = {},{}
+local debugFlags,utils = _debugFlags or {},{}
+_debugFlags = debugFlags
 local toTime,copy,equal,member,remove,protectFun
 fibaro.utils = utils
 -------------------- Utilities ----------------------------------------------
