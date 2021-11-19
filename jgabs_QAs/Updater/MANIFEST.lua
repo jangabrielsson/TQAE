@@ -121,7 +121,7 @@ return {
       },
       { version= 0.64,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.63"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.64"
         },
         descr = "bug fix (refs)",
         mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
