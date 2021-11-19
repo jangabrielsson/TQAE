@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.70,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.72,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -113,6 +113,9 @@ local Toolbox_Module  = {}
 local Module    = Toolbox_Module
 local _MARSHALL = true
 local format    = string.format
+local function trimError(err) 
+  if type(err)=='string' and not _debugFlags.extendedErrors then return err:gsub("(%[.-%]:%d+:)","") else return err end 
+end
 
 ----------------- Module device support -----------------------
 Module.device = { name="ER Device", version="0.2"}
@@ -1072,7 +1075,7 @@ function Module.eventScript.init()
         local body = gStatements(inp,{['end']=true,['else']=true,['elseif']=true})  
         return {'if',test,{'%frame',body},gElse(inp)}
       end
-      error()
+      error("Bad formed if-then-else stmt")
     end
 
     function gStatements(inp,stop)
@@ -1220,7 +1223,7 @@ function Module.eventScript.init()
       __TAG = t1; quickApp:trace(str); __TAG = t0
       return str
     end
-    
+
     local function getVarRec(var,locs) return locs[var] or locs._next and getVarRec(var,locs._next) end
     local function getVar(var,env) local v = getVarRec(var,env.locals); env._lastR = var
       if v then return v[1]
@@ -1311,7 +1314,8 @@ function Module.eventScript.init()
       local res = {coroutine.resume(co)}
       if res[1]==true then
         if coroutine.status(co)=='dead' then e.log.cont(select(2,table.unpack(res))) end
-      else error(res[2]) end
+      elseif isError(res[1]) then error(res[1].err..", "..(res[1].msg or ""))
+      else error(res[2] or "coroutine crashed") end
     end
     local function handleCall(s,e,fun,args)
       local res = table.pack(fun(table.unpack(args)))
@@ -1331,7 +1335,10 @@ function Module.eventScript.init()
     instr['return'] = function(s,n,_,_) return 'dead',s.lift(n) end
     instr['wait'] = function(s,_,e,_) local t,co=s.pop(),e.co; t=t < os.time() and t or t-os.time(); s.push(t);
       setTimeout(function() 
-          resume(co,e) 
+          local stat,res = pcall(resume,co,e)
+          if not stat then
+            quickApp:errorf("'%s' - %s",e.src or "",trimError(res) or "") 
+          end
         end,t*1000);
       return 'suspended',{}
     end
@@ -1939,7 +1946,8 @@ function Module.eventScript.init()
             if coroutine.status(co)=='dead' then 
               return env.log.cont(select(2,table.unpack(res))) 
             end
-          else error(res[1]) end
+          elseif isError(res[1]) then error(res[1].err)
+          else error(res[2]) end
         end
         return run
       else return nil end
@@ -2019,9 +2027,9 @@ function Module.eventScript.init()
         end)
       if not status then 
         if not isError(res) then res={ERR=true,ctx=ctx,src=escript,err=res} end
-        quickApp:errorf("Error in '%s': %s",res and res.src or "rule",res.err)
+        quickApp:errorf("Error in '%s': %s",res and res.src or "rule",trimError(res.err))
         if res.ctx then quickApp:errorf("\n%s",res.ctx) end
-        error(res.err)
+        error(res.err or "error eval")
       else return res end
     end
 
@@ -2217,7 +2225,10 @@ function QuickApp:onInit()
     local stat,res = pcall(function()
         main(quickApp) -- call main
       end)
-    if not stat then self:setView("ERname","text","Error in main()") error("Main() ERROR:"..res) end
+    if not stat then
+      res=trimError(res)
+      self:setView("ERname","text","Error in main()") error("Main() ERROR:"..res) 
+    end
     Util.printBanner("Running")
     self:setView("ERname","text","EventRunner4 %s",_version)
     quickApp:post({type='%startup%',_sh=true})

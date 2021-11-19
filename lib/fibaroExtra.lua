@@ -1764,6 +1764,7 @@ do
       env.last,env.rule.time = t-(env.rule.time or 0),t
       local status, res = pcall(env.rule.action,env) -- call the associated action
       if not status then
+        if type(res)=='string' and not _debugFlags.extendedErrors then res = res:gsub("(%[.-%]:%d+:)","") end
         fibaro.errorf(nil,"in %s: %s",env.rule.doc,res)
         env.rule._disabled = true -- disable rule to not generate more errors
       else return res end

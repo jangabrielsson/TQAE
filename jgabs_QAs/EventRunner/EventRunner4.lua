@@ -49,14 +49,15 @@ function QuickApp:main()    -- EventScript version
 
   rule("log('Current version is %s - %s',E_VERSION,E_FIX)")
 
-  if hc3_emulator then -- fake devices to test with the emulator TQAE
-    hc3_emulator.create.binarySwitch(26,"S1")
-    hc3_emulator.create.multilevelSwitch(219,"S2")
-    hc3_emulator.create.binarySwitch(30,"S3")
-  end
-  
-  rule("@@00:00:03 => log('Ping')")
-  
+--  if hc3_emulator then -- fake devices to test with the emulator TQAE
+--    hc3_emulator.create.binarySwitch(26,"S1")
+--    hc3_emulator.create.multilevelSwitch(219,"S2")
+--    hc3_emulator.create.binarySwitch(30,"S3")
+--  end
+
+  rule("@@00:00:03 => log('Ping'); foo()")
+  rule("@10:00 => foo(")
+
 --  alarms = 1
 --  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")
