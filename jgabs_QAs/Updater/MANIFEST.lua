@@ -42,7 +42,7 @@ return {
       },
       { version = 0.72,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.70"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.72"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "better errors",
