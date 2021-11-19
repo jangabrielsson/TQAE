@@ -41,7 +41,7 @@ if hc3_emulator then
 end
 
 local SERIAL = "UPD896661234567894"
-local VERSION = 0.63
+local VERSION = 0.64
 local QAs={}
 local manifest = {}
 local updates,updP = {},0
@@ -106,7 +106,7 @@ local function process(data)
       local vars,ref = copy(vars)
       if v.ref then
         for _,vr in ipairs(versions) do
-          if vr.serial == id and vr.version == v.ref then ref=vr break end
+          if vr.version == v.ref then ref=vr break end
         end
         if not ref then errorf("Ref %s for %s not found",v.ref,id) return end
         for k,d in pairs(ref.data) do if not v[k] then v[k]=d end end
