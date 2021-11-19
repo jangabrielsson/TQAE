@@ -44,13 +44,7 @@ return {
         vars= {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.72"
         },
-        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "better errors",
-        files = "generate",
-        keep= { "main" },
-        viewLayout = "generate",
-        interfaces= {"quickApp"},
-        quickAppVariables = {},
+        ref=0.70,
       },
 --      { version = 0.x,
 --        vars = {
@@ -111,13 +105,20 @@ return {
         vars= {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.63"
         },
-        descr = "Latest",
+        descr = "First release",
         mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
         files = "generate",
         keep = {
         },
         interfaces = {"quickApp"},
         viewLayout = "generate",
+      },
+      { version= 0.64,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.64"
+        },
+        descr = "bug fix (refs)",
+        ref=0.63,
       }
     }
   }
