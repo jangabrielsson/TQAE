@@ -92,7 +92,7 @@ client_mt.__index = client_mt
 -- @treturn client_mt MQTT client instance table
 function client_mt:__init(args)
 	if not luamqtt_VERSION then
-		luamqtt_VERSION = require("mqtt")._VERSION
+		luamqtt_VERSION = require("mqtt.init")._VERSION
 	end
 
 	-- fetch and validate client args
