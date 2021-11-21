@@ -183,7 +183,7 @@ EM.EMEvents('QACreated',function(ev) -- Intercept QA created and add viewLayout 
       EM.addUI(info)
       EM.installDevice(info)
     end
-    for _,r in ipairs(info.UI) do
+    for _,r in ipairs(info.UI or {}) do
       r = r[1] and r or {r}
       for _,c in ipairs(r) do
         if initElm[c.type] then initElm[c.type](c,qa) end

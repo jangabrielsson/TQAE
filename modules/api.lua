@@ -344,7 +344,9 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       local info = {
         parentId=props.parentId,name=props.name,
         type=props.type,properties=props.initialProperties,
-        interfaces=props.initialInterfaces
+        interfaces=props.initialInterfaces,
+        timers = D.timers,
+        lock = D.lock,
       }
       local dev = EM.createDevice(info)
       Devices[dev.id]=info

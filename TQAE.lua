@@ -409,6 +409,8 @@ function EM.createDevice(info) -- Creates device structure
   end
 
   dev.name,dev.parentId,dev.roomID = info.name or "MyQuickApp",0,info.roomID or EM.cfg.defaultRoom
+  dev.interfaces = dev.interfaces or {}
+  dev.properties = dev.properties or {}
   merge(dev.interfaces,info.interfaces or {})
   merge(dev.properties,info.properties or {})
   info.dev = dev

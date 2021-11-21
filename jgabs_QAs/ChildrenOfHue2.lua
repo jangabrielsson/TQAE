@@ -7,7 +7,7 @@
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   copas=true,
-  debug = { onAction=true, http=false, UIEevent=true },
+  debug = { onAction=true, http=false, UIEevent=true, refreshStates=false },
 }
 
 --%%name="HueTest"
@@ -36,12 +36,29 @@ local HueDeviceTypes = {
   ["Hue dimmer switch"]      = {types={"RWL021"},          maker="SwitchMaker",  class="ButtonQA"},
   ["Hue wall switch module"] = {types={"RDM001"},          maker="SwitchMaker",  class="ButtonQA"},
   ["Hue smart plug"]         = {types={"LOM007"},          maker="PlugMaker",    class="ButtonQA"},
---services: {rid="...", rtype="button"}
   ["Hue color spot"]         = {types={"LCG0012"},         maker="LightMaker",   class="ColorLampQA"},
   ["Philips hue"]            = {types={"LCG0012"},         maker="NopMaker",     class=""},
 }
 
-local ID = 33
+local TypeMap = {
+  ['MotionSensor']           = 'com.fibaro.motionSensor',
+  ['TempSensor']             = 'com.fibaro.temperatureSensor',
+  ['LuxSensor']              = 'com.fibaro.lightSensor',
+  ['OnOff lamp']             = 'com.fibaro.binarySwitch',
+  ['Hue color lamp']         = 'com.fibaro.colorController',
+  ['Hue ambiance lamp']      = 'com.fibaro.multilevelSwitch',
+  ['Hue white lamp']         = 'com.fibaro.multilevelSwitch',
+  ['Hue color candle']       = 'com.fibaro.colorController',
+  ['Hue filament bulb']      = 'com.fibaro.multilevelSwitch',
+  ['Hue dimmer switch']      = 'com.fibaro.remoteController',
+  ['Hue wall switch module'] = 'com.fibaro.remoteController',
+  ['Hue smart plug']         = 'com.fibaro.binarySwitch',
+  ['Hue color spot']         = 'com.fibaro.colorController',
+}
+
+local function dumpQAs()
+  for id,qa in pairs(QAs) do quickApp:debugf("%s %s",qa.id,qa.name) end
+end
 
 local function getServices(t,s)
   local res = {}
@@ -51,27 +68,51 @@ end
 
 function notifier(m,d) 
   local self = { devices = {} }
-  function self:change(data) for _,d in ipairs(self.devices) do d[m](d,data) end end
+  function self:update(data) for _,d in ipairs(self.devices) do d[m](d,data) end end
   function self:add(d) self.devices[#self.devices+1]=d end
   return self
 end
 
-class 'HueDeviceQA'()
-function HueDeviceQA:__init(p,d)
+local function sendHueCmd(api,data) 
+  net.HTTPClient():request(url..api,{
+      options = { method='PUT', data=data and json.encode(data), checkCertificate=false, headers={ ['hue-application-key'] = app_key }},
+      success = function(res) P({type=event,success=json.decode(res.data)}) end,
+      error = function(err) P({type=event,error=err})  end,
+    })
+end
+
+local ID = 0
+class 'HueDeviceQA'(QuickerAppChild)
+function HueDeviceQA:__init(p,d,t)
   local bat = next(getServices("device_power",p.services or {}))
   local con = next(getServices("zigbee_connectivity",p.services or {}))
   ResourceMap[d.id]=self
-  self.bat = bat
-  self.id = ID; ID=ID+1
-  self.name = d.metadata and d.metadata.name
-  if self.name == nil then
-    if d.owner == nil then 
-      a=0
-    end
-    self.name = self.name or Resources[d.owner.rid].metadata.name
-  end
+  self.hueID = d.id
+  local meta = d.metadata or d.owner and Resources[d.owner.rid].metadata or p.metadata
+  ID=ID+1
+  self.name = meta and meta.name or fmt("Device_%03d",ID)
+  local typ = d.type ~= 'grouped_light' and d.type or p.type or ""
+  self.name = typ.." "..self.name
+
+  local ftype = TypeMap[t]
+  local args =    {
+    name = self.name,
+    uid  = d.id,
+    type = ftype,
+    properties = {},
+    interfaces = bat and {"battery"},
+  }
+
+  QuickerAppChild.__init(self,args)
+
+  QAs[self.id] = self
+
   if bat then ResourceMap[bat] = ResourceMap[bat] or notifier('battery') ResourceMap[bat]:add(self) end
-  if bat then ResourceMap[con] = ResourceMap[con] or notifier('connectivity') ResourceMap[con]:add(self) end
+  if con then ResourceMap[con] = ResourceMap[con] or notifier('connectivity') ResourceMap[con]:add(self) end
+end
+
+function HueDeviceQA:__tostring()
+  return fmt("QA:%s - %s",self.id,self.name)
 end
 
 function HueDeviceQA:update(ev)
@@ -84,25 +125,31 @@ end
 
 function HueDeviceQA:battery(ev)
   quickApp:debugf("Battery %s %s %s",self.name,self.id,ev)
+  self:updateProperty("batteryLevel",ev.power_state.battery_level)
 end
 
 function HueDeviceQA:connectivity(ev)
   quickApp:debugf("Connectivity %s %s %s",self.name,self.id,ev)
+  self:updateProperty("dead",ev.status == 'connected')
 end
 
 class 'MotionSensorQA'(HueDeviceQA)
-function MotionSensorQA:__init(p,d)
-  HueDeviceQA.__init(self,p,d)
-  self.value = false
+function MotionSensorQA:__init(p,d,t)
+  HueDeviceQA.__init(self,p,d,t)
+  self.value = d.motion.motion
+  self:updateProperty('value',self.value)
 end
 function MotionSensorQA:event(ev)
   self.value = ev.motion.motion
+  self:updateProperty('value',self.value)
   quickApp:debugf("Motion %s %s %s",self.id,self.name,ev.motion.motion)
 end
 
 class 'TempSensorQA'(HueDeviceQA)
-function TempSensorQA:__init(p,d)
-  HueDeviceQA.__init(self,p,d)
+function TempSensorQA:__init(p,d,t)
+  HueDeviceQA.__init(self,p,d,t)
+  self.value = d.temperature.temperature
+  self:updateProperty('value',self.value)
 end
 function TempSensorQA:event(ev)
   self.value = ev.temperature.temperature
@@ -110,95 +157,118 @@ function TempSensorQA:event(ev)
 end
 
 class 'LuxSensorQA'(HueDeviceQA)
-function LuxSensorQA:__init(p,d)
-  HueDeviceQA.__init(self,p,d)
+function LuxSensorQA:__init(p,d,t)
+  HueDeviceQA.__init(self,p,d,t)
+  self.value = d.light.light_level
+  self:updateProperty('value',self.value)
 end
 function LuxSensorQA:event(ev)
-  quickApp:debugf("Lux %s %s %s",self.id,self.name,ev.light.light_level)
+  self.value = math.floor(0.5+math.pow(10, (ev.light.light_level - 1) / 10000))
+  quickApp:debugf("Lux %s %s %s",self.id,self.name,self.value)
 end
 
 class 'ButtonQA'(HueDeviceQA)
-function ButtonQA:__init(d,buttons)
-  HueDeviceQA.__init(self,d,d)
+function ButtonQA:__init(d,buttons,t)
+  HueDeviceQA.__init(self,d,d,t)
   self.buttons = buttons
   for id,_ in pairs(buttons) do ResourceMap[id]=self end
 end
 function ButtonQA:event(ev)
   quickApp:debugf("Button %s %s %s %s",self.id,self.name,self.buttons[ev.id],ev.button.last_event)
+  local fevents = { ['initial_press']='Pressed',['repeat']='HeldDown',['short_release']='Released',['long_release']='Released' }
+  local data = {
+    type =  "centralSceneEvent",
+    source = self.id,
+    data = { keyAttribute = fevents[ev.button.last_event], keyId = self.buttons[ev.id] }
+  }
+  local a,b = api.post("/plugins/publishEvent", data)
 end
 
 class 'LampQA'(HueDeviceQA)
-function LampQA:__init(p,d)
-  HueDeviceQA.__init(self,p,d)
-  self.value = 0
-  self.on = false
+function LampQA:__init(p,d,t)
+  HueDeviceQA.__init(self,p,d,t)
+  self.on = d.on.on or false
+  self.value = d.dimming and d.dimming.brightness or self.on and 99 or 0
 end
 function LampQA:event(ev)
   if ev.dimming then self.value = ev.dimming.brightness end
   if ev.on then self.on = ev.on.on end
   quickApp:debugf("Light %s %s value:%s, on:%s",self.id,self.name,self.value,self.on)
-  quickApp:debugf("=>%s",ev)
+  --quickApp:debugf("=>%s",ev)
+end
+function LampQA:turnOn()
+  self:updateProperty("value",true)
+  sendHueCmd("/clip/v2/resource/light/"..self.hueID,
+    {on = {on = true }})
+end
+function LampQA:turnOff()
+  self:updateProperty("value",false)
+  sendHueCmd("/clip/v2/resource/light/"..self.hueID,
+    {on = {on = false }})
+
 end
 
 class 'ColorLampQA'(LampQA)
-function ColorLampQA:__init(p,d)
-  LampQA.__init(self,p,d)
+function ColorLampQA:__init(p,d,t)
+  LampQA.__init(self,p,d,t)
 end
 
 class 'DimLampQA'(LampQA)
-function DimLampQA:__init(p,d)
-  LampQA.__init(self,p,d)
+function DimLampQA:__init(p,d,t)
+  LampQA.__init(self,p,d,t)
 end
 
 class 'WhiteLampQA'(LampQA)
-function WhiteLampQA:__init(d)
-  LampQA.__init(self,p,d)
+function WhiteLampQA:__init(p,d,t)
+  LampQA.__init(self,p,d,t)
 end
 
 local DeviceMakers = {}
 
-function DeviceMakers.MotionMaker(d)
+function DeviceMakers.MotionMaker(d,pn)
   local motionID = next(getServices("motion",d.services))
   local temperatureID = next(getServices("temperature",d.services))
   local light_levelID = next(getServices("light_level",d.services))
 
-  MotionSensorQA(d,Resources[motionID])
-  TempSensorQA(d,Resources[temperatureID])
-  LuxSensorQA(d,Resources[light_levelID])
+  MotionSensorQA(d,Resources[motionID],"MotionSensor")
+  TempSensorQA(d,Resources[temperatureID],"TempSensor")
+  LuxSensorQA(d,Resources[light_levelID],"LuxSensor")
 end
 
-function DeviceMakers.LightMaker(d)
+function DeviceMakers.LightMaker(d,pn)
   local lightID = next(getServices("light",d.services))
-  ColorLampQA(d,Resources[lightID])
+  ColorLampQA(d,Resources[lightID],pn)
 end
 
-function DeviceMakers.SwitchMaker(d)
+function DeviceMakers.SwitchMaker(d,pn)
   local buttonsIDs = getServices("button",d.services)
   local buttons = {}
   for id,_ in pairs(buttonsIDs) do
     buttons[id]=Resources[id].metadata.control_id
   end
-  ButtonQA(d,buttons) 
+  d.type="switch"
+  ButtonQA(d,buttons,pn) 
 end
 
-function DeviceMakers.PlugMaker(d)
+function DeviceMakers.PlugMaker(d,pn)
   local lightID = next(getServices("light",d.services))
-  ColorLampQA(d,Resources[lightID])
+  ColorLampQA(d,Resources[lightID],pn)
 end
 
-function DeviceMakers.NopMaker(d) end
+function DeviceMakers.NopMaker(_,_) end
 
 local function makeDevice(d)
   local p = d.product_data
   if HueDeviceTypes[p.product_name] then 
-    DeviceMakers[HueDeviceTypes[p.product_name].maker](d)
+    DeviceMakers[HueDeviceTypes[p.product_name].maker](d,p.product_name)
   else
     quickApp:warningf("Unknown Hue type, %s %s",p.product_name,d.metadata and d.metadata.name or "")
   end
 end
 
 local function makeGroup(d)
-  LampQA(d,d)
+  local lightID = next(getServices("grouped_light",d.services))
+  LampQA(d,Resources[lightID],"OnOff lamp")
 end
 
 local function call(api,event) 
@@ -224,13 +294,15 @@ E({type='HUB_VERSION',error='$err'},function(env)
 
 E({type='GET_RESOURCE',success='$res'},function(env)
     for _,d in ipairs(env.p.res.data or {}) do
-      quickApp:debugf("%s %s %s",d.type,d.metadata and d.metadata.name,d.id)
+      --quickApp:debugf("%s %s %s",d.type,d.metadata and d.metadata.name,d.id)
       Resources[d.id]=d
       ResourcesType[d.type] = ResourcesType[d.type] or {}
       ResourcesType[d.type][d.id]=d
     end
     for _,d in pairs(ResourcesType.device or {}) do makeDevice(d) end
-    for _,d in pairs(ResourcesType.grouped_light or {}) do makeGroup(d) end
+    for _,d in pairs(ResourcesType.room or {})   do makeGroup(d) end
+    for _,d in pairs(ResourcesType.zone or {})   do makeGroup(d) end
+    dumpQAs()
   end)
 
 E({type='GET_DEVICES',error='$err'},function(env) quickApp:error(env.p.err) end)
@@ -265,9 +337,8 @@ end
 function QuickApp:onInit()
   url = self:getVariable("Hue_IP")
   app_key = self:getVariable("Hue_User")
-
   url = fmt("https://%s:443",url)
-
+  self:loadQuickerChildren()
   self:post({type='START'})
   fetchEvents()
 end
