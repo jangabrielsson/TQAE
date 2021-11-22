@@ -15,7 +15,11 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%type="com.fibaro.binarySwitch"
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
+--FILE:lib/colorComponents.lua,colorComponents;
+
 fibaro.debugFlags.extendedErrors = true
+fibaro.debugFlags.hue = true
+
 local fmt = string.format
 local url,app_key
 local E = fibaro.event
@@ -107,8 +111,16 @@ function HueDeviceQA:__init(p,d,t)
 
   QAs[self.id] = self
 
-  if bat then ResourceMap[bat] = ResourceMap[bat] or notifier('battery') ResourceMap[bat]:add(self) end
-  if con then ResourceMap[con] = ResourceMap[con] or notifier('connectivity') ResourceMap[con]:add(self) end
+  if bat then 
+    ResourceMap[bat] = ResourceMap[bat] or notifier('battery') 
+    ResourceMap[bat]:add(self)
+    self:battery(Resources[bat])
+  end
+  if con then 
+    ResourceMap[con] = ResourceMap[con] or notifier('connectivity') 
+    ResourceMap[con]:add(self) 
+    self:connectivity(Resources[con])
+  end
 end
 
 function HueDeviceQA:__tostring()
@@ -124,13 +136,13 @@ function HueDeviceQA:event(ev)
 end
 
 function HueDeviceQA:battery(ev)
-  quickApp:debugf("Battery %s %s %s",self.name,self.id,ev)
   self:updateProperty("batteryLevel",ev.power_state.battery_level)
+  quickApp:debugf("Battery %s %s %s",self.name,self.id,ev.power_state.battery_level)
 end
 
 function HueDeviceQA:connectivity(ev)
-  quickApp:debugf("Connectivity %s %s %s",self.name,self.id,ev)
   self:updateProperty("dead",ev.status == 'connected')
+  quickApp:debugf("Connectivity %s %s %s",self.name,self.id,ev.status)
 end
 
 class 'MotionSensorQA'(HueDeviceQA)
