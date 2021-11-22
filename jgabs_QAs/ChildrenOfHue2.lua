@@ -191,21 +191,17 @@ function LampQA:__init(p,d,t)
   self.value = d.dimming and d.dimming.brightness or self.on and 99 or 0
 end
 function LampQA:event(ev)
-  if ev.dimming then self.value = ev.dimming.brightness end
+  if ev.dimming then self.value = round(ev.dimming.brightness) end
   if ev.on then self.on = ev.on.on end
   quickApp:debugf("Light %s %s value:%s, on:%s",self.id,self.name,self.value,self.on)
-  --quickApp:debugf("=>%s",ev)
 end
 function LampQA:turnOn()
   self:updateProperty("value",true)
-  sendHueCmd("/clip/v2/resource/light/"..self.hueID,
-    {on = {on = true }})
+  sendHueCmd("/clip/v2/resource/light/"..self.hueID,{on = {on = true }})
 end
 function LampQA:turnOff()
   self:updateProperty("value",false)
-  sendHueCmd("/clip/v2/resource/light/"..self.hueID,
-    {on = {on = false }})
-
+  sendHueCmd("/clip/v2/resource/light/"..self.hueID,{on = {on = false }})
 end
 
 class 'ColorLampQA'(LampQA)
