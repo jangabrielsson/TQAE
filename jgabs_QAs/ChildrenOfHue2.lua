@@ -16,6 +16,7 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 --FILE:lib/colorComponents.lua,colorComponents;
+--FILE:lib/colorConversion.lua,colorConversion;
 
 fibaro.debugFlags.extendedErrors = true
 fibaro.debugFlags.hue = true
@@ -31,33 +32,17 @@ local ResourceMap = {}
 local QAs = {}
 
 local HueDeviceTypes = {
-  ["Hue motion sensor"]      = {types={"SML001"},          maker="MotionMaker",  class=""},
-  ["Hue color lamp"]         = {types={"LCA001","LCT015"}, maker="LightMaker",   class="ColorLampQA"},
-  ["Hue ambiance lamp"]      = {types={"LTA001"},          maker="LightMaker",   class="DimLampQA"},
-  ["Hue white lamp"]         = {types={"LWA001"},          maker="LightMaker",   class="DimLampQA"},
-  ["Hue color candle"]       = {types={"LCT012"},          maker="LightMaker",   class="ColorLampQA"},
-  ["Hue filament bulb"]      = {types={"LWO003"},          maker="LightMaker",   class="DimLampQA"},
-  ["Hue dimmer switch"]      = {types={"RWL021"},          maker="SwitchMaker",  class="ButtonQA"},
-  ["Hue wall switch module"] = {types={"RDM001"},          maker="SwitchMaker",  class="ButtonQA"},
-  ["Hue smart plug"]         = {types={"LOM007"},          maker="PlugMaker",    class="ButtonQA"},
-  ["Hue color spot"]         = {types={"LCG0012"},         maker="LightMaker",   class="ColorLampQA"},
-  ["Philips hue"]            = {types={"LCG0012"},         maker="NopMaker",     class=""},
-}
-
-local TypeMap = {
-  ['MotionSensor']           = 'com.fibaro.motionSensor',
-  ['TempSensor']             = 'com.fibaro.temperatureSensor',
-  ['LuxSensor']              = 'com.fibaro.lightSensor',
-  ['OnOff lamp']             = 'com.fibaro.binarySwitch',
-  ['Hue color lamp']         = 'com.fibaro.colorController',
-  ['Hue ambiance lamp']      = 'com.fibaro.multilevelSwitch',
-  ['Hue white lamp']         = 'com.fibaro.multilevelSwitch',
-  ['Hue color candle']       = 'com.fibaro.colorController',
-  ['Hue filament bulb']      = 'com.fibaro.multilevelSwitch',
-  ['Hue dimmer switch']      = 'com.fibaro.remoteController',
-  ['Hue wall switch module'] = 'com.fibaro.remoteController',
-  ['Hue smart plug']         = 'com.fibaro.binarySwitch',
-  ['Hue color spot']         = 'com.fibaro.colorController',
+  ["Hue motion sensor"]      = {types={"SML001"},          maker="MotionMaker"},
+  ["Hue color lamp"]         = {types={"LCA001","LCT015"}, maker="LightMaker"},
+  ["Hue ambiance lamp"]      = {types={"LTA001"},          maker="LightMaker"},
+  ["Hue white lamp"]         = {types={"LWA001"},          maker="LightMaker"},
+  ["Hue color candle"]       = {types={"LCT012"},          maker="LightMaker"},
+  ["Hue filament bulb"]      = {types={"LWO003"},          maker="LightMaker"},
+  ["Hue dimmer switch"]      = {types={"RWL021"},          maker="SwitchMaker"},
+  ["Hue wall switch module"] = {types={"RDM001"},          maker="SwitchMaker"},
+  ["Hue smart plug"]         = {types={"LOM007"},          maker="PlugMaker"},
+  ["Hue color spot"]         = {types={"LCG0012"},         maker="LightMaker"},
+  ["Philips hue"]            = {types={"LCG0012"},         maker="NopMaker"},
 }
 
 local function dumpQAs()
@@ -87,7 +72,7 @@ end
 
 local ID = 0
 class 'HueDeviceQA'(QuickerAppChild)
-function HueDeviceQA:__init(p,d,t)
+function HueDeviceQA:__init(p,d,ftype)
   local bat = next(getServices("device_power",p.services or {}))
   local con = next(getServices("zigbee_connectivity",p.services or {}))
   ResourceMap[d.id]=self
@@ -98,7 +83,6 @@ function HueDeviceQA:__init(p,d,t)
   local typ = d.type ~= 'grouped_light' and d.type or p.type or ""
   self.name = typ.." "..self.name
 
-  local ftype = TypeMap[t]
   local args =    {
     name = self.name,
     uid  = d.id,
@@ -146,8 +130,8 @@ function HueDeviceQA:connectivity(ev)
 end
 
 class 'MotionSensorQA'(HueDeviceQA)
-function MotionSensorQA:__init(p,d,t)
-  HueDeviceQA.__init(self,p,d,t)
+function MotionSensorQA:__init(p,d)
+  HueDeviceQA.__init(self,p,d,"com.fibaro.motionSensor")
   self.value = d.motion.motion
   self:updateProperty('value',self.value)
 end
@@ -158,8 +142,8 @@ function MotionSensorQA:event(ev)
 end
 
 class 'TempSensorQA'(HueDeviceQA)
-function TempSensorQA:__init(p,d,t)
-  HueDeviceQA.__init(self,p,d,t)
+function TempSensorQA:__init(p,d)
+  HueDeviceQA.__init(self,p,d,"com.fibaro.temperatureSensor")
   self.value = d.temperature.temperature
   self:updateProperty('value',self.value)
 end
@@ -169,8 +153,8 @@ function TempSensorQA:event(ev)
 end
 
 class 'LuxSensorQA'(HueDeviceQA)
-function LuxSensorQA:__init(p,d,t)
-  HueDeviceQA.__init(self,p,d,t)
+function LuxSensorQA:__init(p,d)
+  HueDeviceQA.__init(self,p,d,"com.fibaro.lightSensor")
   self.value = d.light.light_level
   self:updateProperty('value',self.value)
 end
@@ -180,8 +164,8 @@ function LuxSensorQA:event(ev)
 end
 
 class 'ButtonQA'(HueDeviceQA)
-function ButtonQA:__init(d,buttons,t)
-  HueDeviceQA.__init(self,d,d,t)
+function ButtonQA:__init(d,buttons)
+  HueDeviceQA.__init(self,d,d,'com.fibaro.remoteController')
   self.buttons = buttons
   for id,_ in pairs(buttons) do ResourceMap[id]=self end
 end
@@ -196,79 +180,109 @@ function ButtonQA:event(ev)
   local a,b = api.post("/plugins/publishEvent", data)
 end
 
-class 'LampQA'(HueDeviceQA)
-function LampQA:__init(p,d,t)
+class 'LightQA'(HueDeviceQA)
+function LightQA:__init(p,d)
+  local controls,t = {},'com.fibaro.binarySwitch'
+  self.controls = controls
+  controls.on = function(data)
+    self.on = data.on
+    self:updateProperty('value',data.on and 99 or 0)
+  end
+  if d.dimming then 
+    t = 'com.fibaro.multilevelSwitch' 
+    controls.dimming = function(data)
+      self.bri = data.brightness
+    end
+  end
+  if d.color_temperature then 
+    t = 'com.fibaro.colorController' 
+    self.mirek_schema = d.color_temperature.mirek_schema
+    local mirmin = self.mirek_schema.mirek_minimum
+    local mirmax = self.mirek_schema.mirek_maximum
+    controls.color_temperature = function(data)
+      if not data.mirek_valid then return end
+      self.mirek = data.mirek
+      self.temperature = (self.mirek-mirmin)/(mirmax-mirmin) -- %
+    end
+  end
+  if d.color then 
+    t = 'com.fibaro.colorController' 
+    controls.color = function(data)
+      local xy = data.xy
+      self.rgb = fibaro.colorConverter.xyBri2rgb(xy.x,xy.y,self.bri)
+    end
+  end
   HueDeviceQA.__init(self,p,d,t)
-  self.on = d.on.on or false
-  self.value = d.dimming and d.dimming.brightness or self.on and 99 or 0
+  self.colorComponent = ColorComponents{
+    parent = self,
+    colorComponents = {
+      warmWhite =  controls.color_temperature and 0 or nil,
+      red =  controls.color and 0 or nil,
+      green = controls.color and 0 or nil,
+      blue = controls.color and 0 or nil,
+    },
+    dim_time   = 10000,  -- Time to do a full dim cycle, max to min, min to max
+    dim_min    = 0,      -- Min value
+    dim_max    = 99,     -- Max value
+    dim_interv = 1000    -- Interval between dim steps
+  }
+  self:event(d)
 end
-function LampQA:event(ev)
-  if ev.dimming then self.value = round(ev.dimming.brightness) end
-  if ev.on then self.on = ev.on.on end
-  quickApp:debugf("Light %s %s value:%s, on:%s",self.id,self.name,self.value,self.on)
+function LightQA:event(ev)
+  for _,h in ipairs({'on','dimming','color_temperature','color'}) do
+    if ev[h] then self.controls[h](ev[h]) end
+  end
+  quickApp:debugf("Light %s %s on:%s, dim:%s, temp:%s rgb:%s, ",self.id,self.name,
+    self.on,self.bri or "nil",self.temperature or "nil",self.rgb or "{}"
+    )
 end
-function LampQA:turnOn()
+function LightQA:turnOn()
   self:updateProperty("value",true)
   sendHueCmd("/clip/v2/resource/light/"..self.hueID,{on = {on = true }})
 end
-function LampQA:turnOff()
+function LightQA:turnOff()
   self:updateProperty("value",false)
   sendHueCmd("/clip/v2/resource/light/"..self.hueID,{on = {on = false }})
 end
 
-class 'ColorLampQA'(LampQA)
-function ColorLampQA:__init(p,d,t)
-  LampQA.__init(self,p,d,t)
-end
-
-class 'DimLampQA'(LampQA)
-function DimLampQA:__init(p,d,t)
-  LampQA.__init(self,p,d,t)
-end
-
-class 'WhiteLampQA'(LampQA)
-function WhiteLampQA:__init(p,d,t)
-  LampQA.__init(self,p,d,t)
-end
-
 local DeviceMakers = {}
 
-function DeviceMakers.MotionMaker(d,pn)
+function DeviceMakers.MotionMaker(d)
   local motionID = next(getServices("motion",d.services))
   local temperatureID = next(getServices("temperature",d.services))
   local light_levelID = next(getServices("light_level",d.services))
 
-  MotionSensorQA(d,Resources[motionID],"MotionSensor")
-  TempSensorQA(d,Resources[temperatureID],"TempSensor")
-  LuxSensorQA(d,Resources[light_levelID],"LuxSensor")
+  MotionSensorQA(d,Resources[motionID])
+  TempSensorQA(d,Resources[temperatureID])
+  LuxSensorQA(d,Resources[light_levelID])
 end
 
-function DeviceMakers.LightMaker(d,pn)
+function DeviceMakers.LightMaker(d)
   local lightID = next(getServices("light",d.services))
-  ColorLampQA(d,Resources[lightID],pn)
+  LightQA(d,Resources[lightID])
 end
 
-function DeviceMakers.SwitchMaker(d,pn)
+function DeviceMakers.SwitchMaker(d)
   local buttonsIDs = getServices("button",d.services)
   local buttons = {}
   for id,_ in pairs(buttonsIDs) do
     buttons[id]=Resources[id].metadata.control_id
   end
   d.type="switch"
-  ButtonQA(d,buttons,pn) 
+  ButtonQA(d,buttons) 
 end
 
-function DeviceMakers.PlugMaker(d,pn)
+function DeviceMakers.PlugMaker(d)
   local lightID = next(getServices("light",d.services))
-  ColorLampQA(d,Resources[lightID],pn)
+  LightQA(d,Resources[lightID])
 end
 
-function DeviceMakers.NopMaker(_,_) end
+function DeviceMakers.NopMaker(_) end
 
 local function makeDevice(d)
   local p = d.product_data
   if HueDeviceTypes[p.product_name] then 
-    DeviceMakers[HueDeviceTypes[p.product_name].maker](d,p.product_name)
+    DeviceMakers[HueDeviceTypes[p.product_name].maker](d)
   else
     quickApp:warningf("Unknown Hue type, %s %s",p.product_name,d.metadata and d.metadata.name or "")
   end
@@ -276,7 +290,7 @@ end
 
 local function makeGroup(d)
   local lightID = next(getServices("grouped_light",d.services))
-  LampQA(d,Resources[lightID],"OnOff lamp")
+  LightQA(d,Resources[lightID])
 end
 
 local function call(api,event) 
