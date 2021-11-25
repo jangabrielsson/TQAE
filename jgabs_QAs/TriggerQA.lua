@@ -1,6 +1,6 @@
 -- luacheck: globals ignore QuickAppBase QuickApp QuickAppChild quickApp fibaro class
 -- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
--- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
+-- luacheck: globals ignore hc3_emulator
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { 
@@ -32,15 +32,15 @@ local idSubs = {}
 local function updateSubscriber(id,events)
   quickApp:debugf("Updating subscriptions for QA:%s",id)
   for _,s in ipairs(idSubs[id] or {}) do
-    quickApp:removeEvent(s.event,s.fun)
+    fibaro.removeEvent(s.event,s.fun)
   end
   idSubs[id]={}
   for _,e in ipairs(events) do
     local function fun(ev) notify(id,ev) end
     idSubs[id][#idSubs[id]+1]={event=e,fun=fun}
     local stat,res = pcall(function()
-        quickApp:event(e,fun)
-        quickApp:enableTriggerType(e.type,true) 
+        fibaro.event(e,fun)
+        fibaro.enableSourceTriggers(e.type,true) 
       end)
     if not stat then quickApp:errorf("updateSubscriber %s - %s",id,res) end
   end
@@ -55,7 +55,8 @@ end
 function QuickApp:onInit()
   self:debugf("%s deviceId:%s, v%s",self.name,self.id,VERSION)
   self:setVersion("TriggerQA",SERIAL,VERSION)
-  self:enableTriggerType({'quickvar','deviceEvent'},true) -- Get events of these types
+  fibaro._REFRESHSTATERATE = 10
+  fibaro.enableSourceTriggers({'quickvar','deviceEvent'},true) -- Get events of these types
 
   -- At startup, check all QAs for subscriptions
   for _,d in ipairs(api.get("/devices?interface=quickApp") or {}) do
