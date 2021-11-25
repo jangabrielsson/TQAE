@@ -215,7 +215,14 @@ local function HC3Request(method,path,data,extra)
   }
   for k,v in pairs(extra or {}) do req[k]=v end
   local res,stat,_ = httpRequest(req)
-  return res~=nil and FB.json.decode(res),stat,nil
+  if res~=nil then
+    local a,b = pcall(FB.json.decode,res)
+    if a then return b,stat,nil
+  else
+      LOG.error("Bad HC3 call: %s",path)
+      return nil,500,nil
+    end
+  else return nil,stat,nil end
 end
 
 local function __assert_type(value,typeOfValue )
