@@ -15,7 +15,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%type="com.fibaro.binarySwitch"
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
---FILE:lib/colorComponents.lua,colorComponents;
+--FILE:lib/UI.lua,UI;
 --FILE:lib/colorConversion.lua,colorConversion;
 
 fibaro.debugFlags.extendedErrors = true
@@ -46,7 +46,7 @@ local HueDeviceTypes = {
 }
 
 local function dumpQAs()
-  for id,qa in pairs(QAs) do quickApp:debugf("%s %s",qa.id,qa.name) end
+  for id,qa in pairs(QAs) do quickApp:debugf("%s %s %s",qa.id,qa.name,qa.type) end
 end
 
 local function getServices(t,s)
@@ -70,40 +70,42 @@ local function sendHueCmd(api,data)
     })
 end
 
-local ID = 0
 class 'HueDeviceQA'(QuickerAppChild)
-function HueDeviceQA:__init(p,d,ftype)
-  local bat = next(getServices("device_power",p.services or {}))
-  local con = next(getServices("zigbee_connectivity",p.services or {}))
-  ResourceMap[d.id]=self
-  self.hueID = d.id
-  local meta = d.metadata or d.owner and Resources[d.owner.rid].metadata or p.metadata
-  ID=ID+1
-  self.name = meta and meta.name or fmt("Device_%03d",ID)
-  local typ = d.type ~= 'grouped_light' and d.type or p.type or ""
-  self.name = typ.." "..self.name
+function HueDeviceQA:__init(info,id,ftype)
+  if id == nil then
+    a=0
+  end
+  ResourceMap[id]=self
+  self.hueID = id
+  self.name = info.name
+  if info.type == nil then
+    a=0
+  end
+  self.name = info.type.." "..self.name
 
+  local interfaces = info.interfaces or {}
+  if info.bat then interfaces[#interfaces+1]='batery' end
   local args =    {
     name = self.name,
-    uid  = d.id,
+    uid  = self.hueID,
     type = ftype,
-    properties = {},
-    interfaces = bat and {"battery"},
+    properties = info.properties,
+    interfaces = interfaces,
   }
 
   QuickerAppChild.__init(self,args)
 
   QAs[self.id] = self
 
-  if bat then 
-    ResourceMap[bat] = ResourceMap[bat] or notifier('battery') 
-    ResourceMap[bat]:add(self)
-    self:battery(Resources[bat])
+  if info.bat then 
+    ResourceMap[info.bat] = ResourceMap[info.bat] or notifier('battery') 
+    ResourceMap[info.bat]:add(self)
+    self:battery(Resources[info.bat])
   end
-  if con then 
-    ResourceMap[con] = ResourceMap[con] or notifier('connectivity') 
-    ResourceMap[con]:add(self) 
-    self:connectivity(Resources[con])
+  if info.con then 
+    ResourceMap[info.con] = ResourceMap[info.con] or notifier('connectivity') 
+    ResourceMap[info.con]:add(self) 
+    self:connectivity(Resources[info.con])
   end
 end
 
@@ -130,10 +132,11 @@ function HueDeviceQA:connectivity(ev)
 end
 
 class 'MotionSensorQA'(HueDeviceQA)
-function MotionSensorQA:__init(p,d)
-  HueDeviceQA.__init(self,p,d,"com.fibaro.motionSensor")
-  self.value = d.motion.motion
-  self:updateProperty('value',self.value)
+function MotionSensorQA:__init(info,id)
+  info.type='Motion'
+  HueDeviceQA.__init(self,info,id,"com.fibaro.motionSensor")
+  local d = Resources[id]
+  self:event(d)
 end
 function MotionSensorQA:event(ev)
   self.value = ev.motion.motion
@@ -142,30 +145,35 @@ function MotionSensorQA:event(ev)
 end
 
 class 'TempSensorQA'(HueDeviceQA)
-function TempSensorQA:__init(p,d)
-  HueDeviceQA.__init(self,p,d,"com.fibaro.temperatureSensor")
-  self.value = d.temperature.temperature
-  self:updateProperty('value',self.value)
+function TempSensorQA:__init(info,id)
+  info.type='Temp'
+  HueDeviceQA.__init(self,info,id,"com.fibaro.temperatureSensor")
+  local d = Resources[id]
+  self:event(d)
 end
 function TempSensorQA:event(ev)
   self.value = ev.temperature.temperature
+  self:updateProperty('value',self.value)
   quickApp:debugf("Temp %s %s %s",self.id,self.name,ev.temperature.temperature)
 end
 
 class 'LuxSensorQA'(HueDeviceQA)
-function LuxSensorQA:__init(p,d)
-  HueDeviceQA.__init(self,p,d,"com.fibaro.lightSensor")
-  self.value = d.light.light_level
-  self:updateProperty('value',self.value)
+function LuxSensorQA:__init(info,id)
+  info.type='Lux'
+  HueDeviceQA.__init(self,info,id,"com.fibaro.lightSensor")
+  local d = Resources[id]
+  self:event(d)
 end
 function LuxSensorQA:event(ev)
   self.value = math.floor(0.5+math.pow(10, (ev.light.light_level - 1) / 10000))
+  self:updateProperty('value',self.value)
   quickApp:debugf("Lux %s %s %s",self.id,self.name,self.value)
 end
 
 class 'ButtonQA'(HueDeviceQA)
-function ButtonQA:__init(d,buttons)
-  HueDeviceQA.__init(self,d,d,'com.fibaro.remoteController')
+function ButtonQA:__init(info,id,buttons)
+  info.type="Switch"
+  HueDeviceQA.__init(self,info,id,'com.fibaro.remoteController')
   self.buttons = buttons
   for id,_ in pairs(buttons) do ResourceMap[id]=self end
 end
@@ -180,101 +188,150 @@ function ButtonQA:event(ev)
   local a,b = api.post("/plugins/publishEvent", data)
 end
 
-class 'LightQA'(HueDeviceQA)
-function LightQA:__init(p,d)
-  local controls,t = {},'com.fibaro.binarySwitch'
-  self.controls = controls
-  controls.on = function(data)
-    self.on = data.on
-    self:updateProperty('value',data.on and 99 or 0)
+local function onHandler(light,on)
+  light:updateProperty('state',on.on)
+end
+
+local function dimHandler(light,dim)
+  light:updateProperty('value',dim.brightness)
+end
+
+local function tempHandler(light,temp)
+  if not temp.mirek_valid then return end
+  light.temp = temp.mirek
+  local tempP = math.floor(99*(light.temp - light.mirek_templ.mirek_minimum) / (light.mirek_templ.mirek_maximum-light.mirek_templ.mirek_minimum))
+  light:updateView('temperature',"value",tostring(tempP))
+end
+
+local function colorHandler(light,on)
+  local a = 9
+end
+
+local lightActions =
+{{'on',onHandler},{'color_temperature',tempHandler},{'dimming',dimHandler},{'color',colorHandler}}
+
+local function decorateLight(light)
+  function light:turnOn() hueCall(self.url,{on={on=true}}) end
+  function light:turnOn() hueCall(self.url,{on={on=false}}) end
+  function light:setValue(v) -- 0-99
+    hueCall(self.url,{dimming={brightness=v/99.0}})  -- %
   end
-  if d.dimming then 
-    t = 'com.fibaro.multilevelSwitch' 
-    controls.dimming = function(data)
-      self.bri = data.brightness
+  function light:setTemperature(t) -- 0-99
+    hueCall(self.url,{color_temperature={mirek=t}})  -- mirek
+  end
+  function light:event(ev)
+    for _,f in ipairs(lightActions) do
+      if ev[f[1]] then f[2](light,ev[f[1]]) end
     end
   end
-  if d.color_temperature then 
-    t = 'com.fibaro.colorController' 
-    self.mirek_schema = d.color_temperature.mirek_schema
-    local mirmin = self.mirek_schema.mirek_minimum
-    local mirmax = self.mirek_schema.mirek_maximum
-    controls.color_temperature = function(data)
-      if not data.mirek_valid then return end
-      self.mirek = data.mirek
-      self.temperature = (self.mirek-mirmin)/(mirmax-mirmin) -- %
-    end
-  end
-  if d.color then 
-    t = 'com.fibaro.colorController' 
-    controls.color = function(data)
-      local xy = data.xy
-      self.rgb = fibaro.colorConverter.xyBri2rgb(xy.x,xy.y,self.bri)
-    end
-  end
-  HueDeviceQA.__init(self,p,d,t)
-  self.colorComponent = ColorComponents{
-    parent = self,
-    colorComponents = {
-      warmWhite =  controls.color_temperature and 0 or nil,
-      red =  controls.color and 0 or nil,
-      green = controls.color and 0 or nil,
-      blue = controls.color and 0 or nil,
-    },
-    dim_time   = 10000,  -- Time to do a full dim cycle, max to min, min to max
-    dim_min    = 0,      -- Min value
-    dim_max    = 99,     -- Max value
-    dim_interv = 1000    -- Interval between dim steps
-  }
-  self:event(d)
+  local d = Resources[light.hueID]
+  light:event(d)
 end
-function LightQA:event(ev)
-  for _,h in ipairs({'on','dimming','color_temperature','color'}) do
-    if ev[h] then self.controls[h](ev[h]) end
-  end
-  quickApp:debugf("Light %s %s on:%s, dim:%s, temp:%s rgb:%s, ",self.id,self.name,
-    self.on,self.bri or "nil",self.temperature or "nil",self.rgb or "{}"
-    )
+
+class 'LightOnOff'(HueDeviceQA)
+function LightOnOff:__init(info,id)
+  info.properties={}
+  info.interfaces = {"light"}
+  HueDeviceQA.__init(self,info,id,'com.fibaro.binarySwitch')
+  decorateLight(self)
 end
-function LightQA:turnOn()
-  self:updateProperty("value",true)
-  sendHueCmd("/clip/v2/resource/light/"..self.hueID,{on = {on = true }})
+
+class 'LightDimmable'(HueDeviceQA)
+function LightDimmable:__init(info,id)
+  info.properties={}
+  info.interfaces = {"light","levelChange"}
+  HueDeviceQA.__init(self,info,id,'com.fibaro.multilevelSwitch')
+  decorateLight(self)
 end
-function LightQA:turnOff()
-  self:updateProperty("value",false)
-  sendHueCmd("/clip/v2/resource/light/"..self.hueID,{on = {on = false }})
+
+local UI3 = {
+  {label='Ltemperature',text='Temperature'},
+  {slider='temperature',onChanged='temperature'},
+}
+fibaro.UI.transformUI(UI3)
+local v3 = fibaro.UI.mkViewLayout(UI3)
+local cb3 = fibaro.UI.uiStruct2uiCallbacks(UI3)
+
+class 'LightTemperature'(HueDeviceQA)
+function LightTemperature:__init(info,id)
+  info.properties={ viewLayout=v3, uiCallbacks=cb3 }
+  info.interfaces = {'light','levelChange','quickApp'}
+  HueDeviceQA.__init(self,info,id,'com.fibaro.multilevelSwitch')
+  local d = Resources[id]
+  self.mirek_templ = d.color_temperature.mirek_schema
+  decorateLight(self)
+end
+
+local UI4 = {
+  {label='Lsaturation',text='Saturation'},
+  {slider='saturation',onChanged='saturation'},
+  {label='Ltemperature',text='Temperature'},
+  {slider='temperature',onChanged='temperature'},
+}
+fibaro.UI.transformUI(UI4)
+local v4 = fibaro.UI.mkViewLayout(UI4)
+local cb4 = fibaro.UI.uiStruct2uiCallbacks(UI4)
+
+class 'LightColor'(HueDeviceQA)
+function LightColor:__init(info,id)
+  info.properties={ viewLayout=v4, uiCallbacks=cb4 }
+  info.interfaces = {'light','levelChange','quickApp'}
+  HueDeviceQA.__init(self,info,id,'com.fibaro.colorController')
+  local d = Resources[id]
+  self.mirek_templ = d.color_temperature.mirek_schema
+  decorateLight(self)
 end
 
 local DeviceMakers = {}
+local ID = 0
+local function nextID() ID=ID+1; return ID end
+local function getDeviceInfo(d)
+  local bat = next(getServices("device_power",d.services or {}))
+  local con = next(getServices("zigbee_connectivity",d.services or {}))
+  local name = d.metadata and d.metadata.name or fmt("Device_%03d",nextID())
+  return {bat=bat, com=con, name=name}
+end
 
 function DeviceMakers.MotionMaker(d)
   local motionID = next(getServices("motion",d.services))
   local temperatureID = next(getServices("temperature",d.services))
   local light_levelID = next(getServices("light_level",d.services))
-
-  MotionSensorQA(d,Resources[motionID])
-  TempSensorQA(d,Resources[temperatureID])
-  LuxSensorQA(d,Resources[light_levelID])
+  local info = getDeviceInfo(d)
+  MotionSensorQA(info,motionID)
+  TempSensorQA(info,temperatureID)
+  LuxSensorQA(info,light_levelID)
 end
 
+local lightMap = {
+  [1]=LightOnOff,[3]=LightDimmable,[7]=LightTemperature,[15]=LightColor
+}
 function DeviceMakers.LightMaker(d)
-  local lightID = next(getServices("light",d.services))
-  LightQA(d,Resources[lightID])
+  local n = 0
+  local light = next(getServices("light",d.services))
+  local info = getDeviceInfo(d) info.type='Light'
+  light = Resources[light]
+  n = n + (light.on and 1 or 0)
+  n = n + (light.dimming and 2 or 0)
+  n = n + (light.color_temperature and 4 or 0)
+  n = n + (light.color and 8 or 0)
+  local cl = lightMap[n]
+  if not cl then quickApp:warning("Unsupported light:%s %s",d.metadata.name,d.id) return end
+  cl(info,light.id)
 end
 
 function DeviceMakers.SwitchMaker(d)
   local buttonsIDs = getServices("button",d.services)
+  local info = getDeviceInfo(d)
   local buttons = {}
   for id,_ in pairs(buttonsIDs) do
     buttons[id]=Resources[id].metadata.control_id
   end
   d.type="switch"
-  ButtonQA(d,buttons) 
+  ButtonQA(info,d.id,buttons) 
 end
 
 function DeviceMakers.PlugMaker(d)
-  local lightID = next(getServices("light",d.services))
-  LightQA(d,Resources[lightID])
+  DeviceMakers.LightMaker(d)
 end
 
 function DeviceMakers.NopMaker(_) end
@@ -288,9 +345,10 @@ local function makeDevice(d)
   end
 end
 
-local function makeGroup(d)
-  local lightID = next(getServices("grouped_light",d.services))
-  LightQA(d,Resources[lightID])
+local function makeGroup(d,t)
+  local light = next(getServices("grouped_light",d.services))
+  local info = getDeviceInfo(d) info.type=t
+  LightOnOff(info,light)
 end
 
 local function call(api,event) 
@@ -322,8 +380,8 @@ E({type='GET_RESOURCE',success='$res'},function(env)
       ResourcesType[d.type][d.id]=d
     end
     for _,d in pairs(ResourcesType.device or {}) do makeDevice(d) end
-    for _,d in pairs(ResourcesType.room or {})   do makeGroup(d) end
-    for _,d in pairs(ResourcesType.zone or {})   do makeGroup(d) end
+    for _,d in pairs(ResourcesType.room or {})   do makeGroup(d,"Room") end
+    for _,d in pairs(ResourcesType.zone or {})   do makeGroup(d,"Zone") end
     dumpQAs()
   end)
 

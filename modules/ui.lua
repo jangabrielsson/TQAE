@@ -187,7 +187,8 @@ customUI['com.fibaro.binarySwitch'] =
 {{{button='__turnon', text="Turn On",onReleased="turnOn"},{button='__turnoff', text="Turn Off",onReleased="turnOff"}}}
 customUI['com.fibaro.multilevelSwitch'] = 
 {{{button='__turnon', text="Turn On",onReleased="turnOn"},{button='__turnoff', text="Turn Off",onReleased="turnOff"}},
-  {{slider='__value', min=0, max=99, onChanged='setValue'}},
+  {label='_Brightness', text='Brightness'},
+  {slider='__value', min=0, max=99, onChanged='setValue'},
   {
     {button='__sli', text="&#8679;",onReleased="startLevelIncrease"},
     {button='__sld', text="&#8681;",onReleased="startLevelIncrease"},
@@ -196,6 +197,16 @@ customUI['com.fibaro.multilevelSwitch'] =
 }
 customUI['com.fibaro.binarySensor']     = customUI['com.fibaro.binarySwitch']      -- For debugging
 customUI['com.fibaro.multilevelSensor'] = customUI['com.fibaro.multilevelSwitch']  -- For debugging
+customUI['com.fibaro.colorController'] = 
+{{{button='__turnon', text="Turn On",onReleased="turnOn"},{button='__turnoff', text="Turn Off",onReleased="turnOff"}},
+  {label='_Brightness', text='Brightness'},
+  {slider='__value', min=0, max=99, onChanged='setValue'},
+  {
+    {button='__sli', text="&#8679;",onReleased="startLevelIncrease"},
+    {button='__sld', text="&#8681;",onReleased="startLevelIncrease"},
+    {button='__sls', text="&Vert;",onReleased="stopLevelChange"},
+  }
+}
 
 local initElm = {
   ['button'] = function(e,qa) qa:updateView(e.button,'text',e.text) end,
@@ -206,15 +217,15 @@ local initElm = {
 function EM.addUI(info)
   local dev = info.dev
   local defUI = customUI[dev.type] or customUI[dev.baseType or ""] or {}
-  
+
   if dev.properties.viewLayout then
     info.UI = view2UI(dev.properties.viewLayout or {},dev.properties.uiCallbacks or {}) or {}
   end
-  
+
   local cmbUI = {}
   for _,e in ipairs(copy(defUI)) do cmbUI[#cmbUI+1]=e end
   for _,e in ipairs(copy(info.UI or {}))    do cmbUI[#cmbUI+1]=e end
-  
+
   if next(cmbUI)~=nil then 
     transformUI(cmbUI)
     dev.properties.viewLayout = mkViewLayout(cmbUI)
