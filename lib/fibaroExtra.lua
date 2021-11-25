@@ -1441,6 +1441,7 @@ do
           break
         end
       end
+      local callbacks
       if not dev then
         assert(args.type,"QuickerAppChild missing type")
         assert(args.name,"QuickerAppChild missing name")
@@ -1448,10 +1449,16 @@ do
         props.name = args.name
         props.type = args.type
         local properties = args.properties or {}
+        args.quickVars = args.quickVars or {}
         local qvars = properties.quickAppVariables or {}
         qvars[#qvars+1]={name="_UID", value=args.uid, type='password'}
         qvars[#qvars+1]={name="_className", value=args.className, type='password'}
-        for k,v in pairs(args.quickVars or {}) do qvars[#qvars+1] = {name=k, value=v} end
+        callbacks = properties.uiCallbacks
+        if  callbacks then 
+          callbacks = copy(callbacks)
+          args.quickVars['_callbacks']=callbacks
+        end
+        for k,v in pairs(args.quickVars) do qvars[#qvars+1] = {name=k, value=v} end
         properties.quickAppVariables = qvars
         props.initialProperties = properties
         props.initialInterfaces = args.interfaces or {}
@@ -1463,8 +1470,12 @@ do
         created = true
         devices = devices or {}
         devices[#devices+1]=dev
+        if callbacks then setCallbacks(self,callbacks) end
         fibaro.tracef(__TAG,"Created new child:%s %s",dev.id,dev.type)
+      else
+        callbacks = getVar(dev,"_callbacks")
       end
+      if callbacks then setCallbacks(self,callbacks) end
       uidMap[args.uid]=self
       childDevices[dev.id]=self
       QuickAppBase.__init(self,dev) -- Now when everything is done, call base class initiliser...

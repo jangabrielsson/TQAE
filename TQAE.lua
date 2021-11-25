@@ -401,7 +401,7 @@ function EM.createDevice(info) -- Creates device structure
   local dev = deviceTemplates[typ] and deepCopy(deviceTemplates[typ]) or {
     actions = { turnOn=0,turnOff=0,setValue=1,toggle=0 }
   }
-
+  dev.properties.viewLayout,dev.properties.uiCallbacks = nil,nil
   if info.parentId and info.parentId > 0 then
     local p = Devices[info.parentId]
     info.env,info.childProxy = p.env,p.proxy

@@ -32,19 +32,20 @@ function ColorComponents:__init(args)
   self.ccComps = {}
   self.colorComponents = dev.properties.colorComponents
   self.brightness = dev.properties.value
-
+  local selfC = self
+  
   -- Set up functions for parent
-  function parent:turnOff() self:turnOff() end
-  function parent:turnOn() self:turnOn() end
-  function parent:setValue(value) self:setValue(value) end
-  function parent:setColor(...) self:setColor(...) end
-  function parent:setColorComponents(arg) self:setColorComponents(arg) end
-  function parent:stopLevelChange() self:stopLevelChange() end 
-  function parent:startLevelIncrease() self:startLevelIncrease() end
-  function parent:startLevelDecrease() self:startLevelDecrease() end
-  function parent:startColorEnhancement(arg) self:startColorEnhancement(arg) end
-  function parent:startColorFade(arg) self:startColorFade(arg) end
-  function parent:stopColorChange(arg) self:stopColorChange(arg) end
+  function parent:turnOff() selfC:turnOff() end
+  function parent:turnOn() selfC:turnOn() end
+  function parent:setValue(value) selfC:setValue(value) end
+  function parent:setColor(...) selfC:setColor(...) end
+  function parent:setColorComponents(arg) selfC:setColorComponents(arg) end
+  function parent:stopLevelChange() selfC:stopLevelChange() end 
+  function parent:startLevelIncrease() selfC:startLevelIncrease() end
+  function parent:startLevelDecrease() selfC:startLevelDecrease() end
+  function parent:startColorEnhancement(arg) selfC:startColorEnhancement(arg) end
+  function parent:startColorFade(arg) selfC:startColorFade(arg) end
+  function parent:stopColorChange(arg) selfC:stopColorChange(arg) end
 end
 
 function ColorComponents:turnOff() -- TurnOff

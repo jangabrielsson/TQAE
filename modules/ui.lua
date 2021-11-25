@@ -11,7 +11,7 @@ local EM,FB = ...
 
 local json,DEBUG,Devices = FB.json,EM.DEBUG,EM.Devices
 local format = string.format
-local traverse = EM.utilities.traverse
+local traverse,copy = EM.utilities.traverse,EM.utilities.copy
 
 local function map(f,l) for _,v in ipairs(l) do f(v) end end
 
@@ -132,6 +132,56 @@ local function uiStruct2uiCallbacks(UI)
   return cb
 end
 
+local function collectViewLayoutRow(u,map)
+  local row = {}
+  local function conv(u)
+    if type(u) == 'table' then
+      if u.name then
+        if u.type=='label' then
+          row[#row+1]={label=u.name, text=u.text}
+        elseif u.type=='button'  then
+          local cb = map["button"..u.name]
+          if cb == u.name.."Clicked" then cb = nil end
+          row[#row+1]={button=u.name, text=u.text, onReleased=cb}
+        elseif u.type=='slider' then
+          local cb = map["slider"..u.name]
+          if cb == u.name.."Clicked" then cb = nil end
+          row[#row+1]={slider=u.name, text=u.text, onChanged=cb}
+        end
+      else
+        for _,v in pairs(u) do conv(v) end
+      end
+    end
+  end
+  conv(u)
+  return row
+end
+
+local function viewLayout2UI(u,map)
+  local function conv(u)
+    local rows = {}
+    for _,j in pairs(u.items) do
+      local row = collectViewLayoutRow(j.components,map)
+      if #row > 0 then
+        if #row == 1 then row=row[1] end
+        rows[#rows+1]=row
+      end
+    end
+    return rows
+  end
+  return conv(u['$jason'].body.sections)
+end
+
+local function view2UI(view,callbacks)
+  local map = {}
+  traverse(callbacks,function(e)
+      if e.eventType=='onChanged' then map["slider"..e.name]=e.callback
+      elseif e.eventType=='onReleased' then map["button"..e.name]=e.callback end
+    end)
+  local UI = viewLayout2UI(view,map)
+  return UI
+end
+
 local customUI = {}
 customUI['com.fibaro.binarySwitch'] = 
 {{{button='__turnon', text="Turn On",onReleased="turnOn"},{button='__turnoff', text="Turn Off",onReleased="turnOff"}}}
@@ -154,18 +204,25 @@ local initElm = {
 }
 
 function EM.addUI(info)
-  local UI,dev = info.UI,info.dev
-  if info.UI and next(info.UI)~= nil then
-    transformUI(UI)
-    dev.properties.viewLayout = mkViewLayout(UI)
-    dev.properties.uiCallbacks = uiStruct2uiCallbacks(UI)
-  elseif (not dev.viewLayout) and (customUI[dev.type] or customUI[dev.baseType or ""]) then
-    info.UI = customUI[dev.type] or customUI[dev.baseType]
-    UI = info.UI
-    transformUI(UI)
-    dev.properties.viewLayout = mkViewLayout(UI)
-    dev.properties.uiCallbacks = uiStruct2uiCallbacks(UI)
-  elseif not dev.properties.viewLayout then
+  local dev = info.dev
+  local defUI = customUI[dev.type] or customUI[dev.baseType or ""] or {}
+  
+  if dev.properties.viewLayout then
+    info.UI = view2UI(dev.properties.viewLayout or {},dev.properties.uiCallbacks or {}) or {}
+  end
+  
+  local cmbUI = {}
+  for _,e in ipairs(copy(defUI)) do cmbUI[#cmbUI+1]=e end
+  for _,e in ipairs(copy(info.UI or {}))    do cmbUI[#cmbUI+1]=e end
+  
+  if next(cmbUI)~=nil then 
+    transformUI(cmbUI)
+    dev.properties.viewLayout = mkViewLayout(cmbUI)
+    dev.properties.uiCallbacks = uiStruct2uiCallbacks(cmbUI)
+    info.UI=cmbUI
+  end
+
+  if not dev.properties.viewLayout then -- No UI
     info.UI = {}
     dev.properties.viewLayout= json.decode(
 [[{"$jason":{"body":{"header":{"style":{"height":"0"},"title":"quickApp_device_403"},"sections":{"items":[]}},"head":{"title":"quickApp_device_403"}}}]]
@@ -196,4 +253,5 @@ EM.UI = {}
 EM.UI.uiStruct2uiCallbacks = uiStruct2uiCallbacks
 EM.UI.transformUI = transformUI
 EM.UI.mkViewLayout = mkViewLayout
+EM.UI.view2UI = view2UI
 
