@@ -1475,6 +1475,7 @@ do
       else
         callbacks = getVar(dev,"_callbacks")
       end
+      self.uid = args.uid
       if callbacks then setCallbacks(self,callbacks) end
       uidMap[args.uid]=self
       childDevices[dev.id]=self
