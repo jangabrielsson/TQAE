@@ -1451,8 +1451,8 @@ do
         local properties = args.properties or {}
         args.quickVars = args.quickVars or {}
         local qvars = properties.quickAppVariables or {}
-        qvars[#qvars+1]={name="_UID", value=args.uid, type='password'}
-        qvars[#qvars+1]={name="_className", value=args.className, type='password'}
+        qvars[#qvars+1]={name="_UID", value=args.uid }--, type='password'}
+        qvars[#qvars+1]={name="_className", value=args.className }--, type='password'}
         callbacks = properties.uiCallbacks
         if  callbacks then 
           callbacks = copy(callbacks)

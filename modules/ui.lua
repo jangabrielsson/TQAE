@@ -195,8 +195,8 @@ customUI['com.fibaro.multilevelSwitch'] =
     {button='__sls', text="&Vert;",onReleased="stopLevelChange"},
   }
 }
-customUI['com.fibaro.binarySensor']     = customUI['com.fibaro.binarySwitch']      -- For debugging
-customUI['com.fibaro.multilevelSensor'] = customUI['com.fibaro.multilevelSwitch']  -- For debugging
+--customUI['com.fibaro.binarySensor']     = customUI['com.fibaro.binarySwitch']      -- For debugging
+--customUI['com.fibaro.multilevelSensor'] = customUI['com.fibaro.multilevelSwitch']  -- For debugging
 customUI['com.fibaro.colorController'] = 
 {{{button='__turnon', text="Turn On",onReleased="turnOn"},{button='__turnoff', text="Turn Off",onReleased="turnOff"}},
   {label='_Brightness', text='Brightness'},
@@ -216,7 +216,7 @@ local initElm = {
 
 function EM.addUI(info)
   local dev = info.dev
-  local defUI = customUI[dev.type] or customUI[dev.baseType or ""] or {}
+  local defUI = (not info.UI and customUI[dev.type] or customUI[dev.baseType or ""]) or {}
 
   if dev.properties.viewLayout then
     info.UI = view2UI(dev.properties.viewLayout or {},dev.properties.uiCallbacks or {}) or {}
@@ -246,8 +246,9 @@ EM.EMEvents('QACreated',function(ev) -- Intercept QA created and add viewLayout 
     local qa,dev = ev.qa,ev.dev
     local info = Devices[qa.id]
     DEBUG("ui","sys","ui.lua inspecting QA:%s",qa.name)
-    if info == nil and dev.parentId and dev.parentId > 0 then
-      info = {dev = dev, env = Devices[dev.parentId].env }
+    if info == nil and dev.parentId and dev.parentId > 0 then -- This is where we create the child device - not good!
+      local p = Devices[dev.parentId]
+      info = {dev = dev, env = p.env, childProxy=p.proxy, timers=p.timers, lock=p.lock }
       EM.addUI(info)
       EM.installDevice(info)
     end

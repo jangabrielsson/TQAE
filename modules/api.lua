@@ -366,11 +366,25 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     FB.__fibaro_add_debug_message(tag,str,typ)
     return 200
   end,
+  ["POST/plugins/publishEvent"] = function(_,_,data,_)
+    local id = data.source
+    local D = Devices[id]
+    if D.proxy or D.childProxy then
+      return EM.post2Proxy(id,"/plugins/publishEvent",data)
+    else
+      return nil,200
+    end
+  end,
   ["DELETE/plugins/removeChildDevice/#id"] = function(method,path,data,_,id)
     local D = Devices[id]
     if D then
       Devices[id]=nil
-      Devices[D.dev.parentId]:restart()
+      local p = Devices[D.dev.parentId]
+      EM.setTimeout(function() EM.restartQA(p) end,0,nil,p) 
+      --EM.restartQA(D.dev.parentId)
+      if D.childProxy then
+        return HC3Request(method,path,data)
+      end
       return true,200
     else return HC3Request(method,path,data) end
   end,
