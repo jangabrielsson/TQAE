@@ -50,11 +50,12 @@ local function main()
     return self
   end
 
-  local function hueCall(api,data) 
-    net.HTTPClient():request(url..api,{
+  local function hueCall(path,data) 
+    print(path,json.encode(data))
+    net.HTTPClient():request(url..path,{
         options = { method='PUT', data=data and json.encode(data), checkCertificate=false, headers={ ['hue-application-key'] = app_key }},
         success = function(res)  end,
-        error = function(err) quickApp:errorf("hue call, %s - %s",api,err) end,
+        error = function(err) quickApp:errorf("hue call, %s - %s",path,err) end,
       })
   end
 
@@ -189,10 +190,17 @@ local function main()
 
   local function onHandler(light,on)
     light:updateProperty('state',on.on)
+    light.on = on.on
+    light:updateProperty('value',on.on and (light.fib_bri or 99) or 0)
+    light:updateView('dimming','value',tostring(on.on and (light.fib_bri or 99) or 0))
   end
 
   local function dimHandler(light,dim)
-    light:updateProperty('value',dim.brightness)
+    light.raw_bri = 99*dim.brightness
+    local bri = math.floor(light.raw_bri + 0.5)
+    light.fib_bri = math.max(dim.min_dim_level or 1,bri)
+    light:updateProperty('value',light.on and light.fib_bri or 0)
+    light:updateView('dimming',"value",tostring(light.on and light.fib_bri or 0))   
   end
 
   local function tempHandler(light,temp)
@@ -207,13 +215,15 @@ local function main()
   end
 
   local lightActions =
-  {{'on',onHandler},{'color_temperature',tempHandler},{'dimming',dimHandler},{'color',colorHandler}}
+  {{'on',onHandler},{'dimming',dimHandler},{'color_temperature',tempHandler},{'color',colorHandler}}
 
   local function decorateLight(light)
+    light.url="/clip/v2/resource/light/"..light.uid
     function light:turnOn() hueCall(self.url,{on={on=true}}) end
-    function light:turnOn() hueCall(self.url,{on={on=false}}) end
+    function light:turnOff() hueCall(self.url,{on={on=false}}) end
     function light:setValue(v) -- 0-99
-      hueCall(self.url,{dimming={brightness=v/99.0}})  -- %
+      v = 100*v/99
+      hueCall(self.url,{dimming={brightness=v}})  -- %
     end
     function light:setTemperature(t) -- 0-99
       t = t/100 * (light.mirek_schema.mirek_maximum-light.mirek_schema.mirek_minimum) + light.mirek_schema.mirek_minimum
@@ -456,7 +466,6 @@ local function main()
   url = fmt("https://%s:443",url)
   quickApp:post({type='START'})
   fetchEvents()
-
 end
 function QuickApp:onInit()
   setTimeout(main,0)

@@ -16,7 +16,7 @@ _=loadfile and loadfile("TQAE.lua"){
 
 HueTable = {
 --  ['0d9dc2ae-9dbe-4eba-a2c3-f1d036c401b9'] = { type='room'    , product='*'                      , name = 'Star' },
---  ['1c10e485-e52b-4144-9991-46dbb2eedafa'] = { type='device'  , product='Hue color candle'       , name = 'Middle window' },
+  ['1c10e485-e52b-4144-9991-46dbb2eedafa'] = { type='device'  , product='Hue color candle'       , name = 'Middle window' },
 --  ['1d83a9ef-1012-446d-94f0-ab95ae655931'] = { type='room'    , product='*'                      , name = 'Living room' },
 --  ['20174df3-48c1-44a6-bf91-cb8aa1010ef2'] = { type='room'    , product='*'                      , name = 'Right window' },
 --  ['2219eadd-9464-4149-b52d-073ed1d9754a'] = { type='device'  , product='Hue color spot'         , name = 'Köksö2' },
@@ -35,7 +35,7 @@ HueTable = {
 --  ['8dddf049-0a73-44e2-8fdd-e3c2310c1bb1'] = { type='device'  , product='Hue color candle'       , name = 'Roof1' },
   ['9222ea53-37a6-4ac0-b57d-74bca1cfa23f'] = { type='device'  , product='Hue motion sensor'      , name = 'Living room sensor' },
 --  ['932bd43b-d8cd-44bc-b8bd-daaf72ae6f82'] = { type='device'  , product='Hue wall switch module' , name = 'Hue wall switch module 1' },
---  ['93d49902-6ce5-4383-9037-bfaeec8cd538'] = { type='device'  , product='Hue filament bulb'      , name = 'Right window' },
+  ['93d49902-6ce5-4383-9037-bfaeec8cd538'] = { type='device'  , product='Hue filament bulb'      , name = 'Right window' },
 --  ['9be444b2-1587-4fbe-89ac-efb809d7e629'] = { type='device'  , product='Hue color lamp'         , name = 'Roof lamp' },
 --  ['9de7ef07-fba9-4f9d-86c4-655352bb3c1f'] = { type='room'    , product='*'                      , name = 'Hue1' },
 --  ['a001f510-48dd-47fc-b9ff-f779c40dd693'] = { type='device'  , product='Hue color lamp'         , name = 'Table1' },
