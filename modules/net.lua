@@ -26,14 +26,14 @@ function net.HTTPClient(i_options)
       EM.systemTimer(function()
           res,status,headers = httpRequest(args2,i_options)
           args2.url=nil
-          if tonumber(status) and status < 205 and args.success then 
+          if tonumber(status) and status < 208 and args.success then 
             FB.setTimeout(function() args.success({status=status,headers=headers,data=res}) end,0,nil,ctx)
           elseif args.error then FB.setTimeout(function() args.error(status) end,0,nil,ctx) end
         end,0)
       return
     end
     args2.url=nil
-    if tonumber(status) and status < 205 and args.success then 
+    if tonumber(status) and status < 208 and args.success then 
       FB.setTimeout(function() args.success({status=status,headers=headers,data=res}) end,math.random(0,2))
     elseif args.error then FB.setTimeout(function() args.error(status) end,math.random(0,2)) end
   end

@@ -33,6 +33,7 @@ local function main()
     ["Philips hue"]            = {types={"LCG0012"},         maker="NopMaker"},
   }
 
+  local function DEBUG(fm,...) print(fmt(fm,...)) end
   local function dumpQAs()
     for id,qa in pairs(QAs) do quickApp:debugf("DeviceId:%s (%s) '%s' %s",qa.id,qa.uid,qa.name,qa.type) end
   end
@@ -51,7 +52,7 @@ local function main()
   end
 
   local function hueCall(path,data) 
-    print(path,json.encode(data))
+    DEBUG("P:%s %s",path,json.encode(data))
     net.HTTPClient():request(url..path,{
         options = { method='PUT', data=data and json.encode(data), checkCertificate=false, headers={ ['hue-application-key'] = app_key }},
         success = function(res)  end,
@@ -100,6 +101,10 @@ local function main()
 
   function HueDeviceQA:update(ev)
     self:event(ev)
+  end
+
+  function HueDeviceQA:hueCall(data)
+    hueCall(self.url,data)
   end
 
   function HueDeviceQA:event(ev)
@@ -192,21 +197,21 @@ local function main()
     light:updateProperty('state',on.on)
     light.on = on.on
     light:updateProperty('value',on.on and (light.fib_bri or 99) or 0)
-    light:updateView('dimming','value',tostring(on.on and (light.fib_bri or 99) or 0))
   end
 
   local function dimHandler(light,dim)
-    light.raw_bri = 99*dim.brightness
+    light.raw_bri = dim.brightness
+    DEBUG("Dim(%s) H:%s",light.id,light.raw_bri)
     local bri = math.floor(light.raw_bri + 0.5)
-    light.fib_bri = math.max(dim.min_dim_level or 1,bri)
-    light:updateProperty('value',light.on and light.fib_bri or 0)
-    light:updateView('dimming',"value",tostring(light.on and light.fib_bri or 0))   
+    light.fib_bri = math.max(light.cfg.min_dim or 1,bri)
+    DEBUG("Dim(%s) F:%s",light.id,light.fib_bri,light.on)
+    light:updateProperty('value',light.on and light.fib_bri or 0) 
   end
 
   local function tempHandler(light,temp)
     if not temp.mirek_valid then return end
     light.temp = temp.mirek
-    local tempP = math.floor(99*(light.temp - light.mirek_schema.mirek_minimum) / (light.mirek_schema.mirek_maximum-light.mirek_schema.mirek_minimum))
+    local tempP = math.floor(99*(light.temp-light.cfg.min_mirek)/(light.cfg.max_mirek-light.cfg.min_mirek))
     light:updateView('temperature',"value",tostring(tempP))
   end
 
@@ -218,24 +223,62 @@ local function main()
   {{'on',onHandler},{'dimming',dimHandler},{'color_temperature',tempHandler},{'color',colorHandler}}
 
   local function decorateLight(light)
+    light.cfg = {}
     light.url="/clip/v2/resource/light/"..light.uid
     function light:turnOn() hueCall(self.url,{on={on=true}}) end
     function light:turnOff() hueCall(self.url,{on={on=false}}) end
     function light:setValue(v) -- 0-99
-      v = 100*v/99
-      hueCall(self.url,{dimming={brightness=v}})  -- %
+      DEBUG("setValue(%s) F:%s",light.id,v)
+      if v == 0 then
+        light:turnOff()
+      else
+        if not light.on then light.fib_bri=v light:turnOn() end
+        DEBUG("setValue(%s) H:%s",light.id,v)
+        hueCall(self.url,{dimming={brightness=v}})
+      end
     end
     function light:setTemperature(t) -- 0-99
-      t = t/100 * (light.mirek_schema.mirek_maximum-light.mirek_schema.mirek_minimum) + light.mirek_schema.mirek_minimum
+      t = t/100 * (light.cfg.max_mirek-light.cfg.min_mirek) + light.cfg.min_mirek
       hueCall(self.url,{color_temperature={mirek=t}})  -- mirek
+    end
+    function light:startLevelIncrease()
+      DEBUG("startLevelIncrease")
+      self.dimDir = 'UP'
+      if not self.on then
+        self:hueCall({dimming = { brightness = 1 }})
+        self.raw_bri=self.cfg.min_bri or 0
+      end
+      local t = (100-self.raw_bri)/100*(DIMTIME or 10)
+      self:hueCall({dynamics = { duration = t*1000}, dimming = { brightness = 100 }, on = { on = true}})
+    end
+    function light:startLevelDecrease()
+      DEBUG("startLevelDecrease")
+      self.dimDir = 'DOWN'
+      local t = (self.raw_bri)/254*DIMTIME
+      self:hueCall({bri=1,transitiontime=math.ceil(10*t)})
+    end
+    function light:stopLevelChange()
+      DEBUG("stopLevelChange")
+      if DIM2OFF and self.dimDir == 'DOWN' and self.raw_bri<2 then
+        self:turnOff()
+      else
+        self:hueCall({bri_inc=0}) 
+      end
     end
     function light:event(ev)
       for _,f in ipairs(lightActions) do
-        if ev[f[1]] then f[2](light,ev[f[1]]) end
+        if ev[f[1]] then 
+          DEBUG("EV(%s) %s",self.id,json.encode(ev[f[1]]))
+          f[2](light,ev[f[1]]) 
+        end
       end
     end
     local d = Resources[light.uid]
-    if d.color_temperature then light.mirek_schema = d.color_temperature.mirek_schema end
+    if d.color_temperature then
+      light.cfg.min_mirek = d.color_temperature.mirek_schema.mirek_minimum
+      light.cfg.max_mirek = d.color_temperature.mirek_schema.mirek_maximum 
+    end
+    if d.dimming then light.cfg.min_dim = d.dimming.min_dim_level or 1 end
     light:event(d)
   end
 
