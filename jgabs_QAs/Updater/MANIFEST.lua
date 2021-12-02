@@ -131,6 +131,18 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
+      { version= 0.65,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.65"
+        },
+        descr = "bug fix (New QA)",
+        mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
     }
   },
   
