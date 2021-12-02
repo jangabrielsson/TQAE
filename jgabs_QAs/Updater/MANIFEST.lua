@@ -132,5 +132,24 @@ return {
         viewLayout = "generate",
       },
     }
+  },
+  
+    ["896661234567895"] = {
+    name = "TriggerQA",
+    type = "com.fibaro.deviceController",
+    versions = {
+      { version= 1.21,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/TriggerQA_1.21"
+        },
+        descr = "First release",
+        mainfile = "$base1/jgabs_QAs/TriggerQA.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+    }
   }
 }
