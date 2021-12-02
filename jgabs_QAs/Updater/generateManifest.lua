@@ -47,11 +47,12 @@ local function generateVersion(vs,ctx)
       EM.UI.transformUI(info.UI)
       v.viewLayout = json.encode(EM.UI.mkViewLayout(info.UI))
       v.uiCallbacks = json.encode(EM.UI.uiStruct2uiCallbacks(info.UI))
-    end
+    else v.viewLayout = nil end
   end
 
   if v.interfaces=="generate" then loadinfo() v.interfaces = info.interfaces end
-
+  v.version = math.floor(v.version*1000+0.5)/1000
+  
   return v
 end
 

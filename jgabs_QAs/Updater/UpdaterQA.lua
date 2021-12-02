@@ -355,7 +355,7 @@ local function Install()
   local version  = versions[veP]  or {}
   local qaList   = version.QAs    or {}
   local qa       = qaList[qaP]
-  if not qa then return end
+--  if not qa then return end
 
   local data = version.data
 
