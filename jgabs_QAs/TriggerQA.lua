@@ -60,11 +60,12 @@ wday:  1-7   1=sunday
 year:  YYYY
 
 Ex.
-"0 * * * * *"           Every hour
-"0/15 * * * * *"        Every 15 minutes
-"0,20 * * * * *"        At even hour and 20min past
-"0 * * 1-3 * *"         Every hour, January to March
-"0 7 lastw-last * 1 *"  7:00, every sunday in the last week of the month
+"0 * * * * *"                  Every hour
+"0/15 * * * * *"               Every 15 minutes
+"0,20 * * * * *"               At even hour and 20min past
+"0 * * 1-3 * *"                Every hour, January to March
+"0 7 lastw-last * 1 *"         7:00, every sunday in the last week of the month
+"sunset -10 lastw-last * 1 *"  10min before sunset every sunday in the last week of the month
 --]]
 
 --%%name="TriggerQA"
@@ -248,6 +249,8 @@ function removeTimer(id)
 end
 
 function QuickApp:onInit()
+  a = cronTest("sunset -10 * * * *")
+  a()
   equal = fibaro.utils.equal
   self:debugf("%s deviceId:%s, v%s",self.name,self.id,VERSION)
   self:setVersion("TriggerQA",SERIAL,VERSION)

@@ -786,7 +786,7 @@ do
     RoomRemovedEvent = function(d) post({type='room', id=d.id, value='removed'}) end,
     RoomModifiedEvent = function(d) post({type='room', id=d.id, value='modified'}) end,
     SectionCreatedEvent = function(d) post({type='section', id=d.id, value='created'}) end,
-    SectionRemovedEvent = function(d) post({type='section', id=d.id, value='removede'}) end,
+    SectionRemovedEvent = function(d) post({type='section', id=d.id, value='removed'}) end,
     SectionModifiedEvent = function(d) post({type='section', id=d.id, value='modified'}) end,
     DeviceActionRanEvent = function(_) end,
     QuickAppFilesChangedEvent = function(_) end,
@@ -1480,6 +1480,7 @@ do
       uidMap[args.uid]=self
       childDevices[dev.id]=self
       QuickAppBase.__init(self,dev) -- Now when everything is done, call base class initiliser...
+      self.parent = quickApp
       return dev,created 
     end
 

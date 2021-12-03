@@ -51,10 +51,10 @@ local function main()
     return self
   end
 
-  local function hueCall(path,data) 
+  local function hueCall(path,data,op) 
     DEBUG("P:%s %s",path,json.encode(data))
     net.HTTPClient():request(url..path,{
-        options = { method='PUT', data=data and json.encode(data), checkCertificate=false, headers={ ['hue-application-key'] = app_key }},
+        options = { method=op or 'PUT', data=data and json.encode(data), checkCertificate=false, headers={ ['hue-application-key'] = app_key }},
         success = function(res)  end,
         error = function(err) quickApp:errorf("hue call, %s - %s",path,err) end,
       })
@@ -107,6 +107,8 @@ local function main()
     hueCall(self.url,data)
   end
 
+  function HueDeviceQA:oldHueCall(data) hueCall(self.orgUrl,data) end
+  
   function HueDeviceQA:event(ev)
     quickApp:debugf("%s %s %s",self.name,self.id,ev)
   end
@@ -245,11 +247,15 @@ local function main()
       DEBUG("startLevelIncrease")
       self.dimDir = 'UP'
       if not self.on then
-        self:hueCall({dimming = { brightness = 1 }})
+        self:hueCall({dimming = { brightness = 2 }})
+--        self:oldHueCall({bri = 1 })
         self.raw_bri=self.cfg.min_bri or 0
       end
-      local t = (100-self.raw_bri)/100*(DIMTIME or 10)
-      self:hueCall({dynamics = { duration = t*1000}, dimming = { brightness = 100 }, on = { on = true}})
+      local t = (100-self.raw_bri)/100*(DIMTIME or 10) --{bri=254,on=true,transitiontime=math.ceil(10*t)}
+      setTimeout(function()
+      self:oldHueCall({transitiontime = math.ceil(t*10), bri=254, on = true})
+      end,0)
+--      self:hueCall({dynamics = { duration = t*1000}, dimming = { brightness = 100 }, on = { on = true}})
     end
     function light:startLevelDecrease()
       DEBUG("startLevelDecrease")
@@ -279,6 +285,8 @@ local function main()
       light.cfg.max_mirek = d.color_temperature.mirek_schema.mirek_maximum 
     end
     if d.dimming then light.cfg.min_dim = d.dimming.min_dim_level or 1 end
+    local u = url:match("https://(.-):")
+    light.orgUrl = "/api/"..app_key..d.id_v1.."/state"
     light:event(d)
   end
 
