@@ -220,7 +220,7 @@ local function main()
 
   local function colorHandler(light,color)
     if not color.xy then return end
-    local rgb = fibaro.colorConverter.xyBri2rgb(color.xy.x,color.xy.y,self.raw_bri)
+    --   local rgb = fibaro.colorConverter.xyBri2rgb(color.xy.x,color.xy.y,self.raw_bri/100*254)
   end
 
   local lightActions =
@@ -249,7 +249,7 @@ local function main()
       t = (t/254) * (light.cfg.max_mirek-light.cfg.min_mirek) + light.cfg.min_mirek
       hueCall(self.url,{color_temperature={mirek=math.floor(t)}})  -- mirek
     end
-    
+
     function light:startLevelIncrease()
       DEBUG("startLevelIncrease")
       self.dimDir = 'UP'
@@ -287,7 +287,7 @@ local function main()
       DEBUG("stopLevelChange")
       if self.ref then self.ref = clearTimeout(self.ref) end
     end
-    
+
     function light:event(ev)
       for _,f in ipairs(lightActions) do
         if ev[f[1]] then 
@@ -342,22 +342,35 @@ local function main()
     decorateLight(self)
   end
 
-  local UI4 = {
-    {label='Lsaturation',text='Saturation'},
-    {slider='saturation',onChanged='saturation'},
-    {label='Ltemperature',text='Temperature'},
-    {slider='temperature',onChanged='temperature'},
-  }
-  fibaro.UI.transformUI(UI4)
-  local v4 = fibaro.UI.mkViewLayout(UI4)
-  local cb4 = fibaro.UI.uiStruct2uiCallbacks(UI4)
+--  local UI4 = {
+--    {label='Lsaturation',text='Saturation'},
+--    {slider='saturation',onChanged='saturation'},
+--    {label='Ltemperature',text='Temperature'},
+--    {slider='temperature',onChanged='temperature'},
+--  }
+--  fibaro.UI.transformUI(UI4)
+--  local v4 = fibaro.UI.mkViewLayout(UI4)
+--  local cb4 = fibaro.UI.uiStruct2uiCallbacks(UI4)
 
   class 'LightColor'(HueDeviceQA)
   function LightColor:__init(info)
     info.type='com.fibaro.colorController'
-    info.properties={ viewLayout=v4, uiCallbacks=cb4 }
-    info.interfaces = {'light','levelChange','quickApp'}
+--    info.properties={ viewLayout=v4, uiCallbacks=cb4 }
+    info.interfaces = {'light'}
     HueDeviceQA.__init(self,info)
+    self.colorComponent = ColorComponents{
+      parent = self,
+      colorComponents = { -- Comment out components not needed
+        warmWhite =  0,
+        red = 0,
+        green = 0,
+        blue = 0,
+      },
+      dim_time   = 10000,  -- Time to do a full dim cycle, max to min, min to max
+      dim_min    = 0,      -- Min value
+      dim_max    = 99,     -- Max value
+      dim_interv = 1000    -- Interval between dim steps
+    }    
     decorateLight(self)
   end
 
