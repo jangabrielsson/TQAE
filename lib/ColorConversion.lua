@@ -87,7 +87,7 @@ local function getClosestColor(xy, gamut)
   return  closestColorPoints[closestColor]
 end
 
-local function rgbToXy(red, green, blue, gamut)
+local function rgb2xy(red, green, blue, gamut)
   local function getGammaCorrectedValue(value)
     return (value > 0.04045) and math.pow((value + 0.055) / (1.0 + 0.055), 2.4) or (value / 12.92)
   end
@@ -110,7 +110,7 @@ local function rgbToXy(red, green, blue, gamut)
   return xy;
 end
 
-local function xyBriToRgb(x,y,bri)
+local function xyb2rgb(x,y,bri)
   local function getReversedGammaCorrectedValue(value)
     return value <= 0.0031308 and 12.92 * value or (1.0 + 0.055) * math.pow(value, (1.0 / 2.4)) - 0.055
   end
@@ -189,11 +189,26 @@ local function rgb2hsb(r,g,b) -- 0-255,0-255,0-255
   return math.floor(65535*h/360+0.5), math.floor(0.5+254*s), math.floor(0.5+254*max)
 end
 
---- xyBriToRgb(x,y,b) => { r=r, g=g, b=b }
---- rgbToXy(r,g,b,gamut) => { x=x, y=y }
+local function xyb2hsb(x,y,b)
+  local rgb = xyb2rgb(x,y,b)
+  return rgb2hsb(rgb.r,rgb.g,rgb.b)
+end
+
+local function hsb2xy(h,s,b)
+  local rgb = hsb2rgb(h,s,b)
+  return rgb2xy(rgb.r,rgb.g,rgb.b)
+end
+
+--- xyb2rgb(x,y,b) => { r=r, g=g, b=b }
+--- rgb2xy(r,g,b,gamut) => { x=x, y=y }
+fibaro = fibaro or {}
 fibaro.colorConverter = { 
-  xyBri2rgb=xyBriToRgb, 
-  rgb2xy=rgbToXy,
+  xyb2rgb=xyb2rgb, 
+  rgb2xy=rgb2xy,
   hsb2rgb = hsb2rgb,
   rgb2hsb = rgb2hsb
 }
+
+local h,s,b = xyb2hsb(0.5,0.6,200)
+local b = hsb2xy(h,s,b)
+n = b
