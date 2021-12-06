@@ -52,11 +52,11 @@ local function main()
   end
 
   local function hueCall(path,data,op) 
-    DEBUG("P:%s %s",path,json.encode(data))
+    --DEBUG("P:%s %s",path,json.encode(data))
     net.HTTPClient():request(url..path,{
         options = { method=op or 'PUT', data=data and json.encode(data), checkCertificate=false, headers={ ['hue-application-key'] = app_key }},
         success = function(res)  end,
-        error = function(err) quickApp:errorf("hue call, %s - %s",path,err) end,
+        error = function(err) quickApp:errorf("hue call, %s %s - %s",path,json.encode(data),err) end,
       })
   end
 
@@ -108,7 +108,7 @@ local function main()
   end
 
   function HueDeviceQA:oldHueCall(data) hueCall(self.orgUrl,data) end
-  
+
   function HueDeviceQA:event(ev)
     quickApp:debugf("%s %s %s",self.name,self.id,ev)
   end
@@ -198,27 +198,29 @@ local function main()
   local function onHandler(light,on)
     light:updateProperty('state',on.on)
     light.on = on.on
+    DEBUG("Event on(%s) H:%s",light.id,light.on)
     light:updateProperty('value',on.on and (light.fib_bri or 99) or 0)
   end
 
   local function dimHandler(light,dim)
     light.raw_bri = dim.brightness
-    DEBUG("Dim(%s) H:%s",light.id,light.raw_bri)
     local bri = math.floor(light.raw_bri + 0.5)
     light.fib_bri = math.max(light.cfg.min_dim or 1,bri)
-    DEBUG("Dim(%s) F:%s",light.id,light.fib_bri,light.on)
+    DEBUG("Event dim(%s) H:%s F:%s (%s)",light.id,light.raw_bri,light.fib_bri,light.on)
     light:updateProperty('value',light.on and light.fib_bri or 0) 
   end
 
   local function tempHandler(light,temp)
     if not temp.mirek_valid then return end
     light.temp = temp.mirek
-    local tempP = math.floor(99*(light.temp-light.cfg.min_mirek)/(light.cfg.max_mirek-light.cfg.min_mirek))
+    local tempP = math.floor(254*(light.temp-light.cfg.min_mirek)/(light.cfg.max_mirek-light.cfg.min_mirek))
+    DEBUG("Event mirek(%s) H:%s F:%s",light.id,temp.mirek,tempP)
     light:updateView('temperature',"value",tostring(tempP))
   end
 
-  local function colorHandler(light,on)
-    local a = 9
+  local function colorHandler(light,color)
+    if not color.xy then return end
+    local rgb = fibaro.colorConverter.xyBri2rgb(color.xy.x,color.xy.y,self.raw_bri)
   end
 
   local lightActions =
@@ -231,50 +233,65 @@ local function main()
     function light:turnOff() hueCall(self.url,{on={on=false}}) end
     function light:setValue(v) -- 0-99
       DEBUG("setValue(%s) F:%s",light.id,v)
+      if v > 100 then v = 100 end
       if v == 0 then
         light:turnOff()
       else
+        v = v < self.cfg.min_dim and self.cfg.min_dim or v
         if not light.on then light.fib_bri=v light:turnOn() end
         DEBUG("setValue(%s) H:%s",light.id,v)
         hueCall(self.url,{dimming={brightness=v}})
       end
     end
-    function light:setTemperature(t) -- 0-99
-      t = t/100 * (light.cfg.max_mirek-light.cfg.min_mirek) + light.cfg.min_mirek
-      hueCall(self.url,{color_temperature={mirek=t}})  -- mirek
+    function light:temperature(t) -- 0-99
+      t = t.values[1]
+      DEBUG("setTemp(%s) H:%s",light.id,t)
+      t = (t/254) * (light.cfg.max_mirek-light.cfg.min_mirek) + light.cfg.min_mirek
+      hueCall(self.url,{color_temperature={mirek=math.floor(t)}})  -- mirek
     end
+    
     function light:startLevelIncrease()
       DEBUG("startLevelIncrease")
       self.dimDir = 'UP'
+      if self.ref then self.ref=clearTimeout(self.ref) end
+      local dimValue = self.raw_bri
       if not self.on then
-        self:hueCall({dimming = { brightness = 2 }})
---        self:oldHueCall({bri = 1 })
-        self.raw_bri=self.cfg.min_bri or 0
+        self:turnOn()
+        dimValue = 0
       end
-      local t = (100-self.raw_bri)/100*(DIMTIME or 10) --{bri=254,on=true,transitiontime=math.ceil(10*t)}
-      setTimeout(function()
-      self:oldHueCall({transitiontime = math.ceil(t*10), bri=254, on = true})
-      end,0)
---      self:hueCall({dynamics = { duration = t*1000}, dimming = { brightness = 100 }, on = { on = true}})
+      local tDelta = (100/(DIMTIME or 10))*(INTERVS or 0.5)
+      local function loop()
+        self.ref=nil
+        dimValue = math.min(dimValue+tDelta,100)
+        self:setValue(dimValue)
+        if dimValue < 100 then self.ref=setTimeout(loop,1000*(INTERVS or 0.5)) end
+      end
+      self.ref = setTimeout(loop,0)
     end
     function light:startLevelDecrease()
       DEBUG("startLevelDecrease")
+      if not self.on then return end
+      if self.ref then self.ref=clearTimeout(self.ref) end
       self.dimDir = 'DOWN'
-      local t = (self.raw_bri)/254*DIMTIME
-      self:hueCall({bri=1,transitiontime=math.ceil(10*t)})
+      local dimValue = self.raw_bri
+      local tDelta = (100/(DIMTIME or 10))*(INTERVS or 0.5)
+      local function loop()
+        self.ref=nil
+        dimValue = math.max(dimValue-tDelta,0)
+        self:setValue(dimValue)
+        if dimValue > 0 then self.ref=setTimeout(loop,1000*(INTERVS or 0.5)) end
+      end
+      self.ref = setTimeout(loop,0)
     end
     function light:stopLevelChange()
       DEBUG("stopLevelChange")
-      if DIM2OFF and self.dimDir == 'DOWN' and self.raw_bri<2 then
-        self:turnOff()
-      else
-        self:hueCall({bri_inc=0}) 
-      end
+      if self.ref then self.ref = clearTimeout(self.ref) end
     end
+    
     function light:event(ev)
       for _,f in ipairs(lightActions) do
         if ev[f[1]] then 
-          DEBUG("EV(%s) %s",self.id,json.encode(ev[f[1]]))
+          --DEBUG("EV(%s) %s",self.id,json.encode(ev[f[1]]))
           f[2](light,ev[f[1]]) 
         end
       end
