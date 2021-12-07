@@ -7,7 +7,8 @@ _=loadfile and loadfile("TQAE.lua"){
 }
 
 --%%name="Hue"
---%%quickVars = {['HueID'] = "q6eLpWdYiMGq0kdQWFZB1NZHSllvKL0GsNPJeEa-", ['HueIP'] = "192.168.1.153" }
+--%%quickVars = {["Hue_IP"]=EM.cfg.Hue_IP,["Hue_User"]=EM.cfg.Hue_user }
+--%%type="com.fibaro.deviceController"
 -- %%proxy = true
 
 _version = "0.1"
@@ -98,8 +99,8 @@ end
 
 --------------------------------------------------
 function QuickApp:onInit()
-  self.userID = self:getVariable('HueID')         -- Need Hue user key
-  self.HueIP = self:getVariable('HueIP')          -- .. and IP to Hue bridge
+  self.userID = self:getVariable('Hue_User')         -- Need Hue user key
+  self.HueIP = self:getVariable('Hue_IP')          -- .. and IP to Hue bridge
 
   if self.userID=="" or self.HueIP=="" then -- Warn and disable QA if credentials are not provided
     self:error("Missing credentials")

@@ -2,8 +2,9 @@
 -- luacheck: globals ignore hc3_emulator HUEv2Engine
 -- luacheck: ignore 212/self
 
+local version 0.2
 local v2 = "1948086000"
-local debug = true
+local debug = { info = true, call=true, event=true, v2api=true }
 local OPTIMISTIC = false
 local app_key,url,callBack
 local fmt = string.format
@@ -16,14 +17,23 @@ local ResourcesType = {
   light=Lights, button=Buttons, motion=Motions, temperture=Temperatures
 }
 
-local function DEBUG(str,...) if debug then quickApp:debug(fmt(str,...)) end end
+--[[
+debug.info        -- greetings etc
+debug.event       -- incoming event from Hue hub
+debug.v2api       -- v2api info (unhandled events etc)
+debug.call        -- http calls to Hue hub
+debug.unknownType -- Unhandled device updates
+--]]
+
+local function DEBUG(tag,str,...) if debug[tag] then quickApp:debug(fmt(str,...)) end end
 local function ERROR(str,...) quickApp:error(fmt(str,...)) end
 local function WARNING(str,...) quickApp:warning(fmt(str,...)) end
 
-local function makePrintBuffer()
-  local b,r = {},{}
+local function makePrintBuffer(e)
+  local b,r = {},e  and {e} or {}
   function b:toString() return table.concat(r) end
   function b:printf(str,...) r[#r+1]=fmt(str,...) end
+  function b:out(...) for  _,e1 in ipairs({...}) do r[#r+1]=e1 end end
   return b
 end
 
@@ -37,16 +47,16 @@ local function fetchEvents()
       if e1.type=='update' then
         for _,e2 in ipairs(e1.data) do
           if ResourceMap[e2.id] then 
-            DEBUG("ID:%s type:%s",e2.id,ResourceMap[e2.id].type)
+            DEBUG('event',"ID:%s type:%s",e2.id,ResourceMap[e2.id].type)
             ResourceMap[e2.id]:event(e2)
           else
             local _ = 0
-            --WARNING("Unknow resource type: %s",json.encode(e1))
+            if debug.unknownType then WARNING("Unknow resource type: %s",json.encode(e1)) end
           end
         end
       else
-        DEBUG("New event type: %s",e1.type)
-        DEBUG("%s",json.encode(e1))
+        DEBUG('v2api',"New v2 event type: %s",e1.type)
+        DEBUG('v2api',"%s",json.encode(e1))
       end
     end
     getw()
@@ -71,7 +81,7 @@ local function hueGET(api,event)
 end
 
 local function huePUT(path,data,op)
-  DEBUG("%s %s",path,json.encode(data))
+  DEBUG('call',"%s %s",path,json.encode(data))
   net.HTTPClient():request(url..path,{
       options = { method=op or 'PUT', data=data and json.encode(data), checkCertificate=false, headers={ ['hue-application-key'] = app_key }},
       success = function(_)  end,
@@ -103,7 +113,7 @@ local function dispatch(ev,s)
   for f,e in pairs(eventMap) do 
     local se = ev[f]
     if se then
-      if s[e] then s[e](s,se) else DEBUG("Unknown event for %s - %s",s:toString(),json.encode(ev)) end
+      if s[e] then s[e](s,se) else WARNING("Unknown event for %s - %s",s:toString(),json.encode(ev)) end
     end
   end
 end
@@ -340,10 +350,10 @@ function EVENTS.HUB_VERSION(ev)
   else
     local res = ev.result
     if res.swversion >= v2 then
-      DEBUG("V2 api available (%s)",res.swversion)
+      DEBUG('info',"V2 api available (%s)",res.swversion)
       post('REFRESH_RESOURCES')
     else
-      DEBUG("V2 api not available (%s)",res.swversion)
+      WARNING("V2 api not available (%s)",res.swversion)
     end
   end
 end
@@ -375,11 +385,13 @@ function EVENTS.REFRESHED_RESOURCES(ev)
   if callBack then callBack() callBack=nil end
 end
 
-HUEv2Engine = {}
+HUEv2Engine = { debug=debug }
 function HUEv2Engine:initEngine(ip,key,cb)
   devFilter = HUEv2Engine.deviceFilter
   app_key = key
   url =  fmt("https://%s:443",ip)
+  DEBUG('info',"HUEv2Engine v%s",version)
+  DEBUG('info',"Hub url: %s",url)
   callBack = function() fetchEvents() if cb then cb() end end
   post('STARTUP')
 end
@@ -400,19 +412,25 @@ function HUEv2Engine:getTemperatures()
 end
 
 function HUEv2Engine:dumpDevices()
-  local r = {"\n"}
+  local  r = makePrintBuffer("\n")
   for _,d in pairs(HUEv2Engine:getDevices()) do
-    r[#r+1]=d:toString()
+    r:out(d:toString(),"\n")
   end
-  print(table.concat(r,"\n"))
+  print(r:toString())
 end
 
 function HUEv2Engine:listAllDevices()
-  local r = {"\n"}
+  local  r = makePrintBuffer("\n")
+  r:out("HueTable = {\n")
   for _,d in pairs(HUEv2Engine:getResources()) do
     if d.type == 'device' then
-      r[#r+1]=fmt("['%s'] = {name='%s', type='%s', model='%s'},",d.id,d.metadata.name,d.product_data.product_name,d.product_data.model_id)
+      local name = d.metadata and  d.metadata.name or ""
+      local pd = d.product_data or {}
+      local typ = pd.product_name or ""
+      local model = pd.model_id or ""
+      r:printf("   ['%s'] = {name='%s', type='%s', model='%s'},",d.id,name,typ,model)
     end
   end
-  print(table.concat(r,"\n"))
+  r:out("}\n")
+  print(r:toString())
 end
