@@ -2,7 +2,7 @@
 -- luacheck: globals ignore hc3_emulator HUEv2Engine
 -- luacheck: ignore 212/self
 
-local version 0.2
+local version = 0.2
 local v2 = "1948086000"
 local debug = { info = true, call=true, event=true, v2api=true }
 local OPTIMISTIC = false
@@ -180,10 +180,10 @@ end
 function ServiceType.button(id,s,d)
   setParentService("switchService",s)
   s.buttonId = d.metadata.control_id
-  local btnName = "button"..s.buttonId
   s.parents[1].buttons = s.parents[1].buttons or {}
-  s.parents[1].buttons[btnName]=s
-  function s:event(ev) if ev.button then self.lastEvent=ev.button.last_event notifyParents(s,btnName,self.lastEvent) end end
+  s.parents[1].buttons[s.buttonId]=s
+  function s:event(ev) 
+    if ev.button then self.lastEvent=ev.button.last_event notifyParents(s,'button',{event=self.lastEvent,id=s.buttonId}) end end
   function s:toString() return fmt("Button(%s):%s",s.buttonId,id) end
   return  s
 end
@@ -284,7 +284,7 @@ end
 
 local function addProps(d)
   local listeners = {}
-  function d:addListener(prop,l) listeners[prop] = l end
+  function d:addListener(prop,f) listeners[prop] = f end
   function d:setProp(prop,newValue)
     if not listeners[prop] then d[prop]=newValue return end
     local oldValue = d[prop]
