@@ -51,10 +51,15 @@ function ColorLight:__init(uid)
   dev:addListener('colorTemp',function(_,val)
       quickApp:debug("colorTemp=%s",val)
     end)
-  dev:addListener('color',function(_,val)
-      quickApp:debug("color=%s",json.encode(val))
+  dev:addListener('colorXY',function(_,val)
+      quickApp:debug("colorXY=%s",json.encode(val))
     end)
 end
+function ColorLight:turnOn() end
+function ColorLight:turnOff() end
+function ColorLight:setValue(val) end
+function ColorLight:setTemperature(val) end
+function ColorLight:setColor(color) end
 
 local function main()
   local switch = Switch(HueSwitchUID)

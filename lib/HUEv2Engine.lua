@@ -123,8 +123,8 @@ function ServiceType.light(id,s,_)
   s.path = "/clip/v2/resource/light/"..id
   function s:event(ev) dispatch(ev,s) end
   function s:onEvent(ev) self.on = ev.on notifyParents(s,'on',self.on) end
-  function s:colorEvent(ev) self.xy = ev.xy notifyParents(s,'xy',self.xy) end
-  function s:dimEvent(ev) self.brightness = ev.brightness notifyParents(s,'dimming',self.brightness) end
+  function s:colorEvent(ev) self.xy = ev.xy notifyParents(s,'colorXY',self.xy) end
+  function s:dimEvent(ev) self.brightness = ev.brightness notifyParents(s,'brightness',self.brightness) end
   function s:colorTempEvent(ev) self.colorTemp = ev.mirek notifyParents(s,'colorTemp',self.colorTemp) end
   function s:turnOn() 
     huePUT(self.path,{on={on=true}}) 
