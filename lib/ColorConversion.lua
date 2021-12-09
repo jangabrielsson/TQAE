@@ -1,139 +1,225 @@
-local function parseInt(x) return math.floor(x) end
-local function parseFloat(f) return f end
+--[[
+Library for RGB / CIE1931 "x, y" coversion.
+Based on Philips implementation guidance:
+http://www.developers.meethue.com/documentation/color-conversions-rgb-xy
+Copyright (c) 2016 Benjamin Knight / MIT License.
+--]]
 
-local GamutRanges = {
-  A = { red = {0.704, 0.296}, green = {0.2151, 0.7106}, blue = {0.138, 0.08} },
-  B = { red = {0.675, 0.322}, green = {0.409, 0.518},   blue = {0.167, 0.04} },
-  C = { red = {0.692, 0.308}, green = {0.17, 0.7},      blue = {0.153, 0.048} },
-  D = { red = {1.0, 0},       green = {0.0, 1.0},       blue = {0.0, 0.0} } 
+local __version__ = '0.5.1'
+
+-- Represents a CIE 1931 XY coordinate pair.
+local function XYPoint(x,y) return {x=x, y=y} end
+
+-- LivingColors Iris, Bloom, Aura, LightStrips
+local GamutA = {
+  XYPoint(0.704, 0.296),
+  XYPoint(0.2151, 0.7106),
+  XYPoint(0.138, 0.08),
 }
 
-local function xyIsInGamutRange(xy, gamut)
-  gamut = GamutRanges[gamut] or GamutRanges.C
-  if xy[1] then
-    xy = { x = xy[1], y = xy[2] }
+-- Hue A19 bulbs
+local GamutB = {
+  XYPoint(0.675, 0.322),
+  XYPoint(0.4091, 0.518),
+  XYPoint(0.167, 0.04),
+}
+
+-- Hue BR30, A19 (Gen 3), Hue Go, LightStrips plus
+local GamutC = {
+  XYPoint(0.692, 0.308),
+  XYPoint(0.17, 0.7),
+  XYPoint(0.153, 0.048),
+}
+
+local GamutD = { 
+  XYPoint(1.0, 0),
+  XYPoint(0.0, 1.0),
+  XYPoint(0.0, 0.0)
+} 
+
+local Gamut = { A = GamutA, B = GamutB, C = GamutC, D = GamutD }
+
+local get_distance_between_two_points
+local function member(e,l) for _,x in ipairs(l) do if e==x then return true end end end
+
+local function get_light_gamut(modelId)
+-- Gets the correct color gamut for the provided model id.
+-- Docs: https://developers.meethue.com/develop/hue-api/supported-devices/
+--
+  if member(modelId,{'LST001', 'LLC005', 'LLC006', 'LLC007', 'LLC010', 'LLC011', 'LLC012', 'LLC013', 'LLC014'}) then
+    return GamutA
+  elseif member(modelId,{'LCT001', 'LCT007', 'LCT002', 'LCT003', 'LLM001'}) then
+    return GamutB
+  elseif member(modelId,{'LCT010', 'LCT011', 'LCT012', 'LCT014', 'LCT015', 'LCT016', 'LLC020', 'LST002'}) then
+    return GamutC
   end
-
-  local v0 = {gamut.blue[1] - gamut.red[1], gamut.blue[2] - gamut.red[2]}
-  local v1 = {gamut.green[1] - gamut.red[1], gamut.green[2] - gamut.red[2]}
-  local v2 = {xy.x - gamut.red[1], xy.y - gamut.red[2]}
-
-  local dot00 = (v0[1] * v0[1]) + (v0[2] * v0[2])
-  local dot01 = (v0[1] * v1[1]) + (v0[2] * v1[2])
-  local dot02 = (v0[1] * v2[1]) + (v0[2] * v2[2])
-  local dot11 = (v1[1] * v1[1]) + (v1[2] * v1[2])
-  local dot12 = (v1[1] * v2[1]) + (v1[2] * v2[2])
-
-  local invDenom = 1 / (dot00 * dot11 - dot01 * dot01)
-
-  local u = (dot11 * dot02 - dot01 * dot12) * invDenom
-  local v = (dot00 * dot12 - dot01 * dot02) * invDenom
-
-  return ((u >= 0) and (v >= 0) and (u + v < 1));
 end
 
-local function getClosestColor(xy, gamut)
+local function ColorHelper(gamut)
+  local self = {}
+  gamut = gamut or "B"
+  gamut = Gamut[gamut]
 
-  local function getLineDistance(pointA,pointB)
-    return math.sqrt(math.pow(pointB.x - pointA.x,2), math.pow(pointB.y - pointA.y,2))
+  self.Red = gamut[1]
+  self.Lime = gamut[2]
+  self.Blue = gamut[3]
+
+  local function cross_product(p1, p2)
+-- Returns the cross product of two XYPoints.
+    return (p1.x * p2.y - p1.y * p2.x)
   end
 
-  local function getClosestPoint(xy, pointA, pointB) 
-    local xy2a = {xy.x - pointA.x, xy.y - pointA.y}
-    local a2b = {pointB.x - pointA.x, pointB.y - pointA.y}
-    local a2bSqr = math.pow(a2b[1],2) + math.pow(a2b[2],2)
-    local xy2a_dot_a2b = xy2a[1] * a2b[1] + xy2a[2] * a2b[2]
-    local t = xy2a_dot_a2b /a2bSqr
+  local function check_point_in_lamps_reach(p)
+-- Check if the provided XYPoint can be recreated by a Hue lamp.
+    local v1 = XYPoint(self.Lime.x - self.Red.x, self.Lime.y - self.Red.y)
+    local v2 = XYPoint(self.Blue.x - self.Red.x, self.Blue.y - self.Red.y)
 
-    return { x = pointA.x + a2b[1] * t, y = pointA.y + a2b[2] * t }
+    local q = XYPoint(p.x - self.Red.x, p.y - self.Red.y)
+    local s = cross_product(q, v2) / cross_product(v1, v2)
+    local t = cross_product(v1, q) / cross_product(v1, v2)
+
+    return (s >= 0.0) and (t >= 0.0) and (s + t <= 1.0)
   end
 
-  local greenBlue = {
-    a = { x = gamut.green[1], y = gamut.green[2] },
-    b = { x = gamut.blue[1],  y = gamut.blue[2] }
-  }
-  local greenRed = {
-    a = { x = gamut.green[1], y = gamut.green[2] },
-    b = { x = gamut.red[1],   y = gamut.red[2] }
-  }
-  local blueRed = {
-    a = { x = gamut.red[1],   y = gamut.red[2] },
-    b = { x = gamut.blue[1],  y = gamut.blue[2] }
-  }
+  local function get_closest_point_to_line(A, B, P)
+-- Find the closest point on a line. This point will be reproducible by a Hue lamp
+    local AP = XYPoint(P.x - A.x, P.y - A.y)
+    local AB = XYPoint(B.x - A.x, B.y - A.y)
+    local ab2 = AB.x * AB.x + AB.y * AB.y
+    local ap_ab = AP.x * AB.x + AP.y * AB.y
+    local t = ap_ab / ab2
 
-  local closestColorPoints = {
-    greenBlue = getClosestPoint(xy,greenBlue.a,greenBlue.b),
-    greenRed = getClosestPoint(xy,greenRed.a,greenRed.b),
-    blueRed = getClosestPoint(xy,blueRed.a,blueRed.b)
-  }
-
-  local distance = {
-    greenBlue = getLineDistance(xy,closestColorPoints.greenBlue),
-    greenRed = getLineDistance(xy,closestColorPoints.greenRed),
-    blueRed = getLineDistance(xy,closestColorPoints.blueRed)
-  };
-
-  local closestDistance,closestColor
-  for p,_ in pairs(distance) do
-    if closestDistance == nil then
-      closestDistance = distance[p]
-      closestColor = p
+    if t < 0.0 then
+      t = 0.0
+    elseif t > 1.0 then
+      t = 1.0
     end
-    if closestDistance > distance[p] then
-      closestDistance = distance[p]
-      closestColor = p
+
+    return XYPoint(A.x + AB.x * t, A.y + AB.y * t)
+  end
+
+  local function get_closest_point_to_point(xy_point)
+-- Color is unreproducible, find the closest point on each line in the CIE 1931 'triangle'.
+    local pAB = get_closest_point_to_line(self.Red, self.Lime, xy_point)
+    local pAC = get_closest_point_to_line(self.Blue, self.Red, xy_point)
+    local pBC = get_closest_point_to_line(self.Lime, self.Blue, xy_point)
+
+    -- Get the distances per point and see which point is closer to our Point.
+    local dAB = get_distance_between_two_points(xy_point, pAB)
+    local dAC = get_distance_between_two_points(xy_point, pAC)
+    local dBC = get_distance_between_two_points(xy_point, pBC)
+
+    local lowest = dAB
+    local closest_point = pAB
+
+    if (dAC < lowest) then
+      lowest = dAC
+      closest_point = pAC
     end
-  end
-  return  closestColorPoints[closestColor]
-end
 
-local function rgb2xy(red, green, blue, gamut)
-  local function getGammaCorrectedValue(value)
-    return (value > 0.04045) and math.pow((value + 0.055) / (1.0 + 0.055), 2.4) or (value / 12.92)
-  end
-  local colorGamut = GamutRanges[gamut]
+    if (dBC < lowest) then
+      lowest = dBC
+      closest_point = pBC
+    end
 
-  red = getGammaCorrectedValue(parseFloat(red / 255))
-  green = getGammaCorrectedValue(parseFloat(green / 255))
-  blue = getGammaCorrectedValue(parseFloat(blue / 255))
+    -- Change the xy value to a value which is within the reach of the lamp.
+    local cx = closest_point.x
+    local cy = closest_point.y
 
-  local x = red * 0.649926 + green * 0.103455 + blue * 0.197109
-  local y = red * 0.234327 + green * 0.743075 + blue * 0.022598
-  local z = red * 0.0000000 + green * 0.053077 + blue * 1.035763
-
-  local xy = { x = x / (x + y + z), y = y / (x + y + z) }
-
-  if not xyIsInGamutRange(xy, colorGamut) then
-    xy = getClosestColor(xy, colorGamut)
+    return XYPoint(cx, cy)
   end
 
-  return xy;
-end
-
-local function xyb2rgb(x,y,bri)
-  local function getReversedGammaCorrectedValue(value)
-    return value <= 0.0031308 and 12.92 * value or (1.0 + 0.055) * math.pow(value, (1.0 / 2.4)) - 0.055
+  function get_distance_between_two_points(one, two)
+-- Returns the distance between two XYPoints.
+    local dx = one.x - two.x
+    local dy = one.y - two.y
+    return math.sqrt(dx * dx + dy * dy)
   end
 
-  local xy = { x = x, y = y }
+  local function get_xy_point_from_rgb(red_i, green_i, blue_i)
+-- Returns an XYPoint object containing the closest available CIE 1931 x, y coordinates based on the RGB input values
 
-  local z = 1.0 - xy.x - xy.y
-  local Y = bri / 255
-  local X = (Y / xy.y) * xy.x
-  local Z = (Y / xy.y) * z
-  local r = X * 1.656492 - Y * 0.354851 - Z * 0.255038
-  local g = -X * 0.707196 + Y * 1.655397 + Z * 0.036152
-  local b =  X * 0.051713 - Y * 0.121364 + Z * 1.011530
+    local red = red_i / 255.0
+    local green = green_i / 255.0
+    local blue = blue_i / 255.0
 
-  r = getReversedGammaCorrectedValue(r)
-  g = getReversedGammaCorrectedValue(g)
-  b = getReversedGammaCorrectedValue(b)
+    local r = (red > 0.04045) and ((red + 0.055) / (1.0 + 0.055))^2.4 or (red / 12.92)
+    local g = (green > 0.04045) and ((green + 0.055) / (1.0 + 0.055))^2.4 or (green / 12.92)
+    local b = (blue > 0.04045) and ((blue + 0.055) / (1.0 + 0.055))^2.4 or (blue / 12.92)
 
-  local red = parseInt(r * 255) > 255 and 255 or parseInt(r * 255)
-  local green = parseInt(g * 255) > 255 and 255 or parseInt(g * 255)
-  local blue = parseInt(b * 255) > 255 and 255 or parseInt(b * 255)
+    local X = r * 0.664511 + g * 0.154324 + b * 0.162028
+    local Y = r * 0.283881 + g * 0.668433 + b * 0.047685
+    local Z = r * 0.000088 + g * 0.072310 + b * 0.986039
 
-  return {r = math.abs(red), g = math.abs(green), b = math.abs(blue)}
+    local cx = X / (X + Y + Z)
+    local cy = Y / (X + Y + Z)
+
+    -- Check if the given XY value is within the colourreach of our lamps.
+    local xy_point = XYPoint(cx, cy)
+    local in_reach = check_point_in_lamps_reach(xy_point)
+
+    if not in_reach then
+      xy_point = get_closest_point_to_point(xy_point)
+    end
+
+    return xy_point
+  end
+
+  local function get_rgb_from_xy_and_brightness(x, y, bri)
+    bri=bri or 1.0
+-- Inverse of `get_xy_point_from_rgb`. Returns (r, g, b) for given x, y values.
+-- Implementation of the instructions found on the Philips Hue iOS SDK docs: http://goo.gl/kWKXKl
+
+-- The xy to color conversion is almost the same, but in reverse order.
+-- Check if the xy value is within the color gamut of the lamp.
+-- If not continue with step 2, otherwise step 3.
+-- We do this to calculate the most accurate color the given light can actually do.
+    local xy_point = XYPoint(x, y)
+
+    if not check_point_in_lamps_reach(xy_point) then
+      -- Calculate the closest point on the color gamut triangle
+      -- and use that as xy value See step 6 of color to xy.
+      xy_point = get_closest_point_to_point(xy_point)
+    end
+
+    -- Calculate XYZ values Convert using the following formulas:
+    local Y = bri
+    local X = (Y / xy_point.y) * xy_point.x
+    local Z = (Y / xy_point.y) * (1 - xy_point.x - xy_point.y)
+
+    -- Convert to RGB using Wide RGB D65 conversion
+    local r = X * 1.656492 - Y * 0.354851 - Z * 0.255038
+    local g = -X * 0.707196 + Y * 1.655397 + Z * 0.036152
+    local b = X * 0.051713 - Y * 0.121364 + Z * 1.011530
+
+    -- Apply reverse gamma correction
+--  r, g, b = map(
+--    lambda x: (12.92 * x) if (x <= 0.0031308) else ((1.0 + 0.055) * pow(x, (1.0 / 2.4)) - 0.055),
+--    [r, g, b]
+--  )
+    r = (r <= 0.0031308) and (12.92 * r) or ((1.0 + 0.055) * r^(1.0 / 2.4) - 0.055)
+    g = (g <= 0.0031308) and (12.92 * g) or ((1.0 + 0.055) * g^(1.0 / 2.4) - 0.055)
+    b = (b <= 0.0031308) and (12.92 * b) or ((1.0 + 0.055) * b^(1.0 / 2.4) - 0.055)
+
+    -- Bring all negative components to zero
+    r, g, b = r < 0 and 0 or r, g < 0 and 0 or g, b < 0 and 0 or b
+
+    -- If one component is greater than 1, weight components by that value.
+    local max_component = math.max(r, g, b)
+    if max_component > 1 then
+      r, g, b = r / max_component, g / max_component, b / max_component
+    end
+
+    r, g, b = math.floor(r*255),math.floor(g*255),math.floor(b*255) 
+
+    -- Convert the RGB values to your color object The rgb values from the above formulas are between 0.0 and 1.0.
+    return r, g, b
+  end
+
+  self.rgb2xy =  get_xy_point_from_rgb -- (r,g,b) -- 0-255,0-255,0-255
+  self.xyb2rgb = get_rgb_from_xy_and_brightness  -- (x,y,bri) -- 0-1.0,0-1.0,0-1.0
+  self.getGamutFromModel = get_light_gamut -- (modelId)
+  return self
 end
 
 local function round(x) return math.floor(x+0.5) end
@@ -203,12 +289,9 @@ end
 --- rgb2xy(r,g,b,gamut) => { x=x, y=y }
 fibaro = fibaro or {}
 fibaro.colorConverter = { 
-  xyb2rgb=xyb2rgb, 
-  rgb2xy=rgb2xy,
+  xoConverter = ColorHelper,
+--  xyb2rgb=xyb2rgb, 
+--  rgb2xy=rgb2xy,
   hsb2rgb = hsb2rgb,
   rgb2hsb = rgb2hsb
 }
-
-local h,s,b = xyb2hsb(0.5,0.6,200)
-local b = hsb2xy(h,s,b)
-n = b

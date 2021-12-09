@@ -125,7 +125,9 @@ function ServiceType.light(id,s,_)
   function s:onEvent(ev) self.on = ev.on notifyParents(s,'on',self.on) end
   function s:colorEvent(ev) self.xy = ev.xy notifyParents(s,'colorXY',self.xy) end
   function s:dimEvent(ev) self.brightness = ev.brightness notifyParents(s,'brightness',self.brightness) end
-  function s:colorTempEvent(ev) self.colorTemp = ev.mirek notifyParents(s,'colorTemp',self.colorTemp) end
+  function s:colorTempEvent(ev) 
+    if ev.mirek_valid then self.colorTemp = ev.mirek notifyParents(s,'colorTemp',self.colorTemp) end
+  end
   function s:turnOn() 
     huePUT(self.path,{on={on=true}}) 
     if OPTIMISTIC then self:onEvent({on=true}) end
@@ -146,6 +148,17 @@ function ServiceType.light(id,s,_)
     huePUT(self.path,{color={xy=xy}})
     if OPTIMISTIC then self:colorEvent({xy=xy}) end
   end
+  function s:setRGB(r,g,b) 
+    local xy = fibaro.colorConverter.rgb2xy(r,g,b)
+    self:setXY(xy)
+  end
+  function s:getXY() return self.xy end
+  function s:getRGB() 
+    return fibaro.colorConverter.xyb2rgb(self.xy.x,self.xy.y,255*(self.brightness/100))
+  end
+  function s:getBrigthness() return self.brightness end
+  function s:getColorTemp() return self.colorTemp end
+  function s:getOn() return self.on end
   function s:toString() return fmt("Light:%s %s",id,self.on and "ON" or "OFF") end
   return  s
 end
@@ -184,16 +197,16 @@ function ServiceType.button(id,s,d)
   s.parents[1].buttons[s.buttonId]=s
   function s:event(ev) 
     if ev.button then self.lastEvent=ev.button.last_event notifyParents(s,'button',{event=self.lastEvent,id=s.buttonId}) end end
-  function s:toString() return fmt("Button(%s):%s",s.buttonId,id) end
-  return  s
-end
+    function s:toString() return fmt("Button(%s):%s",s.buttonId,id) end
+    return  s
+  end
 
-function ServiceType.temperature(id,s,_)
-  setParentService("tempService",s)
-  function s:event(ev) self.temp = ev.temperature.temperature notifyParents(s,'temp',self.temp)  end
-  function s:toString() return fmt("Temp:%s",id) end
-  return  s
-end
+  function ServiceType.temperature(id,s,_)
+    setParentService("tempService",s)
+    function s:event(ev) self.temp = ev.temperature.temperature notifyParents(s,'temp',self.temp)  end
+    function s:toString() return fmt("Temp:%s",id) end
+    return  s
+  end
 
 --[[
 {
@@ -204,15 +217,15 @@ end
 "id":"a7295dae-379b-4d61-962f-6f9ad9426eda"
 }
 --]]
-function ServiceType.light_level(id,s,_)
-  setParentService("luxService",s)
-  function s:event(ev) 
-    self.lux = math.floor(0.5+math.pow(10, (ev.light.light_level - 1) / 10000)) 
-    notifyParents(s,'lux',self.lux) 
+  function ServiceType.light_level(id,s,_)
+    setParentService("luxService",s)
+    function s:event(ev) 
+      self.lux = math.floor(0.5+math.pow(10, (ev.light.light_level - 1) / 10000)) 
+      notifyParents(s,'lux',self.lux) 
+    end
+    function s:toString() return fmt("Lux:%s",id) end
+    return  s
   end
-  function s:toString() return fmt("Lux:%s",id) end
-  return  s
-end
 
 --[[
 {
@@ -222,12 +235,12 @@ end
 "id_v1":"/sensors/6","id":"6356a5c3-e5b7-455c-bf54-3af2ac511fe6"
 }
 --]]
-function ServiceType.motion(id,s,_)
-  setParentService("motionService",s)
-  function s:event(ev) self.motion=ev.motion.motion notifyParents(s,'motion',self.motion)  end
-  function s:toString() return fmt("Motion:%s",id) end
-  return  s
-end
+  function ServiceType.motion(id,s,_)
+    setParentService("motionService",s)
+    function s:event(ev) self.motion=ev.motion.motion notifyParents(s,'motion',self.motion)  end
+    function s:toString() return fmt("Motion:%s",id) end
+    return  s
+  end
 
 --[[
 {
@@ -238,12 +251,12 @@ end
 "id":"d6bc1f77-4603-4036-ae5f-28b16eefe4b5"
 }
 --]]
-function ServiceType.device_power(id,s,_)
-  setParentService("batteryService",s)
-  function s:event(ev) self.battery=ev.power_state.battery_level notifyParents(s,'battery',self.battery) end
-  function s:toString() return fmt("Battery:%s",id) end
-  return  s
-end
+  function ServiceType.device_power(id,s,_)
+    setParentService("batteryService",s)
+    function s:event(ev) self.battery=ev.power_state.battery_level notifyParents(s,'battery',self.battery) end
+    function s:toString() return fmt("Battery:%s",id) end
+    return  s
+  end
 
 --[[
 {
@@ -255,182 +268,184 @@ end
 }
 --]]
 
-function ServiceType.zigbee_connectivity(id,s,_)
-  setParentService("connectivityService",s)
-  function s:event(ev) self.connected = ev.status=='connected' notifyParents(s,'connected',self.connected)  end
-  function s:toString() return fmt("Connectivity:%s",id) end
-  return  s
-end
+  function ServiceType.zigbee_connectivity(id,s,_)
+    setParentService("connectivityService",s)
+    function s:event(ev) self.connected = ev.status=='connected' notifyParents(s,'connected',self.connected)  end
+    function s:toString() return fmt("Connectivity:%s",id) end
+    return  s
+  end
 
-function ServiceType.entertainment(id,s,_)
-  function s:event(_) --[[print(s.type,s.id,json.encode(ev))--]] end
-  function s:toString() return fmt("Entertainment:%s",id) end
-  return  s
-end
+  function ServiceType.entertainment(id,s,_)
+    function s:event(_) --[[print(s.type,s.id,json.encode(ev))--]] end
+    function s:toString() return fmt("Entertainment:%s",id) end
+    return  s
+  end
 
-local function makeService(parent,id,typ)
-  if typ == 'bridge' then return end
-  local d = ResourceMap[id]
-  if d then return addParent(d,parent) end
-  d = Resources[id]
-  local service = { parents = { parent } }
-  service.type = typ
-  if ServiceType[typ] then 
-    ServiceType[typ](id,service,d)
-    service:event(d)
-    return service
-  else WARNING("Unknown type:%s",typ) end
-end
+  local function makeService(parent,id,typ)
+    if typ == 'bridge' then return end
+    local d = ResourceMap[id]
+    if d then return addParent(d,parent) end
+    d = Resources[id]
+    local service = { parents = { parent } }
+    service.type = typ
+    if ServiceType[typ] then 
+      ServiceType[typ](id,service,d)
+      service:event(d)
+      return service
+    else WARNING("Unknown type:%s",typ) end
+  end
 
-local function addProps(d)
-  local listeners = {}
-  function d:addListener(prop,f) listeners[prop] = f end
-  function d:setProp(prop,newValue)
-    if not listeners[prop] then d[prop]=newValue return end
-    local oldValue = d[prop]
-    if type(newValue)=='table' then -- Handle table values
-      if type(oldValue) == 'table' then
-        for k,v in pairs(newValue) do if oldValue[k]~=v then return end end
+  local function addProps(d)
+    local listeners = {}
+    function d:addListener(prop,f) listeners[prop] = f end
+    function d:setProp(prop,newValue)
+      if not listeners[prop] then d[prop]=newValue return end
+      local oldValue = d[prop]
+      if type(newValue)=='table' then -- Handle table values
+        if type(oldValue) == 'table' then
+          local flag = true
+          for k,v in pairs(newValue) do if oldValue[k]~=v then flag=false break end end
+          if flag then return end
+        end
+      elseif newValue==oldValue then return end
+      d[prop]=newValue
+      listeners[prop](prop,newValue)
+    end
+  end
+
+  local function makeGroup(id,d)
+    local group = { id = id, name=d.metadata.name, children = {} }
+    group.type = d.type
+    addProps(group)
+    function group:toString()
+      local b = makePrintBuffer()
+      b:printf("Group:%s '%s' - %s - %s\n",self.id,self.name,self.type) 
+      b:printf(" Services:\n") 
+      for _,s in pairs(self.children) do
+        b:printf("  %s\n",s:toString()) 
       end
-    elseif newValue==oldValue then return end
-    d[prop]=newValue
-    listeners[prop](prop,newValue)
-  end
-end
-
-local function makeGroup(id,d)
-  local group = { id = id, name=d.metadata.name, children = {} }
-  group.type = d.type
-  addProps(group)
-  function group:toString()
-    local b = makePrintBuffer()
-    b:printf("Group:%s '%s' - %s - %s\n",self.id,self.name,self.type) 
-    b:printf(" Services:\n") 
-    for _,s in pairs(self.children) do
-      b:printf("  %s\n",s:toString()) 
+      return b:toString()
     end
-    return b:toString()
-  end
-  for _,s in ipairs(d.services) do
-    group.children[s.rid] = makeService(group,s.rid,s.rtype)
-    ResourceMap[s.rid] = group.children[s.rid]
-    if s.rtype=='grouped_light' then
-      group.group = group.children[s.rid]
+    for _,s in ipairs(d.services) do
+      group.children[s.rid] = makeService(group,s.rid,s.rtype)
+      ResourceMap[s.rid] = group.children[s.rid]
+      if s.rtype=='grouped_light' then
+        group.group = group.children[s.rid]
+      end
     end
+    return group
   end
-  return group
-end
 
-local function makeDevice(id,d)
-  local device = { id = id, name=d.metadata.name, children = {} }
-  device.type = d.product_data.product_name
-  device.model = d.product_data.model_id
-  addProps(device)
-  function device:toString()
-    local b = makePrintBuffer()
-    b:printf("Device:%s '%s' - %s - %s\n",self.id,self.name,self.type,self.model) 
-    b:printf(" Services:\n") 
-    for _,s in pairs(self.children) do
-      b:printf("  %s\n",s:toString()) 
+  local function makeDevice(id,d)
+    local device = { id = id, name=d.metadata.name, children = {} }
+    device.type = d.product_data.product_name
+    device.model = d.product_data.model_id
+    addProps(device)
+    function device:toString()
+      local b = makePrintBuffer()
+      b:printf("Device:%s '%s' - %s - %s\n",self.id,self.name,self.type,self.model) 
+      b:printf(" Services:\n") 
+      for _,s in pairs(self.children) do
+        b:printf("  %s\n",s:toString()) 
+      end
+      return b:toString()
     end
-    return b:toString()
+    for _,s in ipairs(d.services or {}) do
+      device.children[s.rid] = makeService(device,s.rid,s.rtype)
+      ResourceMap[s.rid] = device.children[s.rid]
+    end
+    return device
   end
-  for _,s in ipairs(d.services or {}) do
-    device.children[s.rid] = makeService(device,s.rid,s.rtype)
-    ResourceMap[s.rid] = device.children[s.rid]
-  end
-  return device
-end
 
-function EVENTS.STARTUP(_) hueGET("/api/config",'HUB_VERSION') end
+  function EVENTS.STARTUP(_) hueGET("/api/config",'HUB_VERSION') end
 
-function EVENTS.HUB_VERSION(ev)
-  if ev.error then 
-    ERROR("%s",ev.error)
-  else
-    local res = ev.result
-    if res.swversion >= v2 then
-      DEBUG('info',"V2 api available (%s)",res.swversion)
-      post('REFRESH_RESOURCES')
+  function EVENTS.HUB_VERSION(ev)
+    if ev.error then 
+      ERROR("%s",ev.error)
     else
-      WARNING("V2 api not available (%s)",res.swversion)
+      local res = ev.result
+      if res.swversion >= v2 then
+        DEBUG('info',"V2 api available (%s)",res.swversion)
+        post('REFRESH_RESOURCES')
+      else
+        WARNING("V2 api not available (%s)",res.swversion)
+      end
     end
   end
-end
 
-function EVENTS.REFRESH_DEVICES(_) hueGET("/clip/v2/resource",'REFRESHED_DEVICES') end
+  function EVENTS.REFRESH_DEVICES(_) hueGET("/clip/v2/resource",'REFRESHED_DEVICES') end
 
-function EVENTS.REFRESH_RESOURCES(_) hueGET("/clip/v2/resource",'REFRESHED_RESOURCES') end
+  function EVENTS.REFRESH_RESOURCES(_) hueGET("/clip/v2/resource",'REFRESHED_RESOURCES') end
 
-function EVENTS.REFRESHED_RESOURCES(ev)
-  if ev.error then 
-    ERROR("/clip/v2/resource %s",ev.error)
-    ERROR("Retry in %ss",err_retry)
-    post('REFRESH_RESOURCES',1000*err_retry)
-  end
-  for _,d in ipairs(ev.result.data or {}) do
-    Resources[d.id]=d
-    ResourcesType[d.type] = ResourcesType[d.type] or {}
-    ResourcesType[d.type][d.id]=d
-  end
-  for id,d in pairs(Devices) do 
-    if (devFilter == nil or devFilter[d.id]) then Devices[id]=makeDevice(id,d) else Devices[id]=nil end
-  end
-  for id,d in pairs(Rooms) do 
-    if (devFilter == nil or devFilter[d.id]) then Rooms[id]=makeGroup(id,d) else Rooms[id]=nil end
-  end
-  for id,d in pairs(Zones) do 
-    if (devFilter == nil or devFilter[d.id]) then Zones[id]=makeGroup(id,d) else Zones[id]=nil end
-  end
-  if callBack then callBack() callBack=nil end
-end
-
-HUEv2Engine = { debug=debug }
-function HUEv2Engine:initEngine(ip,key,cb)
-  devFilter = HUEv2Engine.deviceFilter
-  app_key = key
-  url =  fmt("https://%s:443",ip)
-  DEBUG('info',"HUEv2Engine v%s",version)
-  DEBUG('info',"Hub url: %s",url)
-  callBack = function() fetchEvents() if cb then cb() end end
-  post('STARTUP')
-end
-function HUEv2Engine:getResources() return Resources end
-function HUEv2Engine:getDevices() return Devices end
-function HUEv2Engine:getDevice(uid) return Devices[uid] end
-function HUEv2Engine:getLights()
-end
-function HUEv2Engine:getRooms()
-end
-function HUEv2Engine:getZones()
-end
-function HUEv2Engine:getMotions()
-end
-function HUEv2Engine:getSwitches()
-end
-function HUEv2Engine:getTemperatures()
-end
-
-function HUEv2Engine:dumpDevices()
-  local  r = makePrintBuffer("\n")
-  for _,d in pairs(HUEv2Engine:getDevices()) do
-    r:out(d:toString(),"\n")
-  end
-  print(r:toString())
-end
-
-function HUEv2Engine:listAllDevices()
-  local  r = makePrintBuffer("\n")
-  r:out("HueTable = {\n")
-  for _,d in pairs(HUEv2Engine:getResources()) do
-    if d.type == 'device' then
-      local name = d.metadata and  d.metadata.name or ""
-      local pd = d.product_data or {}
-      local typ = pd.product_name or ""
-      local model = pd.model_id or ""
-      r:printf("   ['%s'] = {name='%s', type='%s', model='%s'},",d.id,name,typ,model)
+  function EVENTS.REFRESHED_RESOURCES(ev)
+    if ev.error then 
+      ERROR("/clip/v2/resource %s",ev.error)
+      ERROR("Retry in %ss",err_retry)
+      post('REFRESH_RESOURCES',1000*err_retry)
     end
+    for _,d in ipairs(ev.result.data or {}) do
+      Resources[d.id]=d
+      ResourcesType[d.type] = ResourcesType[d.type] or {}
+      ResourcesType[d.type][d.id]=d
+    end
+    for id,d in pairs(Devices) do 
+      if (devFilter == nil or devFilter[d.id]) then Devices[id]=makeDevice(id,d) else Devices[id]=nil end
+    end
+    for id,d in pairs(Rooms) do 
+      if (devFilter == nil or devFilter[d.id]) then Rooms[id]=makeGroup(id,d) else Rooms[id]=nil end
+    end
+    for id,d in pairs(Zones) do 
+      if (devFilter == nil or devFilter[d.id]) then Zones[id]=makeGroup(id,d) else Zones[id]=nil end
+    end
+    if callBack then callBack() callBack=nil end
   end
-  r:out("}\n")
-  print(r:toString())
-end
+
+  HUEv2Engine = { debug=debug }
+  function HUEv2Engine:initEngine(ip,key,cb)
+    devFilter = HUEv2Engine.deviceFilter
+    app_key = key
+    url =  fmt("https://%s:443",ip)
+    DEBUG('info',"HUEv2Engine v%s",version)
+    DEBUG('info',"Hub url: %s",url)
+    callBack = function() fetchEvents() if cb then cb() end end
+    post('STARTUP')
+  end
+  function HUEv2Engine:getResources() return Resources end
+  function HUEv2Engine:getDevices() return Devices end
+  function HUEv2Engine:getDevice(uid) return Devices[uid] end
+  function HUEv2Engine:getLights()
+  end
+  function HUEv2Engine:getRooms()
+  end
+  function HUEv2Engine:getZones()
+  end
+  function HUEv2Engine:getMotions()
+  end
+  function HUEv2Engine:getSwitches()
+  end
+  function HUEv2Engine:getTemperatures()
+  end
+
+  function HUEv2Engine:dumpDevices()
+    local  r = makePrintBuffer("\n")
+    for _,d in pairs(HUEv2Engine:getDevices()) do
+      r:out(d:toString(),"\n")
+    end
+    print(r:toString())
+  end
+
+  function HUEv2Engine:listAllDevices()
+    local  r = makePrintBuffer("\n")
+    r:out("HueTable = {\n")
+    for _,d in pairs(HUEv2Engine:getResources()) do
+      if d.type == 'device' then
+        local name = d.metadata and  d.metadata.name or ""
+        local pd = d.product_data or {}
+        local typ = pd.product_name or ""
+        local model = pd.model_id or ""
+        r:printf("   ['%s'] = {name='%s', type='%s', model='%s'},\n",d.id,name,typ,model)
+      end
+    end
+    r:out("}\n")
+    print(r:toString())
+  end
