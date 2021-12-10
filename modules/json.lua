@@ -101,7 +101,7 @@ end
 
 function json.encode(val,...)
   local extras = {...}
-  assert(#extras==0,"Too many arguments to json.encode?")
+  if #extras>0 then error("Too many arguments to json.encode?",2) end
   local res = {pcall(encode,val)}
   if res[1] then return select(2,table.unpack(res))
   else 

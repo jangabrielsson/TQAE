@@ -28,61 +28,81 @@ local HueSwitchUID = 'a007e50b-0bdd-4e48-bee0-97636d57285a'
 local HueMotionUID = '9222ea53-37a6-4ac0-b57d-74bca1cfa23f'
 local HueLightUID = '3ab27084-d02f-44b9-bd56-70ea41163cb6'
 
+local fmt = string.format
 local HUE
 
-class 'Switch'()
-function Switch:__init(uid)
+class 'HueDevice'()
+function HueDevice:__init(uid)
   self.dev =  HUE:getDevice(uid)
+  self.dev:addListener('connected',function(_,val)
+      self:debugf("connected=%s",val)
+    end)
+  self.dev:addListener('battery',function(_,val)
+      self:debugf("battery=%s",val)
+    end)
+end
+function HueDevice:debugf(str,...) quickApp:debugf("%s:%s",self.dev.name,fmt(str,...)) end
+
+class 'Switch'(HueDevice)
+function Switch:__init(uid)
+  HueDevice.__init(self,uid)
   self.dev:addListener('button',function(_,val)
-      quickApp:debugf("button(%s)=%s",val.id,val.event)
+      self:debugf("button(%s)=%s",val.id,val.event)
     end)
 end
 
-class 'MotionDevice'()
+class 'MotionDevice'(HueDevice)
 function MotionDevice:__init(uid)
-  self.dev =  HUE:getDevice(uid)
+  HueDevice.__init(self,uid)
   self.dev:addListener('motion',function(_,val)
-      quickApp:debugf("motion=%s",val)
+      self:debugf("motion=%s",val)
     end)
   self.dev:addListener('lux',function(_,val)
-      quickApp:debugf("lux=%s",val)
+      self:debugf("lux=%s",val)
     end)
   self.dev:addListener('temp',function(_,val)
-      quickApp:debugf("temp=%s",val)
+      self:debugf("temp=%s",val)
     end)
 end
 
-class 'ColorLight'()
+class 'ColorLight'(HueDevice)
 function ColorLight:__init(uid)
-  self.dev =  HUE:getDevice(uid)
-  self.dev:addListener('on',function(_,val)
-      quickApp:debugf("on=%s",val)
+  HueDevice.__init(self,uid)
+  local dev = self.dev
+  dev:addListener('on',function(_,val)
+      self:debugf("on=%s",val)
     end)
-  self.dev:addListener('brightness',function(_,val)
-      quickApp:debugf("brightness=%s",val)
+  dev:addListener('brightness',function(_,val)
+      self:debugf("brightness=%s",val)
     end)  
-  self.dev:addListener('colorTemp',function(_,val)
-      quickApp:debugf("colorTemp=%s",val)
+  dev:addListener('colorTemp',function(_,val)
+      self:debugf("colorTemp=%s",val)
     end)
-  self.dev:addListener('colorXY',function(_,val)
-      quickApp:debugf("colorXY=%s",json.encode(val))
-      quickApp:debugf("RGB=%s",json.encode(self.dev.lightService:getRGB()))
-    end)
-  self.dev:addListener('connected',function(_,val)
-      quickApp:debugf("connected=%s",val)
+  dev:addListener('colorXY',function(_,val)
+      self:debugf("colorXY=%s",json.encode(val))
+      self:debugf("RGB=%s",json.encode({dev.lightService:getRGB()}))
+      local r,g,b = self.dev.lightService:getRGB()
+      self:debugf("xy=%s",json.encode(fibaro.colorConverter.xy("C").rgb2xy(r,g,b)))
     end)
 end
-function ColorLight:turnOn() end
-function ColorLight:turnOff() end
-function ColorLight:setValue(val) end
-function ColorLight:setTemperature(val) end
-function ColorLight:setColor(color) end
+function ColorLight:isOn() return self.dev:isOn() end
+function ColorLight:turnOn() return self.dev:turnOn() end
+function ColorLight:turnOff() return self.dev:turnOff() end
+function ColorLight:getValue() return self.dev:getValue() end                 -- Brightness 0-100
+function ColorLight:setValue(value) return self.dev:setValue(value) end
+function ColorLight:getTemperature() return self.dev:getTemperature() end     -- 0-255
+function ColorLight:setTemperature(temp) return self.dev:setTemperature(temp) end
+function ColorLight:getColor() return self.dev:getColor() end                 -- 0-255,0-255,0-255
+function ColorLight:setColor(color) return self.dev:setColor(color) end
+function ColorLight:getXY() return self.dev:getXY() end                       -- 0-1.0,0-1.0
+function ColorLight:setXY(x,y) return self.dev:setXY(x,y) end
+
 
 local function main()
   local switch = Switch(HueSwitchUID)
   local motion = MotionDevice(HueMotionUID)
   local light = ColorLight(HueLightUID)
-  
+
   setTimeout( function () light.dev.lightService:setRGB(127,127,200) end,2000)
 end
 

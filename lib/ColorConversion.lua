@@ -275,21 +275,11 @@ local function rgb2hsb(r,g,b) -- 0-255,0-255,0-255
   return math.floor(65535*h/360+0.5), math.floor(0.5+254*s), math.floor(0.5+254*max)
 end
 
-local function xyb2hsb(x,y,b)
-  local rgb = xyb2rgb(x,y,b)
-  return rgb2hsb(rgb.r,rgb.g,rgb.b)
-end
-
-local function hsb2xy(h,s,b)
-  local rgb = hsb2rgb(h,s,b)
-  return rgb2xy(rgb.r,rgb.g,rgb.b)
-end
-
 --- xyb2rgb(x,y,b) => { r=r, g=g, b=b }
 --- rgb2xy(r,g,b,gamut) => { x=x, y=y }
 fibaro = fibaro or {}
 fibaro.colorConverter = { 
-  xoConverter = ColorHelper,
+  xy = ColorHelper,   --
 --  xyb2rgb=xyb2rgb, 
 --  rgb2xy=rgb2xy,
   hsb2rgb = hsb2rgb,
