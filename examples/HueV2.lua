@@ -13,7 +13,7 @@ _=loadfile and loadfile("TQAE.lua"){
 -- %%proxy = true
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
---FILE:lib/HUEv2Engine.lua,hueEngine;
+--FILE:lib/HUEv2Engine3.lua,hueEngine;
 --FILE:lib/colorConversion.lua,colorConversion;
 
 local HueTable = {
@@ -22,18 +22,24 @@ local HueTable = {
   ['8a453c82-0072-4223-9c42-f395b5cb0c40']=true, -- Hue smart plug - LOM007
   ['9222ea53-37a6-4ac0-b57d-74bca1cfa23f']=true, -- Hue motion sensor - SML001
   ['a007e50b-0bdd-4e48-bee0-97636d57285a']=true, -- Hue dimmer switch - RWL021
+  ['795959f5-9313-4aae-b930-b178b48249e0']=true, -- Rom guest
+  ['b5f12b5f-20c7-47a5-8535-c7a20fb9e66d']=true, -- Zone kitchen
 }
 
-local HueSwitchUID = 'a007e50b-0bdd-4e48-bee0-97636d57285a'
-local HueMotionUID = '9222ea53-37a6-4ac0-b57d-74bca1cfa23f'
 local HueLightUID = '3ab27084-d02f-44b9-bd56-70ea41163cb6'
+local HueWallSwitch = '932bd43b-d8cd-44bc-b8bd-daaf72ae6f82'
+local HueSmartPlug = '8a453c82-0072-4223-9c42-f395b5cb0c40'
+local HueMotionUID = '9222ea53-37a6-4ac0-b57d-74bca1cfa23f'
+local HueSwitchUID = 'a007e50b-0bdd-4e48-bee0-97636d57285a'
+local HueRoomUID = '795959f5-9313-4aae-b930-b178b48249e0'
+local HueZoneUID = 'b5f12b5f-20c7-47a5-8535-c7a20fb9e66d'
 
 local fmt = string.format
 local HUE
 
 class 'HueDevice'()
 function HueDevice:__init(uid)
-  self.dev =  HUE:getDevice(uid)
+  self.dev =  HUE:getResource(uid)
   self.dev:addListener('connected',function(_,val)
       self:debugf("connected=%s",val)
     end)
@@ -41,13 +47,32 @@ function HueDevice:__init(uid)
       self:debugf("battery=%s",val)
     end)
 end
-function HueDevice:debugf(str,...) quickApp:debugf("%s:%s",self.dev.name,fmt(str,...)) end
+function HueDevice:debugf(str,...) quickApp:debugf("%s:%s",self.dev.rName,fmt(str,...)) end
 
 class 'Switch'(HueDevice)
 function Switch:__init(uid)
   HueDevice.__init(self,uid)
   self.dev:addListener('button',function(_,val)
-      self:debugf("button(%s)=%s",val.id,val.event)
+      self:debugf("button(%s)=%s",val.id,val.value)
+    end)
+end
+
+class 'Room'(HueDevice)
+function Room:__init(uid)
+  HueDevice.__init(self,uid)
+  self.dev:addListener('brightness',function(_,val)
+      self:debugf("brightness=%s",val)
+    end)
+  self.dev:addListener('on',function(_,val)
+      self:debugf("on=%s",val)
+    end)
+end
+
+class 'Zone'(HueDevice)
+function Zone:__init(uid)
+  HueDevice.__init(self,uid)
+  self.dev:addListener('brightness',function(_,val)
+      self:debugf("brightness=%s",val)
     end)
 end
 
@@ -102,8 +127,10 @@ local function main()
   local switch = Switch(HueSwitchUID)
   local motion = MotionDevice(HueMotionUID)
   local light = ColorLight(HueLightUID)
+  local room = Room(HueRoomUID)  
+  local zone = Zone(HueZoneUID)
 
-  setTimeout( function () light.dev.lightService:setRGB(127,127,200) end,2000)
+  --setTimeout(function () light:setXY(HUE.xyColors.green) end,2000)
 end
 
 function QuickApp:onInit()
