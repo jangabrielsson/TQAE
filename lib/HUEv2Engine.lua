@@ -4,14 +4,14 @@
 
 local version = 0.2
 local v2 = "1948086000"
-local debug = { info = true, call=true, event=true, v2api=true, logger=true }
+local debug = { info = true, call=true, event=true, v2api=true, logger=false }
 local OPTIMISTIC = false
 local app_key,url,callBack
 local fmt = string.format
 local err_retry = 3
 local Devices,Rooms,Zones,Scenes,Lights,Buttons,Motions,Temperatures = {},{},{},{},{},{},{},{}
-local devFilter
-local Resources,ResourceMap = {},{}
+local resourceFilter, hueAnnotator
+local Resources = {}
 local ResourcesType = { 
   device = Devices, room = Rooms, zone = Zones, scene = Scenes, 
   light=Lights, button=Buttons, motion=Motions, temperture=Temperatures
@@ -23,6 +23,7 @@ debug.event       -- incoming event from Hue hub
 debug.v2api       -- v2api info (unhandled events etc)
 debug.call        -- http calls to Hue hub
 debug.unknownType -- Unhandled device updates
+debug.logger      -- Logs subscribption events
 --]]
 
 --[[
@@ -113,62 +114,6 @@ end
 }
 --]]
 
-function ServiceType.light(id,s,d)
-  s.props = { on=true, brightness=true, colorTemp=true, colorXY=true }
-  s.actions = {
-    isOn=true, turnOn=true, turnOff=true, getBrightness=true, setBrightness=true,
-    getColorTemp=true, setColorTemp=true, getXY=true, setXY=true, getRGB=true, setRGB=true
-  }
-
-  s.path = "/clip/v2/resource/light/"..id
-  s.id_v1 = d.id_v1
-  s.min_dim = d.dimming and d.dimming.min_dim_level or 0
-  s.gamut = d.color and d.color.gamut_type
-  s.min_mirek = d.color_temperature and d.color_temperature.mirek_schema.mirek_minimum
-  s.max_mirek = d.color_temperature and d.color_temperature.mirek_schema.mirek_maximum
-  if s.gamut then s.rgbConv = fibaro.colorConverter.xy(s.gamut) end
-  function s:event(ev) dispatch(ev,s) end
-  function s:onEvent(ev) self.prop.on = ev.on self:notify({type='on',value=self.prop.on}) end
-  function s:colorEvent(ev) self.prop.colorXY = ev.xy self:notify({type='colorXY',value=self.prop.colorXY}) end
-  function s:dimEvent(ev) self.prop.brightness = ev.brightness self:notify({type='brightness',value=self.prop.brightness}) end
-  function s:colorTempEvent(ev) 
-    if ev.mirek_valid then self.prop.colorTemp = ev.mirek self:notify({type='colorTemp',value=self.prop.colorTemp}) end
-  end
-
-  function s:turnOn() 
-    huePUT(self.path,{on={on=true}}) 
-    if OPTIMISTIC then self:onEvent({on=true}) end
-  end
-  function s:turnOff() 
-    huePUT(self.path,{on={on=false}})
-    if OPTIMISTIC then self:onEvent({on=false}) end
-  end
-  function s:setBrightness(v) 
-    huePUT(self.path,{dimming={brightness=v}}) 
-    if OPTIMISTIC then self:dimEvent({brightness=v}) end
-  end
-  function s:setColorTemp(t) 
-    huePUT(self.path,{color_temperature={mirek=math.floor(t)}})
-    if OPTIMISTIC then self:colorTempEvent({mirek=t}) end
-  end
-  function s:setColorXY(xy) 
-    huePUT(self.path,{color={xy=xy}})
-    if OPTIMISTIC then self:colorEvent({xy=xy}) end
-  end
-  function s:setRGB(r,g,b) 
-    local xy = s.rgbConv.rgb2xy(r,g,b)
-    self:setColorXY(xy)
-  end
-  function s:isOn() return self.prop.on end
-  function s:getXY() return self.prop.colorXY end
-  function s:getRGB() return s.rgbConv.xyb2rgb(self.prop.colorXY.x,self.prop.colorXY.y,self.prop.brightness/100.0) end
-  function s:getBrigthness() return self.prop.brightness end
-  function s:getColorTemp() return self.prop.colorTemp end
-
-  function s:toString() return fmt("Light:%s - %s",id,self.prop.on and "on" or "off") end
-  return  s
-end
-
 --[[
 {
 "id_v1":"/groups/5",
@@ -177,17 +122,6 @@ end
 "id":"39c94b33-7a3d-48e7-8cc1-dc603d401db2"
 }
 --]]
-function ServiceType.grouped_light(id,s,_)
-  s.props = { groupOn=true }
-  s.actions = { turnGroupOn=true, turnGroupOff=true, isGroupOn=true }
-  s.path = "/clip/v2/resource/grouped_light/"..id
-  function s:event(ev) self.prop.groupOn = ev.on self:notify({type='groupOn',value=self.prop.groupOn}) end
-  function s:isGroupOn() return self.prop.groupOn end
-  function s:turnGroupOn() huePUT(self.path,{on={on=true}}) end
-  function s:turnGroupOff() huePUT(self.path,{on={on=false}}) end
-  function s:toString() return fmt("Group:%s - %s",self.id,self.prop.on and "on" or "off") end
-  return  s
-end
 
 --[[
 {
@@ -242,7 +176,7 @@ end
 
 local function setParent(d,id)
   d.parents = d.parents or {}   -- Allow multiple parents
-  if id then d.parents[id]=d end
+  if id then hueAnnotator(id) d.parents[id]=d end
 end
 
 local function addChildren(p,typ)
@@ -279,6 +213,7 @@ local function subscription(d)
     if oldHandler then oldHandler(self,ev) end
     self:notify(ev.type,ev)
   end
+  for _,s in ipairs(d.services or {}) do hueAnnotator(s.rid) end
   return d
 end
 
@@ -293,7 +228,7 @@ local function aggregator(d)
   function d:notify(prop,ev)
     local tp,n = type(ev.value),0
     local val = tp=='boolean' and true or 0
-    for id,v in pairs(d.props[prop]) do
+    for _,v in pairs(d.props[prop]) do
       if tp=='number' then val = val+v n=n+1
       elseif tp=='boolean' then val = val and v end
     end
@@ -336,8 +271,11 @@ end
 
 local HueTypeAnnotation = {}
 
-local function hueAnnotator(d)
+function hueAnnotator(d)
+  d = type(d)=='string' and Resources[d] or d
+  if d.annotated then return d end
   if HueTypeAnnotation[d.type] then 
+    d.annotated = true
     namer(d)
     HueTypeAnnotation[d.type](d)
   end
@@ -370,7 +308,7 @@ local lightEventMap = {
 }
 
 function HueTypeAnnotation.light(d)
-  s.fActions = {
+  d.fActions = {
     isOn=true, turnOn=true, turnOff=true, getBrightness=true, setBrightness=true,
     getColorTemp=true, setColorTemp=true, getXY=true, setXY=true, getRGB=true, setRGB=true
   }
@@ -380,7 +318,7 @@ function HueTypeAnnotation.light(d)
   d.min_mirek = d.color_temperature and d.color_temperature.mirek_schema.mirek_minimum
   d.max_mirek = d.color_temperature and d.color_temperature.mirek_schema.mirek_maximum
   if d.gamut then d.rgbConv = fibaro.colorConverter.xy(d.gamut) end
-  
+
   function d:event(ev)
     for name,h in pairs(lightEventMap) do if ev[name] then d[h](d,ev[name]) end end
   end
@@ -388,8 +326,8 @@ function HueTypeAnnotation.light(d)
   function d:colorEvent(ev) self:handleEvent({type='colorXY',value=ev.xy,id=self.id}) end
   function d:dimEvent(ev) self:handleEvent({type='brightness',value=ev.brightness,id=self.id}) end
   function d:colorTempEvent(ev) if ev.mirek_valid then self:handleEvent({type='colorTemp',value=ev.mirek,id=self.id}) end end
-  
- function d:turnOn() 
+
+  function d:turnOn() 
     huePUT(self.path,{on={on=true}}) 
     if OPTIMISTIC then self:onEvent({on=true}) end
   end
@@ -418,7 +356,7 @@ function HueTypeAnnotation.light(d)
   function d:getRGB() return self.rgbConv.xyb2rgb(self.prop.colorXY.x,self.prop.colorXY.y,self.prop.brightness/100.0) end
   function d:getBrigthness() return self.prop.brightness end
   function d:getColorTemp() return self.prop.colorTemp end
-  
+
   return propagator(d)
 end
 
@@ -489,8 +427,6 @@ function EVENTS.HUB_VERSION(ev)
   end
 end
 
-function EVENTS.REFRESH_DEVICES(_) hueGET("/clip/v2/resource",'REFRESHED_DEVICES') end
-
 function EVENTS.REFRESH_RESOURCES(_) hueGET("/clip/v2/resource",'REFRESHED_RESOURCES') end
 
 function EVENTS.REFRESHED_RESOURCES(ev)
@@ -504,14 +440,18 @@ function EVENTS.REFRESHED_RESOURCES(ev)
     ResourcesType[d.type] = ResourcesType[d.type] or {}
     ResourcesType[d.type][d.id]=d
   end
-  for _,d in pairs(Resources) do hueAnnotator(d) end
+  for _,d in pairs(Resources) do 
+    if resourceFilter[d.id] then 
+      hueAnnotator(d) 
+    end 
+  end
   for _,d in pairs(Resources) do if d.event then d:event(d) end end
   if callBack then callBack() callBack=nil end
 end
 
 HUEv2Engine = { debug=debug }
 function HUEv2Engine:initEngine(ip,key,cb)
-  devFilter = HUEv2Engine.deviceFilter
+  resourceFilter = HUEv2Engine.resourceFilter
   app_key = key
   url =  fmt("https://%s:443",ip)
   DEBUG('info',"HUEv2Engine v%s",version)

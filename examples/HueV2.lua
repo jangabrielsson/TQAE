@@ -13,7 +13,7 @@ _=loadfile and loadfile("TQAE.lua"){
 -- %%proxy = true
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
---FILE:lib/HUEv2Engine3.lua,hueEngine;
+--FILE:lib/HUEv2Engine.lua,hueEngine;
 --FILE:lib/colorConversion.lua,colorConversion;
 
 local HueTable = {
@@ -138,7 +138,7 @@ function QuickApp:onInit()
   self:debug(self.name, self.id)
   local ip = self:getVariable("Hue_IP")
   local key = self:getVariable("Hue_User")
-  -- HUEv2Engine.deviceFilter = HueTable
+  HUEv2Engine.resourceFilter = HueTable
   HUE:initEngine(ip,key,function()
 --      HUEv2Engine:dumpDevices()
       HUE:listAllDevices()
