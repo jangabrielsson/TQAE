@@ -548,6 +548,17 @@ local function main()
   quickApp:post({type='START'})
   fetchEvents()
 end
+
+
 function QuickApp:onInit()
-  setTimeout(main,0)
+  HUE = HUEv2Engine
+  self:debug(self.name, self.id)
+  local ip = self:getVariable("Hue_IP")
+  local key = self:getVariable("Hue_User")
+  HUEv2Engine.resourceFilter = HueTable
+  HUE:initEngine(ip,key,function()
+--      HUEv2Engine:dumpDevices()
+      HUE:listAllDevices()
+      main()
+    end)
 end

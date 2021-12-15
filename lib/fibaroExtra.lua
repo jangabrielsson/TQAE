@@ -1484,12 +1484,16 @@ do
       return dev,created 
     end
 
-    function QuickApp:loadQuickerChildren(silent)
+    function QuickApp:loadQuickerChildren(silent,verifier)
       for _,d in ipairs(api.get("/devices?parentId="..plugin.mainDeviceId) or {}) do
-        local uid = getVar(d,'_UID')
+        local uid,flag = getVar(d,'_UID'),true
         local className = getVar(d,'_className')
-        annotateClass(self,_G[className])
-        _G[className]({uid=uid,silent=silent==true})
+        if verifier then flag = verifier(d,uid,className) end
+        if flag then
+          annotateClass(self,_G[className])
+          d.uid,d.silent = uid,silent==true
+          _G[className](d)
+        end
       end
     end
   end

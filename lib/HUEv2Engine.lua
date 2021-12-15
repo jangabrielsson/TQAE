@@ -465,7 +465,8 @@ local function aggregator(d)
       end
     end
     for _,d in pairs(Resources) do if d.event then d:event(d) end end
-    if callBack then callBack() callBack=nil end
+    local cb
+    if callBack then cb,callBack=callBack,nil setTimeout(cb,0) end
   end
 
   HUEv2Engine = { debug=debug }
