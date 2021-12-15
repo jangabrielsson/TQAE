@@ -1,10 +1,17 @@
+--[[
+fibaroExtra.lua - missing functions for the HC3
+Copyright (c) 2021 Jan Gabrielsson
+Email: jan@gabrielsson.com
+MIT License
+--]]
+
 -- luacheck: globals ignore QuickAppBase QuickApp QuickAppChild quickApp fibaro
 -- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
 -- luacheck: globals ignore __assert_type __fibaro_get_device __TAG
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.930"
+fibaro.FIBARO_EXTRA = "v0.935"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
