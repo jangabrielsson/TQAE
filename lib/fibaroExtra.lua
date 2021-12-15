@@ -6,9 +6,9 @@ MIT License
 --]]
 
 -- luacheck: globals ignore QuickAppBase QuickApp QuickAppChild quickApp fibaro
--- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
--- luacheck: globals ignore __assert_type __fibaro_get_device __TAG
--- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
+-- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json class
+-- luacheck: globals ignore __assert_type __fibaro_get_device __TAG __fibaro_get_device_property
+-- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId QuickerAppChild
 
 fibaro = fibaro  or  {}
 fibaro.FIBARO_EXTRA = "v0.935"
@@ -1433,7 +1433,7 @@ do
     function QuickerAppChild:__init(args)
       assert(args.uid,"QuickerAppChild missing uid")
       if uidMap[args.uid] then
-        if not args.silent then fibaro.warning(__TAG,"Child devices "..uid.." already exists") end
+        if not args.silent then fibaro.warning(__TAG,"Child devices "..args.uid.." already exists") end
         return uidMap[args.uid],false
       end
       local props,created,dev,res={},false
