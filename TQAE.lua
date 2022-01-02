@@ -98,7 +98,7 @@ QuickApp options: (set with --%% directive in file)
 --]]
 
 local embedded=...              -- get parameters if emulator included from QA code...
-local version = "0.40"
+local version = "0.41"
 local EM = { cfg = embedded or {} }
 local cfg,pfvs = EM.cfg
 local function DEF(x,y) if x==nil then return y else return x end end
@@ -218,11 +218,17 @@ local function HC3Request(method,path,data,extra)
   if res~=nil then
     local a,b = pcall(FB.json.decode,res)
     if a then return b,stat,nil
-  else
+    else
       LOG.error("Bad HC3 call: %s",path)
       return nil,500,nil
     end
-  else return nil,stat,nil end
+  else 
+    if stat >= 400 and stat <= 405 then 
+      LOG.error("Bad credential when logging in to HC3, exit to not cause account lock")
+      os.exit()
+    end
+    return nil,stat,nil 
+  end
 end
 
 local function __assert_type(value,typeOfValue )
