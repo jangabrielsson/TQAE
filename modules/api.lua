@@ -154,7 +154,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
   ["GET/devices/#id/properties/#name"] = function(_,path,_,_,id,prop) 
     local D = Devices[id]  -- Is it a local Device?
-    if D then return D.dev.properties[prop] and { value = D.dev.properties[prop], modified=0},200 or nil
+    if D then return D.dev.properties[prop]~=nil and { value = D.dev.properties[prop], modified=0},200 or nil
     elseif not cfg.offline then return HC3Request("GET",path) end
   end,
   ["POST/devices/#id/action/#name"] = function(_,path,data,_,id,action) 
