@@ -98,7 +98,7 @@ QuickApp options: (set with --%% directive in file)
 --]]
 
 local embedded=...              -- get parameters if emulator included from QA code...
-local version = "0.41"
+local version = "0.42"
 local EM = { cfg = embedded or {} }
 local cfg,pfvs = EM.cfg
 local function DEF(x,y) if x==nil then return y else return x end end
@@ -204,7 +204,7 @@ local function httpRequest(reqs,extra)
   if resetTimeout then EM.http.TIMEOUT = resetTimeout end
   if tonumber(status) and status < 300 then 
     return resp[1] and table.concat(resp) or nil,status,h 
-  else return nil,status,h end
+  else return nil,status,h,resp end
 end
 
 local base = "http://"..(EM.cfg.host or "").."/api"
@@ -214,7 +214,7 @@ local function HC3Request(method,path,data,extra)
     headers = {["Accept"] = '*/*',["X-Fibaro-Version"] = 2, ["Fibaro-User-PIN"] = EM.cfg.pin},
   }
   for k,v in pairs(extra or {}) do req[k]=v end
-  local res,stat,_ = httpRequest(req)
+  local res,stat,_,resp = httpRequest(req)
   if res~=nil then
     local a,b = pcall(FB.json.decode,res)
     if a then return b,stat,nil
@@ -223,7 +223,7 @@ local function HC3Request(method,path,data,extra)
       return nil,500,nil
     end
   else 
-    if stat >= 400 and stat <= 405 then 
+    if stat >= 400 and stat < 403 then 
       LOG.error("Bad credential when logging in to HC3, exit to not cause account lock")
       os.exit()
     end
