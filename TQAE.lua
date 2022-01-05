@@ -412,6 +412,8 @@ function EM.createDevice(info) -- Creates device structure
   local typ = info.type or "com.fibaro.binarySensor"
   local deviceTemplates = EM.getDeviceResources()
   local dev = deviceTemplates[typ] and deepCopy(deviceTemplates[typ]) or {
+    properties = {},
+    type = typ,
     actions = { turnOn=0,turnOff=0,setValue=1,toggle=0 }
   }
   dev.properties.viewLayout,dev.properties.uiCallbacks = nil,nil

@@ -164,7 +164,7 @@ local function main()
   end
 
   local function decorateLight(light)
-    local d = light:dev()
+    local d = light:dev():getServices('light')[1]
     light.cfg = {}
 
     function light:turnOn() self:_call('turnOn') end
@@ -175,7 +175,7 @@ local function main()
     function light:setValue(value)
     end
 
-    if light:_prop('brightness') then
+    if d.dimming then
       light.cfg.min_dim = d.dimming.min_dim_level or 1 
       function light:setBrightness(bri)
         self:_call("setBrightness",bri)
@@ -185,7 +185,7 @@ local function main()
       end
     end
 
-    if light:_prop('temp') then
+    if d.color_temperature then
       light.cfg.min_mirek = d.color_temperature.mirek_schema.mirek_minimum
       light.cfg.max_mirek = d.color_temperature.mirek_schema.mirek_maximum 
       function light:setTemperature(t)
@@ -197,7 +197,7 @@ local function main()
       function light:temperature(t) self:setTemperature(t.values[1]) end -- 0..99 button handler
     end
 
-    if light:_prop('color') then
+    if d.color then
       function light:setColor(color) self:_call('setColor',color) end
       function light:getColor() return self:_prop('color') end
       function light:setColorXY(x,y) return self:_call('setColorXY',x,y) end
@@ -241,7 +241,7 @@ local function main()
         v = v < self.cfg.min_dim and self.cfg.min_dim or v
         if not light.on then light.fib_bri=v light:turnOn() end
         DEBUG("setValue(%s) H:%s",light.id,v)
-        hueCall(self.url,{dimming={brightness=v}})
+        self:_call("setBrightness",v)
       end
     end
 
@@ -317,35 +317,35 @@ local function main()
     decorateLight(self)
   end
 
---  local UI4 = {
---    {label='Lsaturation',text='Saturation'},
---    {slider='saturation',onChanged='saturation'},
---    {label='Ltemperature',text='Temperature'},
---    {slider='temperature',onChanged='temperature'},
---  }
---  fibaro.UI.transformUI(UI4)
---  local v4 = fibaro.UI.mkViewLayout(UI4)
---  local cb4 = fibaro.UI.uiStruct2uiCallbacks(UI4)
+  local UI4 = {
+    {label='Lsaturation',text='Saturation'},
+    {slider='saturation',onChanged='saturation'},
+    {label='Ltemperature',text='Temperature'},
+    {slider='temperature',onChanged='temperature'},
+  }
+  fibaro.UI.transformUI(UI4)
+  local v4 = fibaro.UI.mkViewLayout(UI4)
+  local cb4 = fibaro.UI.uiStruct2uiCallbacks(UI4)
 
   class 'ColorLightQA'(HueDeviceQA)
   function ColorLightQA:__init(info)
     info.type='com.fibaro.colorController'
---    info.properties={ viewLayout=v4, uiCallbacks=cb4 }
-    info.interfaces = {'light'}
+    info.properties={ viewLayout=v4, uiCallbacks=cb4 }
+    info.interfaces = {'light','quickApp'}
     HueDeviceQA.__init(self,info)
-    self.colorComponent = ColorComponents{
-      parent = self,
-      colorComponents = { -- Comment out components not needed
-        warmWhite =  0,
-        red = 0,
-        green = 0,
-        blue = 0,
-      },
-      dim_time   = 10000,  -- Time to do a full dim cycle, max to min, min to max
-      dim_min    = 0,      -- Min value
-      dim_max    = 99,     -- Max value
-      dim_interv = 1000    -- Interval between dim steps
-    }    
+--    self.colorComponent = ColorComponents{
+--      parent = self,
+--      colorComponents = { -- Comment out components not needed
+--        warmWhite =  0,
+--        red = 0,
+--        green = 0,
+--        blue = 0,
+--      },
+--      dim_time   = 10000,  -- Time to do a full dim cycle, max to min, min to max
+--      dim_min    = 0,      -- Min value
+--      dim_max    = 99,     -- Max value
+--      dim_interv = 1000    -- Interval between dim steps
+--    }    
     decorateLight(self)
   end
 
@@ -364,7 +364,7 @@ local function main()
       local d = HUE:getResource(uid)
       if d and not d.annotated then
         WARNING("Hue device removed %s (deviceId:%s)",uid,dev.id)
-        plugin.deleteDevice(dev.id) 
+        api.delete("/plugins/removeChildDevice/" .. dev.id)
         return false
       else return true end
     end)

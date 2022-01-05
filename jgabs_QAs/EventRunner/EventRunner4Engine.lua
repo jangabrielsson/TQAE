@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.72,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.73,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -785,7 +785,7 @@ function Module.extras.init(self)
         self:warningf("Device %d can't be dimmed. Type of value is %s",e.id,type(fibaro.getValue(e.id,"value")))
       end
       if e.v and math.abs(currV - e.v) > 2 then return end -- Someone changed the lightning, stop dimming
-      e.v = math.floor(e.fun(e.t,e.start,e.stop,e.sec)+0.5)
+      e.v = math.floor(e.fun(e.t,e.start,(e.stop-e.start),e.sec)+0.5)
       if ev ~= e.v then fibaro.call(e.id,"setValue",e.v) end
       e.t=e.t+e.dir*e.step
       if 0 <= e.t and  e.t <= e.sec then self:post(e,os.time()+e.step) end
