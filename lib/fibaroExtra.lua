@@ -1,17 +1,10 @@
---[[
-fibaroExtra.lua - missing functions for the HC3
-Copyright (c) 2021 Jan Gabrielsson
-Email: jan@gabrielsson.com
-MIT License
---]]
-
 -- luacheck: globals ignore QuickAppBase QuickApp QuickAppChild quickApp fibaro
--- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json class
--- luacheck: globals ignore __assert_type __fibaro_get_device __TAG __fibaro_get_device_property
--- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId QuickerAppChild
+-- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
+-- luacheck: globals ignore __assert_type __fibaro_get_device __TAG
+-- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.935"
+fibaro.FIBARO_EXTRA = "v0.930"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
@@ -764,6 +757,7 @@ do
     DeviceRemovedEvent = function(d)  post({type='deviceEvent', id=d.id, value='removed'}) end,
     DeviceChangedRoomEvent = function(d)  post({type='deviceEvent', id=d.id, value='changedRoom'}) end,
     DeviceCreatedEvent = function(d)  post({type='deviceEvent', id=d.id, value='created'}) end,
+    DeviceCreatedEvent = function(d)  post({type='deviceEvent', id=d.id, value='created'}) end,
     DeviceModifiedEvent = function(d) post({type='deviceEvent', id=d.id, value='modified'}) end,
     PluginProcessCrashedEvent = function(d) post({type='deviceEvent', id=d.deviceId, value='crashed', error=d.error}) end,
     SceneStartedEvent = function(d)   post({type='sceneEvent', id=d.id, value='started'}) end,
@@ -1245,15 +1239,14 @@ do
     end
 
 -- Add interfaces to QA. Note, if interfaces are added the QA will restart
-    local _addInterf = QuickApp.addInterfaces
     function QuickApp:addInterfaces(interfaces) 
-      local d,map = __fibaro_get_device(self.id),{}
+      assert(type(interfaces) == "table")
+      local d,map,i2 = __fibaro_get_device(self.id),{},{}
       for _,i in ipairs(d.interfaces or {}) do map[i]=true end
-      for _,i in ipairs(interfaces or {}) do
-        if not map[i] then
-          _addInterf(self,interfaces)
-          return
-        end
+      for _,i in ipairs(interfaces) do i2[#i2+1]=i end
+      for j,i in ipairs(i2) do if map[i] then table.remove(interfaces,j) end end
+      if i2[1] then
+        api.post("/plugins/interfaces", {action = 'add', deviceId = self.id, interfaces = interfaces})
       end
     end
 
@@ -1433,7 +1426,7 @@ do
     function QuickerAppChild:__init(args)
       assert(args.uid,"QuickerAppChild missing uid")
       if uidMap[args.uid] then
-        if not args.silent then fibaro.warning(__TAG,"Child devices "..args.uid.." already exists") end
+        if not args.silent then fibaro.warning(__TAG,"Child devices "..uid.." already exists") end
         return uidMap[args.uid],false
       end
       local props,created,dev,res={},false
