@@ -30,6 +30,11 @@ copas          -- Copyright 2005-2016 - Kepler Project (www.keplerproject.org)
 timerwheel     -- Credit https://github.com/Tieske/timerwheel.lua/blob/master/LICENSE
 binaryheap     -- Copyright 2015-2019 Thijs Schreijer
 LuWS           -- Copyright 2020 Patrick H. Rigney, All Rights Reserved. http://www.toggledbits.com/LuWS
+
+Thanks for bug reports and suggestions:
+@ChristianSogaard forum.fibaro.com
+@Joep forum.fibaro.com (See also https://docs.joepverhaeg.nl/hc3-tqae/)
+
 --]]
 
 --[[
