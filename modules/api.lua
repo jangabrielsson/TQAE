@@ -28,6 +28,25 @@ local GUI_HANDLERS = {
     client:send("HTTP/1.1 302 Found\nLocation: "..ref.."\n\n")
     return true
   end,
+  --[[
+    {
+  "args": [
+    "{}",
+    "{}"
+  ],
+  "delay": 30,
+  "integrationPin": "1234"
+}
+--]]
+    ["POST/api/devices/#id/action/#name"] = function(_,client,ref,data,opts,id,action)
+    local args = json.decode(data)
+    local params = args.args
+    local stat,err=pcall(FB.__fibaro_call,id,action,"",{args=params})
+    if not stat then LOG.error("Bad callAction:%s",err) end
+    client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
+    return true
+  end,
+
   ["GET/TQAE/method"] = function(_,client,ref,_,opts)
     local arg = opts.Args
     local stat,res = pcall(function()
