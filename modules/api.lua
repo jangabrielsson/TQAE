@@ -30,22 +30,19 @@ local GUI_HANDLERS = {
   end,
   --[[
     {
-  "args": [
-    "{}",
-    "{}"
-  ],
+  "args": ["{}","{}"],
   "delay": 30,
   "integrationPin": "1234"
 }
 --]]
-    ["POST/api/devices/#id/action/#name"] = function(_,client,ref,data,opts,id,action)
-    local args = json.decode(data)
-    local params = args.args or {}
-    local stat,err=pcall(FB.__fibaro_call,id,action,"",{args=params})
-    if not stat then LOG.error("Bad callAction:%s",err) end
-    client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
-    return true
-  end,
+--  ["POST/api/devices/#id/action/#name"] = function(_,client,ref,data,opts,id,action)
+--    local args = json.decode(data)
+--    local params = args.args or {}
+--    local stat,err=pcall(FB.__fibaro_call,id,action,"",{args=params})
+--    if not stat then LOG.error("Bad callAction:%s",err) end
+--    client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
+--    return true
+--  end,
 
   ["GET/TQAE/method"] = function(_,client,ref,_,opts)
     local arg = opts.Args
@@ -536,6 +533,20 @@ EM.EMEvents('start',function(_)
 
     function FB.__fibaro_get_breached_partitions() 
       return api.get("/alarms/v1/partitions/breached")
+    end
+
+    for p,f in pairs(API_CALLS) do
+      if p ~= "GET/api/callAction" then
+        local function fe(method,client,ref,data,opts,...)
+          data = data and json.decode(data)
+          local res,code = f(method,path,data,opts,...)
+          if not code or code > 205 then LOG.error("Bad callAction:%s",code) end
+          client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
+          return true  
+        end
+        p = p:gsub("^%w+",function(str) return str.."/api" end)
+        EM.addPath(p,fe)
+      end
     end
 
   end)
