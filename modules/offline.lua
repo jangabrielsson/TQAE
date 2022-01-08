@@ -99,11 +99,33 @@ local function profileInfo(method,client,data,opts,id)
     end
     return nil,404
   end
-  if method == "PUT" then profileData = data; return data,200 end
+  if method == "PUT" then
+    local old = profileData.activeProfile
+    local id = data.activeProfile or old
+    if old ~= id then
+      EM.addRefreshEvent({
+          type='ActiveProfileChangedEvent',
+          created = EM.osTime(),
+          data={newActiveProfile=id, oldActiveProfile=old}
+        })
+    end
+    profileData = data
+    return data,200 
+  end
   return 500,nil
 end
 local function profileSet(method,client,data,opts,id)
-  if method=='POST' and id then profileData.activeProfile=id return id,200
+  if method=='POST' and id then 
+    local old = profileData.activeProfile
+    profileData.activeProfile=id 
+    if old ~= id then
+      EM.addRefreshEvent({
+          type='ActiveProfileChangedEvent',
+          created = EM.osTime(),
+          data={newActiveProfile=id, oldActiveProfile=old}
+        })
+    end
+    return id,200
   else return nil,500 end
 end
 
@@ -151,6 +173,11 @@ function EM.create.globalVariable(args)
     modified=EM.osTime(),
   }
   EM.rsrc.globalVariables[args.name]=v
+  EM.addRefreshEvent({
+      type='GlobalVariableAddedEvent',
+      created = EM.osTime(),
+      data={variableName=name, value=v}
+    })
   return v
 end
 
