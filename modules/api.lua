@@ -40,7 +40,7 @@ local GUI_HANDLERS = {
 --]]
     ["POST/api/devices/#id/action/#name"] = function(_,client,ref,data,opts,id,action)
     local args = json.decode(data)
-    local params = args.args
+    local params = args.args or {}
     local stat,err=pcall(FB.__fibaro_call,id,action,"",{args=params})
     if not stat then LOG.error("Bad callAction:%s",err) end
     client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
