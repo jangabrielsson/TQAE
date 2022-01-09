@@ -548,7 +548,11 @@ EM.EMEvents('start',function(_)
           data = data and json.decode(data)
           path = path:match("^/api(.*)")
           local res,code,gg = f(method,path,data,opts,...)
-          if not code or code > 205 then LOG.error("Bad callAction:%s",code) end
+          if not code or code > 205 then 
+            LOG.error("Bad callAction:%s",code) 
+            client:send("HTTP/1.1 "..code.." Not Found\n\n")
+            return
+          end
           local dl,sdata = 0,""
           if type(res)=='table' then
             sdata = json.encode(res)

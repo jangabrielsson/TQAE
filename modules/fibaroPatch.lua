@@ -1,6 +1,6 @@
 -- Misc. patches to the Lua environment for QAs/Scenes 
 do
-  local oldGet = fibaro.get    -- Return emulated sunrise/sunset
+  local oldGet,oldGetValue = fibaro.get,fibaro.getValue    -- Return emulated sunrise/sunset
   function fibaro.get(id,prop)
     if id==1 then
       if prop=='sunriseHour' then
@@ -12,6 +12,17 @@ do
     return oldGet(id,prop)
   end
 
+  function fibaro.getValue(id,prop)
+    if id==1 then
+      if prop=='sunriseHour' then
+        return hc3_emulator.EM.sunriseHour
+      elseif prop=='sunsetHour' then
+        return hc3_emulator.EM.sunsetHour
+      end
+    end 
+    return oldGetValue(id,prop)
+  end
+  
   if hc3_emulator.EM.cfg.compat then -- patch table.sort with pure Lua version (ToDo gsub)
     table.sort = hc3_emulator.EM.utilities.tableSort
     string.gsub = hc3_emulator.EM.utilities.stringGsub
