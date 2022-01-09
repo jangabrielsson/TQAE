@@ -99,7 +99,7 @@ local function profileInfo(method,client,data,opts,id)
     end
     return nil,404
   end
-  if method == "PUT" then
+  if method == "PUT" and type(data)=='table' then
     local old = profileData.activeProfile
     local id = data.activeProfile or old
     if old ~= id then
@@ -115,7 +115,7 @@ local function profileInfo(method,client,data,opts,id)
   return 500,nil
 end
 local function profileSet(method,client,data,opts,id)
-  if method=='POST' and id then 
+  if method=='POST' and tonumber(id) then 
     local old = profileData.activeProfile
     profileData.activeProfile=id 
     if old ~= id then

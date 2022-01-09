@@ -228,8 +228,8 @@ local function HC3Request(method,path,data,extra)
       return nil,500,nil
     end
   else 
-    if tonumber(stat) and (stat >= 400 and stat < 403) then 
-      LOG.error("Bad credential when logging in to HC3, exit to not cause account lock")
+    if tonumber(stat) and (stat > 400 and stat < 403) then 
+      LOG.error("Bad credential when logging in to HC3, exiting to avoid account lockout")
       os.exit()
     end
     return nil,stat,nil 
@@ -254,7 +254,8 @@ function FB.__fibaroUseAsyncHandler(_) end -- TBD
 function FB.__fibaro_call(id,name,path,data)
   local args, D = data.args or {},Devices[id]
   if D then -- sim. call in another process/QA
-    return setTimeout(function() D.env.onAction(id,{deviceId=id,actionName=name,args=args}) end,0,nil,D) 
+    setTimeout(function() D.env.onAction(id,{deviceId=id,actionName=name,args=args}) end,0,nil,D) 
+    return nil,200
   elseif not cfg.offline then return HC3Request("POST",path,data) else return nil,404 end
 end
 function FB.__fibaro_call_UI(id,name,typ,values)
