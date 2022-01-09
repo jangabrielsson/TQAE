@@ -166,11 +166,15 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
 --   api.get("/devices?parentId="..self.id) or {}
   ["GET/devices/#id"] = function(_,path,_,_,id)
-    return Devices[id] and Devices[id].dev or cfg.offline and {} or HC3Request("GET",path)
+    if Devices[id]  then return Devices[id].dev,200
+    elseif not cfg.offline then return HC3Request("GET",path)
+    else return nil,404 end
   end,
   ["GET/devices/#id/properties/#name"] = function(_,path,_,_,id,prop) 
     local D = Devices[id] or (cfg.offline and id==1 and {dev=EM.getPrimaryController()}) -- Is it a local Device?
-    if D then return D.dev.properties[prop]~=nil and { value = D.dev.properties[prop], modified=0},200 or nil
+    if D then 
+      if D.dev.properties[prop]~=nil then return { value = D.dev.properties[prop], modified=0},200 
+      else return nil,404 end
     elseif not cfg.offline then return HC3Request("GET",path) end
   end,
   ["POST/devices/#id/action/#name"] = function(_,path,data,_,id,action) 
@@ -194,7 +198,9 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     return globs,200
   end,
   ["GET/globalVariables/#name"] = function(_,path,_,_,name)
-    return EM.rsrc.globalVariables[name] or not cfg.offline and HC3Request("GET",path) or nil
+    if EM.rsrc.globalVariables[name] then return EM.rsrc.globalVariables[name],200
+    elseif not cfg.offline then return HC3Request("GET",path)
+    else return nil,404 end
   end,
   ["POST/globalVariables"] = function(_,path,data,_)
     if cfg.offline then
@@ -537,11 +543,22 @@ EM.EMEvents('start',function(_)
 
     for p,f in pairs(API_CALLS) do
       if p ~= "GET/api/callAction" then
-        local function fe(method,client,ref,data,opts,...)
+        local method = p:match("^(.-)/")
+        local function fe(path,client,ref,data,opts,...)
           data = data and json.decode(data)
-          local res,code = f(method,path,data,opts,...)
+          path = path:match("^/api(.*)")
+          local res,code,gg = f(method,path,data,opts,...)
           if not code or code > 205 then LOG.error("Bad callAction:%s",code) end
-          client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
+          local dl,sdata = 0,""
+          if type(res)=='table' then
+            sdata = json.encode(res)
+            dl = #sdata
+          end
+          client:send("HTTP/1.1 "..code.." OK\n")
+          client:send("Content-Length: "..dl)
+          client:send("Content-Type: application/json\n")
+          client:send("Connection: Closed\n\n")
+          client:send(sdata)
           return true  
         end
         p = p:gsub("^%w+",function(str) return str.."/api" end)

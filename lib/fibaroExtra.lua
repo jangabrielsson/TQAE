@@ -722,6 +722,9 @@ do
     GlobalVariableChangedEvent = function(d) 
       post({type='global-variable', name=d.variableName, value=d.newValue, old=d.oldValue}) 
     end,
+    GlobalVariableAddedEvent = function(d) 
+      post({type='global-variable', name=d.variableName, value=d.value, old=nil}) 
+    end,
     DevicePropertyUpdatedEvent = function(d)
       if d.property=='quickAppVariables' then 
         local old={}; for _,v in ipairs(d.oldValue) do old[v.name] = v.value end -- Todo: optimize
