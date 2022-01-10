@@ -481,6 +481,10 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       else return nil,404 end
     else return HC3Request(method,path,data) end
   end,
+  ["GET/settings/info"]  = function(method,path,data,_)
+    return HC3Request(method,path,data) 
+  end,
+
 }
 
 local API_MAP={ GET={}, POST={}, PUT={}, DELETE={} }
