@@ -140,7 +140,12 @@ local function createAsyncServer(name,port,handler)
   LOG.sys("Created %s at http://%s:%s/web",name,IPAddress,port)
 end
 
+
 local GUI_MAP = { GET={}, PUT={}, POST={}, DELETE={}}
+local noPaths = {}
+
+local function notFoundPath(p,h) noPaths[p]=h end
+
 local function GUIhandler(method,client,call,body,ref)
   local fun,args,opts,path = EM.lookupPath(method,call,GUI_MAP)
   if type(fun)=='function' then
@@ -149,6 +154,16 @@ local function GUIhandler(method,client,call,body,ref)
       LOG.error("Bad API call:%s",res)
     end
   elseif fun==nil then
+    local porg = method..path
+    for p,h in pairs(noPaths) do
+      if porg:match(p) then
+        local stat,res = pcall(h,path,client,ref,body,opts,table.unpack(args))
+        if not stat then
+          LOG.error("Bad API call:%s",res)
+        end
+        return
+      end
+    end
     client:send("HTTP/1.1 501 Not Implemented\nLocation: "..(ref or call).."\n")
   else 
     LOG.error("Bad API call:%s",fun)
@@ -361,3 +376,4 @@ EM.lookupPath = lookupPath
 EM.processPathMap = processPathMap
 EM.addPath = addPath
 EM.addPagePath = addPagePath
+EM.notFoundPath = notFoundPath

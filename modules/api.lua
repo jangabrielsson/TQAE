@@ -481,10 +481,29 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       else return nil,404 end
     else return HC3Request(method,path,data) end
   end,
-  ["GET/settings/info"]  = function(method,path,data,_)
-    return HC3Request(method,path,data) 
-  end,
 
+  --- ToDos
+  ["GET/settings/info"]  = function(method,path,data,_)
+    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
+  end,
+  ["GET/settings/location"]  = function(method,path,data,_)
+    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
+  end,
+  ["GET/profiles"]  = function(method,path,data,_)
+    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
+  end,
+  ["GET/profiles/#id"]  = function(method,path,data,_)
+    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
+  end,
+  ["PUT/profiles"]  = function(method,path,data,_)
+    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
+  end,
+  ["POST/profiles"]  = function(method,path,data,_)
+    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
+  end,
+  ["POST/profiles/activeProfile/#id"]  = function(method,path,data,_)
+    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
+  end,
 }
 
 local API_MAP={ GET={}, POST={}, PUT={}, DELETE={} }
@@ -545,7 +564,8 @@ EM.EMEvents('start',function(_)
       return api.get("/alarms/v1/partitions/breached")
     end
 
-    for p,f in pairs(API_CALLS) do
+    for p,f in pairs(API_CALLS) do   
+      -- Wrap API calls to make them accesible to external users. Register with webserver and make HTTP responses
       if p ~= "GET/api/callAction" then
         local method = p:match("^(.-)/")
         local function fe(path,client,ref,data,opts,...)
@@ -574,6 +594,10 @@ EM.EMEvents('start',function(_)
       end
     end
 
-  end)
+    EM.notFoundPath("^-./api",function(path,client,ref,body,opts,...)
+        client:send("HTTP/1.1 501 Not Implemented\n\n")
+      end)
+
+  end) -- start
 
 FB.api = api

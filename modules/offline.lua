@@ -152,12 +152,12 @@ local function setup()
   function EM.getPrimaryController() return pc end
   EM.create.room{id=219,name="Default Room"}
   EM.create.section{id=219,name="Default Section"}
+  -- Intercept some useful APIs...
   EM.addAPI("GET/settings/location",settingsLocation)
   EM.addAPI("GET/settings/info",settingsInfo)
-  EM.addAPI("GET/alarms/v1/partitions",settingsInfo)
-  EM.addAPI("GET/settings/info",settingsInfo)
-  EM.addAPI("GET/notificationCenter",settingsInfo)
-  EM.addAPI("POST/notificationCenter",settingsInfo)
+  EM.addAPI("GET/alarms/v1/partitions",alarmsParts)
+  EM.addAPI("GET/notificationCenter",notificationCenter)
+  EM.addAPI("POST/notificationCenter",notificationCenter)
   EM.addAPI("GET/profiles",profileInfo)
   EM.addAPI("PUT/profiles",profileInfo)
   EM.addAPI("GET/profiles/#id",profileInfo)
