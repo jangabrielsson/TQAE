@@ -21,8 +21,35 @@ local GETcalls = {
   "GET/devices",
   "GET/devices/1",
   "GET/globalVariables",
-  "GET/globalVariables/A",
-  "GET/globalVariables/XYZ",
+  "GET/globalVariables/A", -- 200
+  "GET/globalVariables/XYZ", --404
+  "GET/energy/devices",
+  "GET/alarms/v1/devices",
+  "GET/alarms/v1/partitions",
+  "GET/customEvents",
+  "GET/panels/location",
+  "GET/settings/location",
+  "GET/settings/info",
+  "GET/debugMessages",
+  "GET/home",
+  "GET/icons",
+  "GET/iosDevices",
+  "GET/notificationCenter",
+  "GET/profiles",
+  "GET/profiles/1",
+  "GET/refreshStates",
+  "GET/rooms",
+  "GET/rooms/219",
+  "GET/scenes",
+  "GET/scenes/10",
+  "GET/sections",
+  "GET/sections/219",
+  "GET/users",
+
+
+  "GET/users/2",
+  "GET/weather",
+
 }
 
 function QuickApp:onInit()
