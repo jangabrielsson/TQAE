@@ -576,9 +576,11 @@ EM.EMEvents('start',function(_)
         dl = #sdata
       end
       client:send("HTTP/1.1 "..code.." OK\n")
-      client:send("Content-Length: "..dl)
-      client:send("Content-Type: application/json\n")
-      client:send("Connection: Closed\n\n")
+      client:send("server: TQAE\n")
+      client:send("Content-Length: "..dl.."\n")
+      client:send("Content-Type: application/json;charset=UTF-8\n")
+      client:send("Cache-control: no-cache, no-store\n")
+      client:send("Connection: close\n\n")
       client:send(sdata)
       return true 
     end

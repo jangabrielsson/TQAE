@@ -214,25 +214,25 @@ end
 
 local base = "http://"..(EM.cfg.host or "").."/api"
 local function HC3Request(method,path,data,extra) 
-  local req = {method=method, url=base..path,
+  local req = {method=method, url=(extra and extra.base or base)..path,
     user=EM.cfg.user, password=EM.cfg.pwd, data=data and FB.json.encode(data), timeout = 15000, 
     headers = {["Accept"] = '*/*',["X-Fibaro-Version"] = 2, ["Fibaro-User-PIN"] = EM.cfg.pin},
   }
   for k,v in pairs(extra or {}) do req[k]=v end
-  local res,stat,_,resp = httpRequest(req)
+  local res,stat,headers,resp = httpRequest(req)
   if res~=nil then
     local a,b = pcall(FB.json.decode,res)
-    if a then return b,stat,nil
+    if a then return b,stat,headers
     else
       LOG.error("Bad HC3 call: %s",path)
-      return nil,500,nil
+      return nil,500,headers
     end
   else 
     if tonumber(stat) and (stat > 400 and stat < 403) then 
       LOG.error("Bad credential when logging in to HC3, exiting to avoid account lockout")
       os.exit()
     end
-    return nil,stat,nil 
+    return nil,stat,headers 
   end
 end
 
