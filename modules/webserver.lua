@@ -154,10 +154,10 @@ local function GUIhandler(method,client,call,body,ref)
       LOG.error("Bad API call:%s",res)
     end
   elseif fun==nil then
-    local porg = method..path
+    local porg = method..call
     for p,h in pairs(noPaths) do
       if porg:match(p) then
-        local stat,res = pcall(h,path,client,ref,body,opts,table.unpack(args))
+        local stat,res = pcall(h,method,call,client,body)
         if not stat then
           LOG.error("Bad API call:%s",res)
         end

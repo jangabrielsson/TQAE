@@ -564,38 +564,51 @@ EM.EMEvents('start',function(_)
       return api.get("/alarms/v1/partitions/breached")
     end
 
+    local function returnREST(code,res,client,call)
+      if not code or code > 205 then 
+        LOG.error("API error:%s - %s",code,call) 
+        client:send("HTTP/1.1 "..code.." Not Found\n\n")
+        return
+      end
+      local dl,sdata = 0,""
+      if type(res)=='table' then
+        sdata = json.encode(res)
+        dl = #sdata
+      end
+      client:send("HTTP/1.1 "..code.." OK\n")
+      client:send("Content-Length: "..dl)
+      client:send("Content-Type: application/json\n")
+      client:send("Connection: Closed\n\n")
+      client:send(sdata)
+      return true 
+    end
+
     for p,f in pairs(API_CALLS) do   
       -- Wrap API calls to make them accesible to external users. Register with webserver and make HTTP responses
       if p ~= "GET/api/callAction" then
         local method = p:match("^(.-)/")
+        
         local function fe(path,client,ref,data,opts,...)
           data = data and json.decode(data)
-          path = path:match("^/api(.*)")
-          local res,code,gg = f(method,path,data,opts,...)
-          if not code or code > 205 then 
-            LOG.error("Bad callAction:%s",code) 
-            client:send("HTTP/1.1 "..code.." Not Found\n\n")
-            return
-          end
-          local dl,sdata = 0,""
-          if type(res)=='table' then
-            sdata = json.encode(res)
-            dl = #sdata
-          end
-          client:send("HTTP/1.1 "..code.." OK\n")
-          client:send("Content-Length: "..dl)
-          client:send("Content-Type: application/json\n")
-          client:send("Connection: Closed\n\n")
-          client:send(sdata)
-          return true  
+          DEBUG("api","sys","Incoming API call: %s",path)
+          local res,code = f(method,path:sub(5),data,opts,...)
+          returnREST(code,res,client,path)
         end
+        
         p = p:gsub("^%w+",function(str) return str.."/api" end)
         EM.addPath(p,fe)
       end
     end
 
-    EM.notFoundPath("^-./api",function(path,client,ref,body,opts,...)
-        client:send("HTTP/1.1 501 Not Implemented\n\n")
+    EM.notFoundPath("^.-/api",function(method,path,client,body)
+        if cfg.offline then
+          DEBUG("api","sys","Denying unknown api (offline): %s",path)
+          client:send("HTTP/1.1 501 Not Implemented\n\n")
+        else
+          DEBUG("api","sys","Redirecting unknown api to HC3: %s",path)
+          local res,code = HC3Request(method,path:sub(5),body)
+          returnREST(code,res,client,path)
+        end
       end)
 
   end) -- start
