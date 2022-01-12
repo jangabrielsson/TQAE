@@ -230,11 +230,14 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
 
   ["GET/rooms"] = function(_,path,_,_)
     local rooms = EM.cfg.offline and {} or HC3Request("GET",path)
-    for _,v in pairs(EM.rsrc.rooms) do rooms[#rooms+1]=v end
+    for _,v in pairs(EM.rsrc.rooms or {}) do rooms[#rooms+1]=v end
     return rooms,200
   end,
   ["GET/rooms/#id"] = function(_,path,_,_,id)
-    return EM.rsrc.rooms[id] or HC3Request("GET",path)
+    local r = EM.rsrc.rooms[id]
+    if r then return r,200 
+    elseif not EM.cfg.offline then return HC3Request("GET",path)
+    else return nil,404 end
   end,
   ["POST/rooms"] = function(_,path,data,_)
     if EM.cfg.offline then
@@ -261,11 +264,14 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
 
   ["GET/sections"] = function(_,path,_,_)
     local sections = EM.cfg.offline and {} or HC3Request("GET",path)
-    for _,v in pairs(EM.rsrc.sections) do sections[#sections+1]=v end
+    for _,v in pairs(EM.rsrc.sections or {}) do sections[#sections+1]=v end
     return sections,200
   end,
   ["GET/sections/#id"] = function(_,path,_,_,id)
-    return EM.rsrc.sections[id] or HC3Request("GET",path)
+    local r = EM.rsrc.sections[id]
+    if r then return r,200 
+    elseif not EM.cfg.offline then return HC3Request("GET",path)
+    else return nil,404 end
   end,
   ["POST/sections"] = function(_,path,data,_)
     if EM.cfg.offline then
@@ -288,11 +294,14 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
 
   ["GET/customEvents"] = function(_,path,_,_)
     local cevents = EM.cfg.offline and {} or HC3Request("GET",path)
-    for _,v in pairs(EM.rsrc.customeEvents) do cevents[#cevents+1]=v end
+    for _,v in pairs(EM.rsrc.customeEvents or {}) do cevents[#cevents+1]=v end
     return cevents,200
   end,
   ["GET/customEvents/#name"] = function(_,path,_,name)
-    return EM.rsrc.customEvents[name] or HC3Request("GET",path)
+    local e = EM.rsrc.customEvents[name]
+    if e  then return e,200 
+    elseif not EM.cfg.offline then return HC3Request("GET",path)
+    else return nil,404 end
   end,
   ["POST/customEvents"] = function(_,path,data,_)
     if EM.cfg.offline then
@@ -585,21 +594,29 @@ EM.EMEvents('start',function(_)
       return true 
     end
 
-    for p,f in pairs(API_CALLS) do   
-      -- Wrap API calls to make them accesible to external users. Register with webserver and make HTTP responses
+    local function exportAPIcall(p,f)
       if p ~= "GET/api/callAction" then
         local method = p:match("^(.-)/")
-        
+
         local function fe(path,client,ref,data,opts,...)
           data = data and json.decode(data)
           DEBUG("api","sys","Incoming API call: %s",path)
           local res,code = f(method,path:sub(5),data,opts,...)
           returnREST(code,res,client,path)
         end
-        
+
         p = p:gsub("^%w+",function(str) return str.."/api" end)
         EM.addPath(p,fe)
       end
+    end
+    
+    -- Wrap API calls to make them accesible to external users. Register with webserver and make HTTP responses
+    for p,f in pairs(API_CALLS) do exportAPIcall(p,f) end
+    
+    local oldAddApi = EM.addAPI
+    function EM.addAPI(p,f) 
+      oldAddApi(p,f)
+      exportAPIcall(p,f)
     end
 
     EM.notFoundPath("^.-/api",function(method,path,client,body)

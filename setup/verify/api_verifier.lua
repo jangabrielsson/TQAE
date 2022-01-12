@@ -1,7 +1,7 @@
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true },
---offline = true,
+  offline = true,
   copas = true
 }
 
@@ -54,15 +54,26 @@ local GETcalls = {
 
 function QuickApp:onInit()
   self:debug(self.name, self.id)
-  local host1 = "192.168.1.18:8976"
-  local host2 = "192.168.1.57"
+  local hc3 = "192.168.1.57"
+  local host1 = "192.168.1.183:8976"
+
+  self:debug("Collecting API responses from HC3...")
+  local ref = {} -- Collect ref responses from HC3
   for _,call in ipairs(GETcalls) do
-    local res1,code1,h1 = callAPI(host1,call)
-    local res2,code2,h2 = callAPI(host2,call)
-    if code1==code2 then
-      self:trace(fmt("OK - %s (%s)",call,code1))
+    local res,code,h = callAPI(hc3,call)
+    ref[#ref+1]={res=res,code=code,header=h}
+  end
+
+  self:debug("Running verification with TQAE (intentional errors will log...)")
+  for i,call in ipairs(GETcalls) do
+    local res,code,h = callAPI(host1,call)
+    if code==ref[i].code then
+      self:trace(fmt("OK - %s (%s)",call,code))
+      if type(res)~=type(ref[i].res) then
+        self:warning(fmt("Result mismatch  %s (%s/%s)",call,type(res)~=type(ref[i].res)))
+      end
     else
-      self:warning(fmt("%s/%s - %s",code1,code2,call))
+      self:warning(fmt("%s/%s - %s",code,ref[i].code,call))
     end
   end
 end

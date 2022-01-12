@@ -147,6 +147,9 @@ local function primaryController()
   200
 end
 
+local function alarmsParts() return {},200 end
+local function notificationCenter() return {},200 end
+
 local function setup()
   local pc = primaryController()
   function EM.getPrimaryController() return pc end
