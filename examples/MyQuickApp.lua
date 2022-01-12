@@ -11,7 +11,6 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%name="MyQuickApp"
 --%%type="com.fibaro.binarySwitch"
 --%%quickVars = {['x'] = 17, ['y'] = 42 }
---%%noterminate = true
 --%%u1={button='b1', text='B1', onReleased='turnOn'}
 --%%u2={{button='b2', text='B2', onReleased='turnOff'},{button='b3', text='B3', onReleased='turnOff'}}
 --%%u2={{button='b4', text='B4', onReleased='turnOff'},{button='b5', text='B5', onReleased='turnOff'},{button='b6', text='B6', onReleased='turnOff'},{button='b7', text='B7', onReleased='turnOff'},{button='b8', text='B8', onReleased='turnOff'}}

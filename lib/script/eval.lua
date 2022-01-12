@@ -340,20 +340,6 @@ end
       code)
   end
 
---[[
-      fun (x,y,...) . body {'fun',{'x','y','...'},body}
-      local x,y,... = ...
---]]
-  comp['fun'] = function(code,_,params,...)
-    assert_type('string_list',params,"fun with non-list params field")
-    local body = {...}
-    if params[#params] == '...' then
-      table.remove(params,#params)
-    end
-    local f = compile( conc('progn',{'params',params,{'varargs'}},body))
-    code.emit('push',f)
-  end
-
   comp['progn'] = function(code,_,...) comp['block'](code,_,...) end
   comp['block'] = function(code,_,...)
     local exprs = {...}
@@ -417,12 +403,37 @@ end
   end
   comp['aref'] = function(code,_,tab,key) 
     compileExpr(tab,code)
-    code.emit('aref',code)
+    local c = compConst(key,code) 
+    code.emit('aref',c)
+  end
+  comp['aset'] = function(code,_,tab,key,val) 
+    compileExpr(tab,code)
+    key = compConst(key,code) 
+    val = compConst(val,code) 
+    code.emit('aset',key,val)
   end
   comp['assert']  = function(code,_,typ,msg) code.emit('assert',typ,msg) end
-  function compileExpr(expr,code)
+
+  --[[
+      fun (x,y,...) . body {'fun',{'x','y','...'},body}
+      local x,y,... = ...
+--]]
+  local function compFun(code,_,params,...)
+    assert_type('string_list',params,"fun with non-list params field")
+    local body = {...}
+    if params[#params] == '...' then
+      table.remove(params,#params)
+    end
+    return compile( conc('progn',{'params',params,{'varargs'}},body))
+  end
+
+  function compileExpr(expr,code,top)
     if type(expr) == 'table' then
       local op = expr[1]
+      if op=='fun' then
+        local f = compFun(code,table.unpack(expr))
+        return top and f or {'push',f}
+      end
       if comp[op] then
         comp[op](code,table.unpack(expr)) 
       else
@@ -440,10 +451,9 @@ end
   function compile(expr,d)
     local code = makeCode()
     expr=optimizeExpr(expr)
-    compileExpr(expr,code)
+    local f = compileExpr(expr,code,true)
     code.code=optimizeCode(code.code)
-    if expr[1]=='fun' then
-      local f = code.code[1][2]
+    if type(f)=='function' then
       local c = f('_INSPECT_')
       if d then dump(c) end
       return f
@@ -502,14 +512,14 @@ end
   opfuns['*'] = function(a,b) return a*b end
   opfuns['/'] = function(a,b) return a/b end
   local opmap={['+']='_OP_',['-']='_OP_',['*']='_OP_',['/']='_OP_',}
-  
+
   opts['_OP_'] = function(e,op,a,b) 
     if tonumber(a) and tonumber(b) then 
       return opfuns[op](a,b)
     else return e end
   end
   opts['quote'] = function(e,op,a,b) return e end
-  
+
   function optimizeExpr(expr)
     if type(expr)=='table' and expr[1] then
       local op = expr[1]
@@ -645,6 +655,13 @@ end
     local key = getArg(i[2],st)
     local tab=st.pop()
     st.push(tab[key])
+  end
+  function instr.aset(i,st) -- aref,const
+    local key = getArg(i[2],st)
+    local val = getArg(i[3],st)
+    local tab=st.pop()
+    tab[key]=val
+    st.push(val)
   end
   function instr.loopIdxCmp(i,st)
     local sign,n,ix = st.pop(),st.pop(),st.pop()

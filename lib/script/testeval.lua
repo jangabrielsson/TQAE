@@ -1,6 +1,6 @@
 -- luacheck: globals ignore makeCompiler json
 
-dofile("test/eval.lua")
+dofile("lib/script/eval.lua")
 
 local fmt = string.format
 
@@ -74,6 +74,8 @@ local function runTests(ts)
   end
   if  #errors > 0 and silent then 
     for _,e in ipairs(errors) do pres(false,table.unpack(e)) end
+  elseif #errors > 0 then
+    printf("Errors: %s",#errors)
   else
     printf("all OK")
   end
@@ -117,6 +119,7 @@ local tests = {
   {8,"(fun(x) (if $x 42))",{false},{false}},
   {9,"(fun(x) (quote (6 7)))",{false},{{6,7}}},
   {10,[[(fun(x) (aref $x "test"))]],{{test=66}},{66}},
+  {10.1,[[(fun(x) (aset $x "test" 77) (aref $x "test"))]],{{test=66}},{77}},
   {11,[[(fun(x) (+ (foo2 $x 8) 6))]],{8},{70}},
   {12,[[(fun(x) (+ (foo1 $x) 6))]],{8},{70}},
   {13,[[(fun(x) (+ 6 (foo2 $x 8)))]],{8},{70}},
@@ -170,7 +173,7 @@ local tests = {
 }
 
 --silent = true
-alwaysDump = true
+--alwaysDump = true
 alwaysTrace = false
 
 local ctests = {
@@ -178,7 +181,7 @@ local ctests = {
   {2,"(fun(x y) (yield  $x $y))",{7,8},{7,8}},
 }
 
---singleTest(17,tests)
+singleTest(10.1,tests)
 
-runTests(tests)
-runCTests(ctests)
+--runTests(tests)
+--runCTests(ctests)

@@ -75,6 +75,13 @@ function makeParser()
     return self
   end 
 
+  local function conc(...)
+    local v = {...}
+    local l = table.remove(v,#v)
+    for i=#v,1,-1 do table.insert(l,1,v[i]) end
+    return l
+  end
+
   local patterns,source,cursor,tokens = {}
   local ptabs = {}
 
@@ -212,8 +219,9 @@ function makeParser()
   end
 
   local function makeVar(name,ctx)
-    while ctx do if ctx.l and ctx.l[name] then return {'var',name} else ctx=ctx.n end end
-    return {'glob', name}
+    return {'var',name} 
+--    while ctx do if ctx.l and ctx.l[name] then return {'var',name} else ctx=ctx.n end end
+--    return {'glob', name}
   end
   local NIL = "%%N".."IL%%"
   local PREFIXTKNS = {['.']=true, ['(']=true, ['[']=true, [':']=true, ['{']=true}
@@ -412,7 +420,11 @@ prefixexp ::= ( exp ) [ afterpref ]
       local vars=gram.varList(inp,ctx)
       if inp.test('=') then
         local exprs = gram.exprList(inp,ctx)
-        return {'assign',vars,exprs}
+        if #exprs==1 then
+          if vars[1][1]=='aref' then
+            return conc('aset',vars[1][2],vars[1][3],exprs)
+          else return conc('setvar',vars[1][2],exprs) end
+        else return conc('setvars',vars,exprs) end
       else
         assert(#vars==1,"Bad expression1")
         vars = vars[1]
@@ -467,7 +479,8 @@ prefixexp ::= ( exp ) [ afterpref ]
       s[#s+1] = {'return'..(#re < 2 and #re or 'n'),re}
     end
     inp.test(';') -- optional
-    return {'block',s}
+    table.insert(s,1,'progn')
+    return s
   end
 
   function gram.field(inp,ctx) 

@@ -171,7 +171,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     else return nil,404 end
   end,
   ["GET/devices/#id/properties/#name"] = function(_,path,_,_,id,prop) 
-    local D = Devices[id] or (cfg.offline and id==1 and {dev=EM.getPrimaryController()}) -- Is it a local Device?
+    local D = Devices[id] or (cfg.offline and id==1 and {dev=EM.getPrimaryController()}) -- Is it a local Device? Ugly!
     if D then 
       if D.dev.properties[prop]~=nil then return { value = D.dev.properties[prop], modified=0},200 
       else return nil,404 end
@@ -198,58 +198,77 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     return globs,200
   end,
   ["GET/globalVariables/#name"] = function(_,path,_,_,name)
-    if EM.rsrc.globalVariables[name] then return EM.rsrc.globalVariables[name],200
+    local var = EM.rsrc.globalVariables[name]
+    if cfg.shadow and var==nil then
+      var = HC3Request("GET",path)
+      if var then EM.rsrc.globalVariables[name]=var end
+    end
+    if var then return var,200
     elseif not cfg.offline then return HC3Request("GET",path)
     else return nil,404 end
   end,
   ["POST/globalVariables"] = function(_,path,data,_)
-    if cfg.offline then
+    if cfg.offline or cfg.shadow then
       if EM.rsrc.globalVariables[data.name] then return nil,404
       else return EM.create.globalVariable(data),200 end
     else return HC3Request("POST",path,data) end
   end,
   ["PUT/globalVariables/#name"] = function(_,path,data,_,name)
-    local v = EM.rsrc.globalVariables[name]
-    if v then  
+    local var = EM.rsrc.globalVariables[name]
+    if cfg.shadow and var==nil then
+      var = HC3Request("GET",path)
+      if var then EM.rsrc.globalVariables[name]=var end
+    end
+    if var then  
       EM.addRefreshEvent({
           type='GlobalVariableChangedEvent',
           created = EM.osTime(),
-          data={variableName=name, newValue=data.value, oldValue=v.value}
+          data={variableName=name, newValue=data.value, oldValue=var.value}
         })
-      v.value = data.value
-      v.modified = EM.osTime()
-      return v,200
-    elseif not cfg.offline then return HC3Request("PUT",path,data) end
+      var.value = data.value
+      var.modified = EM.osTime()
+      return var,200
+    elseif not cfg.offline then return HC3Request("PUT",path,data) 
+    else return nil,404 end
   end,
   ["DELETE/globalVariables/#name"] = function(_,path,data,_,name)
     if EM.rsrc.globalVariables[name] then
       EM.rsrc.globalVariables[name] = nil
       return nil,200
-    elseif not cfg.offline then return HC3Request("DELETE",path,data) end
+    elseif not cfg.offline then return HC3Request("DELETE",path,data) 
+    else return nil,404 end
   end,
 
   ["GET/rooms"] = function(_,path,_,_)
-    local rooms = EM.cfg.offline and {} or HC3Request("GET",path)
-    for _,v in pairs(EM.rsrc.rooms or {}) do rooms[#rooms+1]=v end
+    local rooms = cfg.offline and {} or HC3Request("GET",path)
+    for _,v in pairs(EM.rsrc.rooms) do rooms[#rooms+1]=v end
     return rooms,200
   end,
   ["GET/rooms/#id"] = function(_,path,_,_,id)
     local r = EM.rsrc.rooms[id]
-    if r then return r,200 
-    elseif not EM.cfg.offline then return HC3Request("GET",path)
+    if cfg.shadow and r==nil then
+      r = HC3Request("GET",path)
+      if r then EM.rsrc.rooms[id]=r end
+    end
+    if r then return r,200
+    elseif not cfg.offline then return HC3Request("GET",path)
     else return nil,404 end
   end,
   ["POST/rooms"] = function(_,path,data,_)
-    if EM.cfg.offline then
+    if cfg.offline or cfg.shadow then
       return EM.create.room(data),200
     else return HC3Request("POST",path,data) end
   end,
   ["POST/rooms/#id/action/setAsDefault"] = function(_,path,data,_,id)
-    EM.cfg.defaultRoom = id
-    if EM.cfg.offline then return id,200 else return HC3Request("POST",path,data) end
+    cfg.defaultRoom = id
+    if cfg.offline or cfg.shadow then return id,200 else return HC3Request("POST",path,data) end
   end,
   ["PUT/rooms/#id"] = function(_,path,data,_,id)
     local r = EM.rsrc.rooms[id]
+    if cfg.shadow and r==nil then
+      r = HC3Request("GET",path)
+      if r then EM.rsrc.rooms[id]=r end
+    end
     if r then
       for k,v in pairs(data) do r[k]=v end
       return r,200
@@ -263,23 +282,31 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
 
   ["GET/sections"] = function(_,path,_,_)
-    local sections = EM.cfg.offline and {} or HC3Request("GET",path)
-    for _,v in pairs(EM.rsrc.sections or {}) do sections[#sections+1]=v end
+    local sections = cfg.offline and {} or HC3Request("GET",path)
+    for _,v in pairs(EM.rsrc.sections) do sections[#sections+1]=v end
     return sections,200
   end,
   ["GET/sections/#id"] = function(_,path,_,_,id)
     local r = EM.rsrc.sections[id]
+    if cfg.shadow and r==nil then
+      r = HC3Request("GET",path)
+      if r then EM.rsrc.sections[id]=r end
+    end
     if r then return r,200 
-    elseif not EM.cfg.offline then return HC3Request("GET",path)
+    elseif not cfg.offline then return  HC3Request("GET",path) 
     else return nil,404 end
   end,
   ["POST/sections"] = function(_,path,data,_)
-    if EM.cfg.offline then
+    if cfg.offline or cfg.shadow then
       return EM.create.section(data),200
     else return HC3Request("POST",path,data) end
   end,
   ["PUT/sections/#id"] = function(_,path,data,_,id)
     local s = EM.rsrc.sections[id]
+    if cfg.shadow and s==nil then
+      s = HC3Request("GET",path)
+      if s then EM.rsrc.sections[id]=s end
+    end
     if s then
       for k,v in pairs(data) do s[k]=v end
       return s,200
@@ -293,7 +320,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
 
   ["GET/customEvents"] = function(_,path,_,_)
-    local cevents = EM.cfg.offline and {} or HC3Request("GET",path)
+    local cevents = cfg.offline and {} or HC3Request("GET",path)
     for _,v in pairs(EM.rsrc.customeEvents or {}) do cevents[#cevents+1]=v end
     return cevents,200
   end,
@@ -304,7 +331,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     else return nil,404 end
   end,
   ["POST/customEvents"] = function(_,path,data,_)
-    if EM.cfg.offline then
+    if cfg.offline then
       if EM.rsrc.customEvents[data.name] then return nil,404
       else return EM.create.customEvent(data),200 end
     else return HC3Request("POST",path,data) end
@@ -490,29 +517,6 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       else return nil,404 end
     else return HC3Request(method,path,data) end
   end,
-
-  --- ToDos
-  ["GET/settings/info"]  = function(method,path,data,_)
-    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
-  end,
-  ["GET/settings/location"]  = function(method,path,data,_)
-    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
-  end,
-  ["GET/profiles"]  = function(method,path,data,_)
-    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
-  end,
-  ["GET/profiles/#id"]  = function(method,path,data,_)
-    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
-  end,
-  ["PUT/profiles"]  = function(method,path,data,_)
-    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
-  end,
-  ["POST/profiles"]  = function(method,path,data,_)
-    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
-  end,
-  ["POST/profiles/activeProfile/#id"]  = function(method,path,data,_)
-    if not EM.cfg.offline then return HC3Request(method,path,data) else return nil,404 end
-  end,
 }
 
 local API_MAP={ GET={}, POST={}, PUT={}, DELETE={} }
@@ -619,9 +623,10 @@ EM.EMEvents('start',function(_)
       exportAPIcall(p,f)
     end
 
+    -- Intercept unimplemented APIs and redicrect to HC3 if online
     EM.notFoundPath("^.-/api",function(method,path,client,body)
         if cfg.offline then
-          DEBUG("api","sys","Denying unknown api (offline): %s",path)
+          DEBUG("api","sys","Error unknown api (offline): %s",path)
           client:send("HTTP/1.1 501 Not Implemented\n\n")
         else
           DEBUG("api","sys","Redirecting unknown api to HC3: %s",path)

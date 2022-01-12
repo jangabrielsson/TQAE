@@ -46,8 +46,10 @@ function QuickApp:main()    -- EventScript version
 
   Util.defvars(HT)
   Util.reverseMapDef(HT)
-  
+
   rule("log('Current version is %s - %s',E_VERSION,E_FIX)")
+
+  rule("#foo => log('FOO=%s',tjson(env.event))")
 
 --[[
   rule("@sunset => lamp:value=40; sched=40")
@@ -64,7 +66,7 @@ function QuickApp:main()    -- EventScript version
 --  rule("alarms:willArm => log('Any will arm')")
 --  rule("{1,2}:allArmed => log('1,2 armed')")
 --  rule("{1,2}:disarmed => log('1,2 disarmed')")
-  --rule("wait(2); 0:alarm=true")
+--rule("wait(2); 0:alarm=true")
 
 --  rule("0:armed => log('all armed')").print()
 --  rule("0:armed==false => log('all disarmed')").print()
@@ -83,11 +85,11 @@ function QuickApp:main()    -- EventScript version
 --  rule("#earthHour2 => states = lights:value; lights:off; wait(00:00:06); lights:value = states")
 --  rule("@now+00:00:05 => post(#earthHour2)")
 
-  -- rule("@@00:01 & date('0/5 12-15 *') => log('ping')")
-  -- rule("@@00:00:05 => log(now % 2 == 1 & 'Tick' | 'Tock')")
-  -- rule("remote(1356,#foo)")
-  -- rule("wait(5); publish(#foo)")
-  -- rule("motion:value => log('Motion:%s',motion:last)")
+-- rule("@@00:01 & date('0/5 12-15 *') => log('ping')")
+-- rule("@@00:00:05 => log(now % 2 == 1 & 'Tick' | 'Tock')")
+-- rule("remote(1356,#foo)")
+-- rule("wait(5); publish(#foo)")
+-- rule("motion:value => log('Motion:%s',motion:last)")
 
 --     rule("@{catch,05:00} => Util.checkForUpdates()")
 --     rule("#File_update{} => log('New file version:%s - %s',env.event.file,env.event.version)")

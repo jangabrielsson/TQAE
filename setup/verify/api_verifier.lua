@@ -55,7 +55,8 @@ local GETcalls = {
 function QuickApp:onInit()
   self:debug(self.name, self.id)
   local hc3 = "192.168.1.57"
-  local host1 = "192.168.1.183:8976"
+--  local host1 = "192.168.1.183:8976"
+  local host1 = "192.168.1.18:8976"
 
   self:debug("Collecting API responses from HC3...")
   local ref = {} -- Collect ref responses from HC3
