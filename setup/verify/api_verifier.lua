@@ -1,8 +1,9 @@
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true },
-  offline = true,
-  copas = true
+  --offline = true,
+  copas = true,
+  --readOnly=true,
 }
 
 --%%name="API Verifier"

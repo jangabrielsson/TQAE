@@ -10,6 +10,7 @@ Support for local shadowing global variables, rooms, sections, customEvents - an
 local EM,_ = ...
 
 --local json,LOG,DEBUG = FB.json,EM.LOG,EM.DEBUG
+local HC3Request=EM.HC3Request
 
 EM.rsrc = { 
   rooms = {}, 
@@ -180,6 +181,32 @@ local function setup()
   EM.addAPI("GET/energy/devices",function() return {},200 end)
   EM.addAPI("GET/alarms/v1/devices",function() return {},200 end)
   EM.addAPI("GET/panels/location",function() return {},200 end)
+end
+
+EM.shadow={}
+function EM.shadow.globalVariable(name)
+  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.globalVariables[name] then return end
+  if EM.cfg.shadow then 
+    EM.rsrc.globalVariables[name] = HC3Request("/globalVariables/"..name) 
+  end
+end
+function EM.shadow.room(id)
+  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.rooms[id] then return end
+  if EM.cfg.shadow then 
+    EM.rsrc.rooms[id] = HC3Request("/rooms/"..id) 
+  end
+end
+function EM.shadow.section(id)
+  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.sections[id] then return end
+  if EM.cfg.shadow then 
+    EM.rsrc.sections[id] = HC3Request("/sections/"..id) 
+  end
+end
+function EM.shadow.globalVariable(name)
+  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.customEvents[name] then return end
+  if EM.cfg.shadow then 
+    EM.rsrc.customEvents[name] = HC3Request("/customEvents/"..name) 
+  end
 end
 
 local roomID = 1001

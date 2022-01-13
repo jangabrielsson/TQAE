@@ -199,11 +199,8 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     return globs,200
   end,
   ["GET/globalVariables/#name"] = function(_,path,_,_,name)
+    if cfg.shadow then EM.shadow.globalVariable(name) end
     local var = EM.rsrc.globalVariables[name]
-    if cfg.shadow and var==nil then
-      var = HC3Request("GET",path)
-      if var then EM.rsrc.globalVariables[name]=var end
-    end
     if var then return var,200
     elseif not cfg.offline then return HC3Request("GET",path)
     else return nil,404 end
@@ -215,11 +212,8 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     else return HC3Request("POST",path,data) end
   end,
   ["PUT/globalVariables/#name"] = function(_,path,data,_,name)
+    if cfg.shadow then EM.shadow.globalVariable(name) end
     local var = EM.rsrc.globalVariables[name]
-    if cfg.shadow and var==nil then
-      var = HC3Request("GET",path)
-      if var then EM.rsrc.globalVariables[name]=var end
-    end
     if var then  
       EM.addRefreshEvent({
           type='GlobalVariableChangedEvent',
@@ -246,11 +240,8 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     return rooms,200
   end,
   ["GET/rooms/#id"] = function(_,path,_,_,id)
+    if cfg.shadow then EM.shadow.room(id) end
     local r = EM.rsrc.rooms[id]
-    if cfg.shadow and r==nil then
-      r = HC3Request("GET",path)
-      if r then EM.rsrc.rooms[id]=r end
-    end
     if r then return r,200
     elseif not cfg.offline then return HC3Request("GET",path)
     else return nil,404 end
@@ -265,11 +256,8 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     if cfg.offline or cfg.shadow then return id,200 else return HC3Request("POST",path,data) end
   end,
   ["PUT/rooms/#id"] = function(_,path,data,_,id)
+    if cfg.shadow then EM.shadow.room(id) end
     local r = EM.rsrc.rooms[id]
-    if cfg.shadow and r==nil then
-      r = HC3Request("GET",path)
-      if r then EM.rsrc.rooms[id]=r end
-    end
     if r then
       for k,v in pairs(data) do r[k]=v end
       return r,200
@@ -288,11 +276,8 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     return sections,200
   end,
   ["GET/sections/#id"] = function(_,path,_,_,id)
+    if cfg.shadow then EM.shadow.section(id) end
     local r = EM.rsrc.sections[id]
-    if cfg.shadow and r==nil then
-      r = HC3Request("GET",path)
-      if r then EM.rsrc.sections[id]=r end
-    end
     if r then return r,200 
     elseif not cfg.offline then return  HC3Request("GET",path) 
     else return nil,404 end
@@ -303,11 +288,8 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     else return HC3Request("POST",path,data) end
   end,
   ["PUT/sections/#id"] = function(_,path,data,_,id)
+    if cfg.shadow then EM.shadow.section(id) end
     local s = EM.rsrc.sections[id]
-    if cfg.shadow and s==nil then
-      s = HC3Request("GET",path)
-      if s then EM.rsrc.sections[id]=s end
-    end
     if s then
       for k,v in pairs(data) do s[k]=v end
       return s,200
@@ -326,13 +308,14 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     return cevents,200
   end,
   ["GET/customEvents/#name"] = function(_,path,_,name)
+    if cfg.shadow then EM.shadow.customEvent(name) end
     local e = EM.rsrc.customEvents[name]
     if e  then return e,200 
     elseif not EM.cfg.offline then return HC3Request("GET",path)
     else return nil,404 end
   end,
   ["POST/customEvents"] = function(_,path,data,_)
-    if cfg.offline then
+    if cfg.offline or cfg.offline then
       if EM.rsrc.customEvents[data.name] then return nil,404
       else return EM.create.customEvent(data),200 end
     else return HC3Request("POST",path,data) end
@@ -347,6 +330,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     else return HC3Request("POST",path,data) end
   end,
   ["PUT/customEvents/#name"] = function(_,path,data,name)
+    if cfg.shadow then EM.shadow.customEvent(name) end
     local ce = EM.rsrc.rooms[name]
     if ce then
       for k,v in pairs(data) do ce[k]=v end
@@ -614,15 +598,6 @@ EM.EMEvents('start',function(_)
       return api.get("/alarms/v1/partitions/breached")
     end
 
-    -- Wrap API calls to make them accesible to external users. Register with webserver and make HTTP responses
-    -- for p,f in pairs(API_CALLS) do exportAPIcall(p,f) end
-
---    local oldAddApi = EM.addAPI
---    function EM.addAPI(p,f) 
---      oldAddApi(p,f)
---      exportAPIcall(p,f)
---    end
-
     -- Intercept unimplemented APIs and redicrect to HC3 if online
     EM.notFoundPath("^.-/api",function(method,path,client,body)
         if cfg.offline then
@@ -637,6 +612,6 @@ EM.EMEvents('start',function(_)
 
   end) -- start
 
-function EM.addAPI(p,f) EM.addPath(p,f,API_MAP) exportAPIcall(p,f) end
+function EM.addAPI(p,f) EM.addPath(p,f,API_MAP) exportAPIcall(p,f) end -- Add internal API and export as external API
 
 FB.api = api
