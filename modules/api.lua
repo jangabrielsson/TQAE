@@ -166,7 +166,8 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
 --   api.get("/devices?parentId="..self.id) or {}
   ["GET/devices/#id"] = function(_,path,_,_,id)
-    if Devices[id]  then return Devices[id].dev,200
+    local D = Devices[id] or (cfg.offline and id==1 and {dev=EM.getPrimaryController()}) -- Is it a local Device? Ugly!
+    if D  then return D.dev,200
     elseif not cfg.offline then return HC3Request("GET",path)
     else return nil,404 end
   end,
@@ -539,10 +540,46 @@ function api.post(cmd,data, remote) return aHC3call("POST",cmd,data, remote) end
 function api.put(cmd,data, remote) return aHC3call("PUT",cmd,data, remote) end
 function api.delete(cmd, remote) return aHC3call("DELETE",cmd, remote) end
 
-function EM.addAPI(p,f) EM.addPath(p,f,API_MAP) end
+local function returnREST(code,res,client,call)
+  if not code or code > 205 then 
+    LOG.error("API error:%s - %s",code,call) 
+    client:send("HTTP/1.1 "..code.." Not Found\n\n")
+    return
+  end
+  local dl,sdata = 0,""
+  if type(res)=='table' then
+    sdata = json.encode(res)
+    dl = #sdata
+  end
+  client:send("HTTP/1.1 "..code.." OK\n")
+  client:send("server: TQAE\n")
+  client:send("Content-Length: "..dl.."\n")
+  client:send("Content-Type: application/json;charset=UTF-8\n")
+  client:send("Cache-control: no-cache, no-store\n")
+  client:send("Connection: close\n\n")
+  client:send(sdata)
+  return true 
+end
+
+local function exportAPIcall(p,f)
+  if p ~= "GET/api/callAction" then
+    local method = p:match("^(.-)/")
+
+    local function fe(path,client,ref,data,opts,...)
+      data = data and json.decode(data)
+      DEBUG("api","sys","Incoming API call: %s",path)
+      local res,code = f(method,path:sub(5),data,opts,...)
+      returnREST(code,res,client,path)
+    end
+
+    p = p:gsub("^%w+",function(str) return str.."/api" end)
+    EM.addPath(p,fe)
+  end
+end
 
 EM.EMEvents('start',function(_) 
-    EM.processPathMap(API_CALLS,API_MAP)
+    for p,f in pairs(API_CALLS) do EM.addAPI(p,f) end
+    --EM.processPathMap(API_CALLS,API_MAP)
 
     local f1 = EM.lookupPath("GET","/devices/0",API_MAP)
     function FB.__fibaro_get_device(id) __assert_type(id,"number") return f1("GET","/devices/"..id,nil,{},id) end
@@ -577,51 +614,14 @@ EM.EMEvents('start',function(_)
       return api.get("/alarms/v1/partitions/breached")
     end
 
-    local function returnREST(code,res,client,call)
-      if not code or code > 205 then 
-        LOG.error("API error:%s - %s",code,call) 
-        client:send("HTTP/1.1 "..code.." Not Found\n\n")
-        return
-      end
-      local dl,sdata = 0,""
-      if type(res)=='table' then
-        sdata = json.encode(res)
-        dl = #sdata
-      end
-      client:send("HTTP/1.1 "..code.." OK\n")
-      client:send("server: TQAE\n")
-      client:send("Content-Length: "..dl.."\n")
-      client:send("Content-Type: application/json;charset=UTF-8\n")
-      client:send("Cache-control: no-cache, no-store\n")
-      client:send("Connection: close\n\n")
-      client:send(sdata)
-      return true 
-    end
-
-    local function exportAPIcall(p,f)
-      if p ~= "GET/api/callAction" then
-        local method = p:match("^(.-)/")
-
-        local function fe(path,client,ref,data,opts,...)
-          data = data and json.decode(data)
-          DEBUG("api","sys","Incoming API call: %s",path)
-          local res,code = f(method,path:sub(5),data,opts,...)
-          returnREST(code,res,client,path)
-        end
-
-        p = p:gsub("^%w+",function(str) return str.."/api" end)
-        EM.addPath(p,fe)
-      end
-    end
-    
     -- Wrap API calls to make them accesible to external users. Register with webserver and make HTTP responses
-    for p,f in pairs(API_CALLS) do exportAPIcall(p,f) end
-    
-    local oldAddApi = EM.addAPI
-    function EM.addAPI(p,f) 
-      oldAddApi(p,f)
-      exportAPIcall(p,f)
-    end
+    -- for p,f in pairs(API_CALLS) do exportAPIcall(p,f) end
+
+--    local oldAddApi = EM.addAPI
+--    function EM.addAPI(p,f) 
+--      oldAddApi(p,f)
+--      exportAPIcall(p,f)
+--    end
 
     -- Intercept unimplemented APIs and redicrect to HC3 if online
     EM.notFoundPath("^.-/api",function(method,path,client,body)
@@ -636,5 +636,7 @@ EM.EMEvents('start',function(_)
       end)
 
   end) -- start
+
+function EM.addAPI(p,f) EM.addPath(p,f,API_MAP) exportAPIcall(p,f) end
 
 FB.api = api

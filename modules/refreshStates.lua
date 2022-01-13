@@ -161,7 +161,7 @@ EM.refreshStatesQueue = refreshStatesQueue
 function EM.addRefreshListener(fun) refreshListeners[#refreshListeners+1] = fun end
 
 EM.addAPI("GET/refreshStates",function(_,_,_,prop) -- Intercept /api/refreshStates
-    return refreshStatesQueue.getEvents(tonumber(prop.last) or 0)
+    return refreshStatesQueue.getEvents(tonumber(prop.last) or 0),200
   end)
 
 EM.interceptHTTP = EM.interceptHTTP or {} 

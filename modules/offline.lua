@@ -149,6 +149,11 @@ end
 
 local function alarmsParts() return {},200 end
 local function notificationCenter() return {},200 end
+local function userInfo() return {},200 end
+local function weatherInfo() return {},200 end
+local function debugInfo() return {},200 end
+local function homeInfo() return {},200 end
+local function iosDevicesInfo() return {},200 end
 
 local function setup()
   local pc = primaryController()
@@ -165,6 +170,16 @@ local function setup()
   EM.addAPI("PUT/profiles",profileInfo)
   EM.addAPI("GET/profiles/#id",profileInfo)
   EM.addAPI("POST/profiles/activeProfile/#id",profileSet)
+  EM.addAPI("GET/users",userInfo)
+  EM.addAPI("GET/users/#id",userInfo)
+  EM.addAPI("GET/weather",weatherInfo)
+  EM.addAPI("GET/debugMessages",debugInfo)
+  EM.addAPI("GET/home",homeInfo)
+  EM.addAPI("GET/icons",function() return {},200 end)
+  EM.addAPI("GET/iosDevices",iosDevicesInfo)
+  EM.addAPI("GET/energy/devices",function() return {},200 end)
+  EM.addAPI("GET/alarms/v1/devices",function() return {},200 end)
+  EM.addAPI("GET/panels/location",function() return {},200 end)
 end
 
 local roomID = 1001
