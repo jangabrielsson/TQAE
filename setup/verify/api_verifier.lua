@@ -1,8 +1,9 @@
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true },
-  offline = true,
-  copas = true
+  --offline = true,
+  copas = true,
+  --readOnly=true,
 }
 
 --%%name="API Verifier"
@@ -16,6 +17,8 @@ local function callAPI(host,path,args) -- GET/icons...
   local base = fmt("http://%s/api",host)
   return EM.HC3Request(method,call,args,{base=base})
 end
+
+if EM.cfg.offline then EM.create.globalVariable{name="A",value=""} end
 
 local GETcalls = {
   "GET/devices",
@@ -56,7 +59,7 @@ function QuickApp:onInit()
   self:debug(self.name, self.id)
   local hc3 = "192.168.1.57"
 --  local host1 = "192.168.1.183:8976"
-  local host1 = "192.168.1.18:8976"
+  local host1 = EM.IPAddress..":8976"
 
   self:debug("Collecting API responses from HC3...")
   local ref = {} -- Collect ref responses from HC3

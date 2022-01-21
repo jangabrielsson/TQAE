@@ -11,9 +11,9 @@ local EM,_ = ...
 
 local HC3Request = EM.HC3Request
 
-EM.rsrc = { 
-  rooms = {}, 
-  sections={}, 
+EM.rsrc = {
+  rooms = {},
+  sections={},
   globalVariables={},
   customEvents={},
 }
@@ -24,7 +24,7 @@ function EM.shadow.globalVariable(name)
   local v = HC3Request("GET","/globalVariables/"..name)
   if v then EM.rsrc.globalVariables[name]=v end
 end
-function EM.shadow.room(id) 
+function EM.shadow.room(id)
   if EM.cfg.offline or EM.rsrc.rooms[id] then return end
   local v = HC3Request("GET","/rooms/"..id)
   if v then EM.rsrc.rooms[id]=v end
@@ -46,7 +46,7 @@ local function settingsLocation(_,client,ref,_,opts)
     city = "Berlin",
     latitude = 52.520008,
     longitude = 13.404954,
-    },200      
+    },200
 end
 
 EM.cachedInfoSettings = {
@@ -98,7 +98,7 @@ EM.cachedInfoSettings = {
 
 local function settingsInfo(_,client,ref,_,opts)
   if EM.cfg.location then return EM.cfg.location,200 end
-  return EM.cachedInfoSettings,200      
+  return EM.cachedInfoSettings,200
 end
 
 local profileData = { activeProfile = 1, profiles = {}}
@@ -117,7 +117,7 @@ end
 
 local function profileInfo(method,client,data,opts,id)
   if method=='GET' and id==nil then return profileData,200 end
-  if method=='GET' and id then 
+  if method=='GET' and id then
     for _,p in ipairs(profileData.profiles) do
       if p.id == id then return p,200 end
     end
@@ -134,14 +134,14 @@ local function profileInfo(method,client,data,opts,id)
         })
     end
     profileData = data
-    return data,200 
+    return data,200
   end
   return 500,nil
 end
 local function profileSet(method,client,data,opts,id)
-  if method=='POST' and tonumber(id) then 
+  if method=='POST' and tonumber(id) then
     local old = profileData.activeProfile
-    profileData.activeProfile=id 
+    profileData.activeProfile=id
     if old ~= id then
       EM.addRefreshEvent({
           type='ActiveProfileChangedEvent',
@@ -171,6 +171,11 @@ end
 
 local function alarmsParts() return {},200 end
 local function notificationCenter() return {},200 end
+local function userInfo() return {},200 end
+local function weatherInfo() return {},200 end
+local function debugInfo() return {},200 end
+local function homeInfo() return {},200 end
+local function iosDevicesInfo() return {},200 end
 
 local function setup()
   local pc = primaryController()
@@ -187,6 +192,42 @@ local function setup()
   EM.addAPI("PUT/profiles",profileInfo)
   EM.addAPI("GET/profiles/#id",profileInfo)
   EM.addAPI("POST/profiles/activeProfile/#id",profileSet)
+  EM.addAPI("GET/users",userInfo)
+  EM.addAPI("GET/users/#id",userInfo)
+  EM.addAPI("GET/weather",weatherInfo)
+  EM.addAPI("GET/debugMessages",debugInfo)
+  EM.addAPI("GET/home",homeInfo)
+  EM.addAPI("GET/icons",function() return {},200 end)
+  EM.addAPI("GET/iosDevices",iosDevicesInfo)
+  EM.addAPI("GET/energy/devices",function() return {},200 end)
+  EM.addAPI("GET/alarms/v1/devices",function() return {},200 end)
+  EM.addAPI("GET/panels/location",function() return {},200 end)
+end
+
+EM.shadow={}
+function EM.shadow.globalVariable(name)
+  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.globalVariables[name] then return end
+  if EM.cfg.shadow then
+    EM.rsrc.globalVariables[name] = HC3Request("/globalVariables/"..name)
+  end
+end
+function EM.shadow.room(id)
+  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.rooms[id] then return end
+  if EM.cfg.shadow then
+    EM.rsrc.rooms[id] = HC3Request("/rooms/"..id)
+  end
+end
+function EM.shadow.section(id)
+  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.sections[id] then return end
+  if EM.cfg.shadow then
+    EM.rsrc.sections[id] = HC3Request("/sections/"..id)
+  end
+end
+function EM.shadow.globalVariable(name)
+  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.customEvents[name] then return end
+  if EM.cfg.shadow then
+    EM.rsrc.customEvents[name] = HC3Request("/customEvents/"..name)
+  end
 end
 
 local roomID = 1001
@@ -223,7 +264,7 @@ function EM.create.room(args)
   }
   for _,k in ipairs(
     {"id","name","sectionID","isDefault","visible","icon","defaultSensors","meters","defaultThermostat","sortOrder","category"}
-    ) do v[k] = args[k] or v[k] 
+    ) do v[k] = args[k] or v[k]
   end
   if not v.id then v.id = roomID roomID=roomID+1 end
   EM.rsrc.rooms[v.id]=v
@@ -251,7 +292,5 @@ function EM.create.customEvent(args)
 end
 
 EM.EMEvents('start',function(_)
-    if EM.cfg.offline then setup() end 
+    if EM.cfg.offline then setup() end
   end)
-
-
