@@ -139,6 +139,52 @@ local fFuns = {
   property=function(v,rsrc) return rsrc.properties[v:match("%[(.-),")]==_fconv(v:match(",(.*)%]")) end
 }
 
+local function retCode(rsrc) if  rsrc then return rsrc,200  else return rsrc,404 end end
+
+local function getAllItems(rname)
+  local r = cfg.offline and {} or HC3Request("GET","/"..rname)
+  for _,v in pairs(EM.rsrc[rname]) do r[#r+1]=v end
+  return r,200
+end
+
+local function getItem(rname,id)
+  if cfg.offline or EM.rsrc[rname][id] then return retCode(EM.rsrc[rname][id])
+  elseif cfg.shadow then
+    if not EM.rsrc[rname][id] then
+      EM.rsrc[rname][id] = HC3Request("GET","/"..rname.."/"..id)
+    end
+    return retCode(EM.rsrc[rname][id])
+  else return HC3Request("GET","/"..rname.."/"..id) end
+end
+
+local function createItem(rname,id,data)
+  local cfun = rname:sub(1,-1)
+  if cfg.offline or cfg.shadow or EM.rsrc[rname][id] then
+    if EM.rsrc[rname][id] then return nil,404 
+    elseif EM.create[cfun] then
+      return EM.create[cfun](data),200
+    else return nil,501 end
+  else return HC3Request("POST","/"..rname,data) end
+end
+
+local function modifyItem(rname,id,data)
+  if not (cfg.offline or cfg.shadow or EM.rsrc[rname][id]) then return HC3Request("PUT","/"..rname.."/"..id,data) end
+  if cfg.shadow and not EM.rsrc[rname][id] then
+    EM.rsrc[rname][id] = HC3Request("GET","/"..rname.."/"..id)
+  end
+  local r = EM.rsrc[rname][id]
+  if not r then return nil,404 end
+  for k,v in pairs(data) do r[k]=v end
+  return r,200
+end
+
+local function deleteItem(rname,id)
+  if EM.rsrc[rname][id] then
+    EM.rsrc[rname][id] = nil
+    return nil,200
+  else return HC3Request("DELETE","/"..rname.."/"..id,data) end
+end
+
 local function filter(list,props)
   if next(props)==nil then return list end
   local res = {}
@@ -157,7 +203,8 @@ local aHC3call
 local API_CALLS = { -- Intercept some api calls to the api to include emulated QAs or emulator aspects
   ["GET/devices"] = function(_,_,_,opts)
     local ds = cfg.offline and {} or HC3Request("GET","/devices") or {}
-    for _,dev in pairs(Devices) do ds[#ds+1]=dev.dev end -- Add emulated Devices
+    for _,dev in pairs(Devices) do ds[#ds+1]=dev.dev end     -- Add emulated Devices
+    for _,dev in pairs(EM.rsrc.devices) do ds[#ds+1]=dev end -- Add raw devices
     if next(opts)==nil then
       return ds,200
     else
@@ -166,15 +213,15 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
 --   api.get("/devices?parentId="..self.id) or {}
   ["GET/devices/#id"] = function(_,path,_,_,id)
-    local D = Devices[id] or (cfg.offline and id==1 and {dev=EM.getPrimaryController()}) -- Is it a local Device? Ugly!
-    if D  then return D.dev,200
+    local d = Devices[id] and Devices[id].dev or EM.rsrc.devices[id] 
+    if d  then return d,200
     elseif not cfg.offline then return HC3Request("GET",path)
     else return nil,404 end
   end,
   ["GET/devices/#id/properties/#name"] = function(_,path,_,_,id,prop) 
-    local D = Devices[id] or (cfg.offline and id==1 and {dev=EM.getPrimaryController()}) -- Is it a local Device? Ugly!
-    if D then 
-      if D.dev.properties[prop]~=nil then return { value = D.dev.properties[prop], modified=0},200 
+    local d = Devices[id] and Devices[id].dev or EM.rsrc.devices[id] 
+    if d then 
+      if d.properties[prop]~=nil then return { value = d.properties[prop], modified=0},200 
       else return nil,404 end
     elseif not cfg.offline then return HC3Request("GET",path) end
   end,
@@ -190,136 +237,48 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       end
       return data,202
       -- Should check other device values too - usually needs restart of QA
-    else return HC3Request("GET",path, data) end
-  end,
-
-  ["GET/globalVariables"] = function(_,path,_,_)
-    local globs = cfg.offline and {} or HC3Request("GET",path)
-    for _,v in pairs(EM.rsrc.globalVariables) do globs[#globs+1]=v end
-    return globs,200
-  end,
-  ["GET/globalVariables/#name"] = function(_,path,_,_,name)
-    if cfg.shadow then EM.shadow.globalVariable(name) end
-    local var = EM.rsrc.globalVariables[name]
-    if var then return var,200
-    elseif not cfg.offline then return HC3Request("GET",path)
+    elseif not cfg.offline then return HC3Request("GET",path, data)
     else return nil,404 end
   end,
-  ["POST/globalVariables"] = function(_,path,data,_)
-    if cfg.offline or cfg.shadow then
-      if EM.rsrc.globalVariables[data.name] then return nil,404
-      else return EM.create.globalVariable(data),200 end
-    else return HC3Request("POST",path,data) end
-  end,
+
+  ["GET/globalVariables"] = function(_,path,_,_) return getAllItems('globalVariables') end,
+  ["GET/globalVariables/#name"] = function(_,path,_,_,name) return getItem('globalVariables',name) end,
+  ["POST/globalVariables"] = function(_,path,data,_) return createItem('globalVariables',name,data) end,
   ["PUT/globalVariables/#name"] = function(_,path,data,_,name)
-    if cfg.shadow then EM.shadow.globalVariable(name) end
+    local oldVar  = EM.rsrc.globalVariables[name] or {}
+    local oldValue  = oldVar.value
+    local res,code  = modifyItem('globalVariables',name,data)
     local var = EM.rsrc.globalVariables[name]
-    if var then  
+    if cfg.offline or cfg.shadow and code <  205 and oldValue ~= var.value then
       EM.addRefreshEvent({
           type='GlobalVariableChangedEvent',
           created = EM.osTime(),
-          data={variableName=name, newValue=data.value, oldValue=var.value}
+          data={variableName=name, newValue=var.value, oldValue=oldValue}
         })
-      var.value = data.value
-      var.modified = EM.osTime()
-      return var,200
-    elseif not cfg.offline then return HC3Request("PUT",path,data) 
-    else return nil,404 end
+    end
+    return res,code
   end,
-  ["DELETE/globalVariables/#name"] = function(_,path,data,_,name)
-    if EM.rsrc.globalVariables[name] then
-      EM.rsrc.globalVariables[name] = nil
-      return nil,200
-    elseif not cfg.offline then return HC3Request("DELETE",path,data) 
-    else return nil,404 end
-  end,
+  ["DELETE/globalVariables/#name"] = function(_,path,data,_,name) return deleteItem('globalVariables',name) end,
 
-  ["GET/rooms"] = function(_,path,_,_)
-    local rooms = cfg.offline and {} or HC3Request("GET",path)
-    for _,v in pairs(EM.rsrc.rooms) do rooms[#rooms+1]=v end
-    return rooms,200
-  end,
-  ["GET/rooms/#id"] = function(_,path,_,_,id)
-    if cfg.shadow then EM.shadow.room(id) end
-    local r = EM.rsrc.rooms[id]
-    if r then return r,200
-    elseif not cfg.offline then return HC3Request("GET",path)
-    else return nil,404 end
-  end,
-  ["POST/rooms"] = function(_,path,data,_)
-    if cfg.offline or cfg.shadow then
-      return EM.create.room(data),200
-    else return HC3Request("POST",path,data) end
-  end,
+  ["GET/rooms"] = function(_,path,_,_) return getAllItems('rooms') end,
+  ["GET/rooms/#id"] = function(_,path,_,_,id) return getItem('rooms',id) end,
+  ["POST/rooms"] = function(_,path,data,_) return createItem('rooms',id,data) end,
   ["POST/rooms/#id/action/setAsDefault"] = function(_,path,data,_,id)
     cfg.defaultRoom = id
     if cfg.offline or cfg.shadow then return id,200 else return HC3Request("POST",path,data) end
   end,
-  ["PUT/rooms/#id"] = function(_,path,data,_,id)
-    if cfg.shadow then EM.shadow.room(id) end
-    local r = EM.rsrc.rooms[id]
-    if r then
-      for k,v in pairs(data) do r[k]=v end
-      return r,200
-    else return HC3Request("PUT",path,data) end
-  end,
-  ["DELETE/rooms/#id"] = function(_,path,data,_,id)
-    if EM.rsrc.rooms[id] then
-      EM.rsrc.rooms[id] = nil
-      return nil,200
-    else return HC3Request("DELETE",path,data) end
-  end,
+  ["PUT/rooms/#id"] = function(_,path,data,_,id) return modifyItem('rooms',id,data) end,
+  ["DELETE/rooms/#id"] = function(_,path,data,_,id) return deleteItem('rooms',id,data) end,
 
-  ["GET/sections"] = function(_,path,_,_)
-    local sections = cfg.offline and {} or HC3Request("GET",path)
-    for _,v in pairs(EM.rsrc.sections) do sections[#sections+1]=v end
-    return sections,200
-  end,
-  ["GET/sections/#id"] = function(_,path,_,_,id)
-    if cfg.shadow then EM.shadow.section(id) end
-    local r = EM.rsrc.sections[id]
-    if r then return r,200 
-    elseif not cfg.offline then return  HC3Request("GET",path) 
-    else return nil,404 end
-  end,
-  ["POST/sections"] = function(_,path,data,_)
-    if cfg.offline or cfg.shadow then
-      return EM.create.section(data),200
-    else return HC3Request("POST",path,data) end
-  end,
-  ["PUT/sections/#id"] = function(_,path,data,_,id)
-    if cfg.shadow then EM.shadow.section(id) end
-    local s = EM.rsrc.sections[id]
-    if s then
-      for k,v in pairs(data) do s[k]=v end
-      return s,200
-    else return HC3Request("PUT",path,data) end
-  end,
-  ["DELETE/sections/#id"] = function(_,path,data,_,id)
-    if EM.rsrc.sections[id] then
-      EM.rsrc.sections[id] = nil
-      return nil,200
-    else return HC3Request("DELETE",path,data) end
-  end,
-
-  ["GET/customEvents"] = function(_,path,_,_)
-    local cevents = cfg.offline and {} or HC3Request("GET",path)
-    for _,v in pairs(EM.rsrc.customeEvents or {}) do cevents[#cevents+1]=v end
-    return cevents,200
-  end,
-  ["GET/customEvents/#name"] = function(_,path,_,name)
-    if cfg.shadow then EM.shadow.customEvent(name) end
-    local e = EM.rsrc.customEvents[name]
-    if e  then return e,200 
-    elseif not EM.cfg.offline then return HC3Request("GET",path)
-    else return nil,404 end
-  end,
-  ["POST/customEvents"] = function(_,path,data,_)
-    if cfg.offline or cfg.offline then
-      if EM.rsrc.customEvents[data.name] then return nil,404
-      else return EM.create.customEvent(data),200 end
-    else return HC3Request("POST",path,data) end
-  end,
+  ["GET/sections"] = function(_,path,_,_) return getAllItems('sections') end,
+  ["GET/sections/#id"] = function(_,path,_,_,id) return getItem('sections',id) end,
+  ["POST/sections"] = function(_,path,data,_) return createItem('sections',id,data) end,
+  ["PUT/sections/#id"] = function(_,path,data,_,id) return modifyItem('sections',id,data) end,
+  ["DELETE/sections/#id"] = function(_,path,data,_,id) return deleteItem('sections',id,data) end,
+  
+  ["GET/customEvents"] = function(_,path,_,_) return getAllItems('customEvents') end,
+  ["GET/customEvents/#name"] = function(_,path,_,name) return getItem('customEvents',name) end,
+  ["POST/customEvents"] = function(_,path,data,_) return createItem('customEvents',id,data) end,
   ["POST/customEvents/#name"] = function(_,path,data,_,name)
     if EM.rsrc.customEvents[name] then
       EM.addRefreshEvent({
@@ -327,22 +286,11 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
           created = EM.osTime(),
           data={name=name, value=EM.rsrc.customEvents[name].userDescription}
         })
-    else return HC3Request("POST",path,data) end
+    elseif not cfg.offline then return HC3Request("POST",path,data) 
+    else return 404,nil end
   end,
-  ["PUT/customEvents/#name"] = function(_,path,data,name)
-    if cfg.shadow then EM.shadow.customEvent(name) end
-    local ce = EM.rsrc.rooms[name]
-    if ce then
-      for k,v in pairs(data) do ce[k]=v end
-      return ce,200
-    else return HC3Request("PUT",path,data) end
-  end,
-  ["DELETE/customEvents/#name"] = function(_,path,data,name)
-    if EM.rsrc.customEvents[name] then
-      EM.rsrc.customEvents[name] = nil
-      return nil,200
-    else return HC3Request("DELETE",path,data) end
-  end,
+  ["PUT/customEvents/#name"] = function(_,path,data,name) return modifyItem('customEvents',name,data) end,
+  ["DELETE/customEvents/#name"] = function(_,path,data,name) return deleteItem('customEvents',name) end,
 
   ["GET/scenes"] = function(_,path,_,_)
     return HC3Request("GET",path)
@@ -433,7 +381,20 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       return true,200
     else return HC3Request(method,path,data) end
   end,
-  ------------- quickApp ---------
+
+  ["GET/panels/location"] = function(_,path,_,_) return getAllItems('panels_locations') end,
+  ["GET/panels/location/#id"] = function(_,path,_,_,id) return getItem('panels_locations',id) end,
+  ["POST/panels/location"] = function(_,path,data,_) return createItem('panels_locations',id,data) end,
+  ["PUT/panels/location/#id"] = function(_,path,data,_,id) return modifyItem('panels_locations',id,data) end,
+  ["DELETE/panels/location/#id"] = function(_,path,data,_,id) return deleteItem('panels_locations',id,data) end,
+  
+  ["GET/users"] = function(_,path,_,_) return getAllItems('users') end,
+  ["GET/users/#id"] = function(_,path,_,_,id) return getItem('users',id) end,
+  ["POST/users"] = function(_,path,data,_) return createItem('users',id,data) end,
+  ["PUT/users/#id"] = function(_,path,data,_,id) return modifyItem('users',id,data) end,
+  ["DELETE/users/#id"] = function(_,path,data,_,id) return deleteItem('users',id,data) end,
+
+------------- quickApp ---------
   ["GET/quickApp/#id/files"] = function(method,path,data,_,id)                     --Get files
     local D = Devices[id]
     if D then

@@ -1,7 +1,7 @@
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true },
-  --offline = true,
+  offline = true,
   copas = true,
   --readOnly=true,
 }
@@ -74,7 +74,7 @@ function QuickApp:onInit()
     if code==ref[i].code then
       self:trace(fmt("OK - %s (%s)",call,code))
       if type(res)~=type(ref[i].res) then
-        self:warning(fmt("Result mismatch  %s (%s/%s)",call,type(res)~=type(ref[i].res)))
+        self:warning(fmt("Result mismatch  %s (%s/%s)",call,type(res),type(ref[i].res)))
       end
     else
       self:warning(fmt("%s/%s - %s",code,ref[i].code,call))

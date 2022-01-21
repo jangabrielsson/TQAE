@@ -12,23 +12,48 @@ local EM,_ = ...
 --local json,LOG,DEBUG = FB.json,EM.LOG,EM.DEBUG
 local HC3Request=EM.HC3Request
 
-EM.rsrc = { 
+local rsrc = { 
   rooms = {}, 
   sections={}, 
   globalVariables={},
   customEvents={},
+  devices = {},
+  settings_localtion = {},
+  settings_info = {}, 
+  settings_led={}, 
+  settings_network={},
+  alarms_v1_partitions = {}, 
+  alarms_v1_devices={},
+  notificationCenter = {},
+  profiles = {},
+  users = {},
+  icons = {},
+  weather = {},
+  debugMessages = {},
+  home = {},
+  iosDevices = {},
+  energy_devices = {},
+  panels_location = {},  
+  panels_notifications = {}, 
+  panels_family={},
+  panels_sprinklers = {}, 
+  panels_humidity={},
+  panels_favoriteColors = {},
+  diagnostics = {},
+  sortOrder = {},
+  loginStatus = {},
+  RGBprograms = {},
 }
 
-local function settingsLocation(_,client,ref,_,opts)
-  if EM.cfg.location then return EM.cfg.location,200 end
-  return {
-    city = "Berlin",
-    latitude = 52.520008,
-    longitude = 13.404954,
-    },200      
-end
+EM.rsrc = rsrc
 
-EM.cachedInfoSettings = {
+rsrc.settings_location = {
+  city = "Berlin",
+  latitude = 52.520008,
+  longitude = 13.404954,
+}
+
+rsrc.settings_info = {
   serialNumber = "HC3-00000999",
   platform = "HC3",
   zwaveEngineVersion = "2.0",
@@ -72,13 +97,45 @@ EM.cachedInfoSettings = {
   newestStableVersion = "5.090.17",
   newestBetaVersion = "5.000.15",
   isFTIConfigured = true,
-  isSlave = false
+  isSlave = false,
 }
 
-local function settingsInfo(_,client,ref,_,opts)
-  if EM.cfg.location then return EM.cfg.location,200 end
-  return EM.cachedInfoSettings,200      
-end
+rsrc.users = {  
+  [2] = {
+    id = 2,
+    name = "admin",
+    type = "superuser",
+    email = "foo@bar.com",
+    deviceRights =  {},
+    sceneRights =  {},
+    alarmRights =  {},
+    profileRights =  {},
+    climateZoneRights =  {},
+  }
+}
+
+rsrc.panels_locations = {
+  [6] = {
+    id =  6,
+    name =  "My Home",
+    address =  "Serdeczna 3, Wysogotowo",
+    longitude =  16.791597,
+    latitude =  52.404958,
+    radius =  150,
+    home =  true,
+  }
+}
+
+rsrc.weather = {
+  Temperature=  3.1,
+  TemperatureUnit=  "C",
+  Humidity=  51.4,
+  Wind=  29.52,
+  WindUnit=  "km/h",
+  WeatherCondition=  "clear",
+  ConditionCode=  32
+}
+
 
 local profileData = { activeProfile = 1, profiles = {}}
 for i,name in ipairs({'Home','Away','Vacation','Night'}) do
@@ -93,7 +150,9 @@ for i,name in ipairs({'Home','Away','Vacation','Night'}) do
     partitions =  { }
   }
 end
+EM.rsrc.profiles  =  profileData
 
+---------------- Profile  handling ---------------------
 local function profileInfo(method,client,data,opts,id)
   if method=='GET' and id==nil then return profileData,200 end
   if method=='GET' and id then 
@@ -117,6 +176,7 @@ local function profileInfo(method,client,data,opts,id)
   end
   return 500,nil
 end
+
 local function profileSet(method,client,data,opts,id)
   if method=='POST' and tonumber(id) then 
     local old = profileData.activeProfile
@@ -131,81 +191,57 @@ local function profileSet(method,client,data,opts,id)
     return id,200
   else return nil,500 end
 end
+------------------------------
 
-local function primaryController()
-  return {
-    id= 1,
-    name = "zwave",
-    roomID = 219,
-    type = "com.fibaro.zwavePrimaryController",
-    baseType = "",
-    enabled = true,
-    properties = {
-      sunriseHour = "08:40",
-      sunsetHour = "15:08",
-    },
+local  primaryController  = {
+  id= 1,
+  name = "zwave",
+  roomID = 219,
+  type = "com.fibaro.zwavePrimaryController",
+  baseType = "",
+  enabled = true,
+  properties = {
+    sunriseHour = "08:40",
+    sunsetHour = "15:08",
   },
-  200
-end
-
-local function alarmsParts() return {},200 end
-local function notificationCenter() return {},200 end
-local function userInfo() return {},200 end
-local function weatherInfo() return {},200 end
-local function debugInfo() return {},200 end
-local function homeInfo() return {},200 end
-local function iosDevicesInfo() return {},200 end
+}
 
 local function setup()
-  local pc = primaryController()
-  function EM.getPrimaryController() return pc end
+
+  rsrc.devices[1] = primaryController
   EM.create.room{id=219,name="Default Room"}
   EM.create.section{id=219,name="Default Section"}
+
+  if EM.cfg.location then rsrc.settings.location = EM.cfg.location  end
+
   -- Intercept some useful APIs...
-  EM.addAPI("GET/settings/location",settingsLocation)
-  EM.addAPI("GET/settings/info",settingsInfo)
-  EM.addAPI("GET/alarms/v1/partitions",alarmsParts)
-  EM.addAPI("GET/notificationCenter",notificationCenter)
+  local function map2arr(t) local r={}; for k,v in pairs(t) do r[#r+1]=v end return r end
+
+  EM.addAPI("GET/settings/location",function() return rsrc.settings_location,200 end)
+  EM.addAPI("GET/settings/info",function() return rsrc.settings_info,200 end)
+  EM.addAPI("GET/alarms/v1/partitions",function() return rsrc.alarms_v1_partitions,200 end)
+  EM.addAPI("GET/alarms/v1/devices",function() return rsrc.alarms_v1_devices,200 end)
+  EM.addAPI("GET/notificationCenter",function() return rsrc.notificationCenter,200 end)
   EM.addAPI("POST/notificationCenter",notificationCenter)
   EM.addAPI("GET/profiles",profileInfo)
   EM.addAPI("PUT/profiles",profileInfo)
   EM.addAPI("GET/profiles/#id",profileInfo)
   EM.addAPI("POST/profiles/activeProfile/#id",profileSet)
-  EM.addAPI("GET/users",userInfo)
-  EM.addAPI("GET/users/#id",userInfo)
-  EM.addAPI("GET/weather",weatherInfo)
-  EM.addAPI("GET/debugMessages",debugInfo)
-  EM.addAPI("GET/home",homeInfo)
-  EM.addAPI("GET/icons",function() return {},200 end)
-  EM.addAPI("GET/iosDevices",iosDevicesInfo)
-  EM.addAPI("GET/energy/devices",function() return {},200 end)
-  EM.addAPI("GET/alarms/v1/devices",function() return {},200 end)
-  EM.addAPI("GET/panels/location",function() return {},200 end)
+  EM.addAPI("GET/weather",function() return rsrc.weather,200 end)
+  EM.addAPI("GET/debugMessages",function() return rsrc.debugMessages,200 end)
+  EM.addAPI("GET/home",function() return rsrc.home,200 end)
+  EM.addAPI("GET/icons",function() return map2arr(rsrc.icons),200 end)
+  EM.addAPI("GET/iosDevices",function() return map2arr(rsrc.iosDevices),200 end)
+  EM.addAPI("GET/energy/devices",function() return rsrc.energy_devices,200 end)
 end
 
 EM.shadow={}
-function EM.shadow.globalVariable(name)
-  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.globalVariables[name] then return end
-  if EM.cfg.shadow then 
-    EM.rsrc.globalVariables[name] = HC3Request("/globalVariables/"..name) 
-  end
-end
-function EM.shadow.room(id)
-  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.rooms[id] then return end
-  if EM.cfg.shadow then 
-    EM.rsrc.rooms[id] = HC3Request("/rooms/"..id) 
-  end
-end
-function EM.shadow.section(id)
-  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.sections[id] then return end
-  if EM.cfg.shadow then 
-    EM.rsrc.sections[id] = HC3Request("/sections/"..id) 
-  end
-end
-function EM.shadow.globalVariable(name)
-  if EM.cfg.offline or EM.cfg.shadow and EM.rsrc.customEvents[name] then return end
-  if EM.cfg.shadow then 
-    EM.rsrc.customEvents[name] = HC3Request("/customEvents/"..name) 
+for _,name in  ipairs({'globalVariables','rooms','sections','customEvents'}) do
+  EM.shadow[name]=function(id)
+    if EM.cfg.offline or EM.cfg.shadow and EM.rsrc[name][id] then return end
+    if EM.cfg.shadow then 
+      EM.rsrc[name][id] = HC3Request("/"..name.."/"..gid) 
+    end
   end
 end
 
@@ -262,12 +298,21 @@ function EM.create.section(args)
 end
 
 function EM.create.customEvent(args)
-  local v = {
-    name=args.name,
-    userDescription=args.userDescription or "",
-  }
+  local v = { name=args.name, userDescription=args.userDescription or "" }
   EM.rsrc.customEvents[v.id]=v
   return v
+end
+
+function EM.create.user(args)
+  local u = {} for k,v in  pairs(args) do u[k]=v end
+  EM.rsrc.users[u.id]=u
+  return u
+end
+
+function EM.create.panels_locations(args)
+  local u = {} for k,v in  pairs(args) do u[k]=v end
+  EM.rsrc.panels_locations[u.id]=u
+  return u
 end
 
 EM.EMEvents('start',function(_)

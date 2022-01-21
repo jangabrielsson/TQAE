@@ -151,8 +151,8 @@ EM.EMEvents('start',function(_) -- Intercept emulator started and check if start
     local m,start=midnight(),true
     local function loop()
       EM.sunriseHour,EM.sunsetHour = sunCalc()
-      if EM.cfg.offline then
-        local p = EM.getPrimaryController()
+      if EM.cfg.offline and EM.rsrc.devices[1] then
+        local p = EM.rsrc.devices[1]
         p.properties.sunriseHour = EM.sunriseHour
         p.properties.sunsetHour = EM.sunsetHour
       end
