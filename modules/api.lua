@@ -376,7 +376,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       EM.setTimeout(function() EM.restartQA(p) end,0,nil,p) 
       --EM.restartQA(D.dev.parentId)
       if D.childProxy then
-        return HC3Request(method,path,data)
+        return HC3Request(method,path,data) 
       end
       return true,200
     else return HC3Request(method,path,data) end
