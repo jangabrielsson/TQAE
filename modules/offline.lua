@@ -9,7 +9,7 @@ Support for local shadowing global variables, rooms, sections, customEvents - an
 --]]
 local EM,_ = ...
 
---local json,LOG,DEBUG = FB.json,EM.LOG,EM.DEBUG
+local HC3Request = EM.HC3Request
 
 EM.rsrc = { 
   rooms = {}, 
@@ -17,6 +17,28 @@ EM.rsrc = {
   globalVariables={},
   customEvents={},
 }
+
+EM.shadow={}
+function EM.shadow.globalVariable(name)
+  if EM.cfg.offline or EM.rsrc.globalVariables[name] then return end
+  local v = HC3Request("GET","/globalVariables/"..name)
+  if v then EM.rsrc.globalVariables[name]=v end
+end
+function EM.shadow.room(id) 
+  if EM.cfg.offline or EM.rsrc.rooms[id] then return end
+  local v = HC3Request("GET","/rooms/"..id)
+  if v then EM.rsrc.rooms[id]=v end
+end
+function EM.shadow.section(id)
+  if EM.cfg.offline or EM.rsrc.sections[id] then return end
+  local v = HC3Request("GET","/sections/"..id)
+  if v then EM.rsrc.sections[id]=v end
+end
+function EM.shadow.customEvent(name)
+  if EM.cfg.offline or EM.rsrc.customEvents[name] then return end
+  local v = HC3Request("GET","/customEvent/"..name)
+  if v then EM.rsrc.customEvents[name]=v end
+end
 
 local function settingsLocation(_,client,ref,_,opts)
   if EM.cfg.location then return EM.cfg.location,200 end
@@ -181,7 +203,7 @@ function EM.create.globalVariable(args)
   EM.addRefreshEvent({
       type='GlobalVariableAddedEvent',
       created = EM.osTime(),
-      data={variableName=name, value=v}
+      data={variableName=args.name, value=v}
     })
   return v
 end

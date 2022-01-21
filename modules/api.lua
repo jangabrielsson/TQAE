@@ -198,27 +198,22 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     return globs,200
   end,
   ["GET/globalVariables/#name"] = function(_,path,_,_,name)
+    if cfg.shadow then EM.shadow.globalVariable(name) end
     local var = EM.rsrc.globalVariables[name]
-    if cfg.shadow and var==nil then
-      var = HC3Request("GET",path)
-      if var then EM.rsrc.globalVariables[name]=var end
-    end
-    if var then return var,200
-    elseif not cfg.offline then return HC3Request("GET",path)
-    else return nil,404 end
+    if var then return var,202
+    elseif not cfg.offline then return HC3Request("GET",path) 
+    elseif var==nil then return nil,404 end
   end,
   ["POST/globalVariables"] = function(_,path,data,_)
     if cfg.offline or cfg.shadow then
       if EM.rsrc.globalVariables[data.name] then return nil,404
       else return EM.create.globalVariable(data),200 end
-    else return HC3Request("POST",path,data) end
+    elseif not cfg.offline then return HC3Request("POST",path,data) 
+    else return nil,501 end
   end,
   ["PUT/globalVariables/#name"] = function(_,path,data,_,name)
+    if cfg.shadow then EM.shadow.globalVariable(name) end
     local var = EM.rsrc.globalVariables[name]
-    if cfg.shadow and var==nil then
-      var = HC3Request("GET",path)
-      if var then EM.rsrc.globalVariables[name]=var end
-    end
     if var then  
       EM.addRefreshEvent({
           type='GlobalVariableChangedEvent',
@@ -245,11 +240,8 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     return rooms,200
   end,
   ["GET/rooms/#id"] = function(_,path,_,_,id)
+    if cfg.shadow then EM.shadow.room(id) end
     local r = EM.rsrc.rooms[id]
-    if cfg.shadow and r==nil then
-      r = HC3Request("GET",path)
-      if r then EM.rsrc.rooms[id]=r end
-    end
     if r then return r,200
     elseif not cfg.offline then return HC3Request("GET",path)
     else return nil,404 end
@@ -261,14 +253,13 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
   ["POST/rooms/#id/action/setAsDefault"] = function(_,path,data,_,id)
     cfg.defaultRoom = id
-    if cfg.offline or cfg.shadow then return id,200 else return HC3Request("POST",path,data) end
+    if cfg.offline or cfg.shadow then return id,200 
+    elseif not cfg.offline then return HC3Request("POST",path,data) 
+    else return nil,501 end
   end,
   ["PUT/rooms/#id"] = function(_,path,data,_,id)
+    if cfg.shadow then EM.shadow.room(id) end
     local r = EM.rsrc.rooms[id]
-    if cfg.shadow and r==nil then
-      r = HC3Request("GET",path)
-      if r then EM.rsrc.rooms[id]=r end
-    end
     if r then
       for k,v in pairs(data) do r[k]=v end
       return r,200
@@ -287,11 +278,8 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     return sections,200
   end,
   ["GET/sections/#id"] = function(_,path,_,_,id)
+    if cfg.shadow then EM.shadow.section(id) end
     local r = EM.rsrc.sections[id]
-    if cfg.shadow and r==nil then
-      r = HC3Request("GET",path)
-      if r then EM.rsrc.sections[id]=r end
-    end
     if r then return r,200 
     elseif not cfg.offline then return  HC3Request("GET",path) 
     else return nil,404 end
@@ -299,14 +287,12 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   ["POST/sections"] = function(_,path,data,_)
     if cfg.offline or cfg.shadow then
       return EM.create.section(data),200
-    else return HC3Request("POST",path,data) end
+    elseif not cfg.offline then return HC3Request("POST",path,data)
+    else return nil,501 end
   end,
   ["PUT/sections/#id"] = function(_,path,data,_,id)
+    if cfg.shadow then EM.shadow.section(id) end
     local s = EM.rsrc.sections[id]
-    if cfg.shadow and s==nil then
-      s = HC3Request("GET",path)
-      if s then EM.rsrc.sections[id]=s end
-    end
     if s then
       for k,v in pairs(data) do s[k]=v end
       return s,200
@@ -325,8 +311,9 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     return cevents,200
   end,
   ["GET/customEvents/#name"] = function(_,path,_,name)
+    if cfg.shadow then EM.shadow.customEvent(name) end
     local e = EM.rsrc.customEvents[name]
-    if e  then return e,200 
+    if e then return e,200 
     elseif not EM.cfg.offline then return HC3Request("GET",path)
     else return nil,404 end
   end,
@@ -343,14 +330,18 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
           created = EM.osTime(),
           data={name=name, value=EM.rsrc.customEvents[name].userDescription}
         })
-    else return HC3Request("POST",path,data) end
+      return true,200
+    elseif not cfg.offline then return HC3Request("POST",path,data)
+    else return nil,501 end
   end,
   ["PUT/customEvents/#name"] = function(_,path,data,name)
+    if cfg.shadow then EM.shadow.customEvent(name) end
     local ce = EM.rsrc.rooms[name]
     if ce then
       for k,v in pairs(data) do ce[k]=v end
       return ce,200
-    else return HC3Request("PUT",path,data) end
+    elseif not cfg.offline then return HC3Request("PUT",path,data)
+    else return nil,501 end
   end,
   ["DELETE/customEvents/#name"] = function(_,path,data,name)
     if EM.rsrc.customEvents[name] then
@@ -379,15 +370,15 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       if D.proxy or D.childProxy then
         return HC3Request(method,path,data)
       else return data.value,202 end
-    else
+    elseif not cfg.offline then 
       return HC3Request(method,path,data)
-    end
+    else return nil,501 end
   end,
   ["POST/plugins/updateView"] = function(method,path,data)
     local D = Devices[data.deviceId]
     if D and (D.proxy or D.childProxy) then
       HC3Request(method,path,data)
-    end
+    else return nil,501 end
   end,
   ["POST/plugins/restart"] = function(method,path,data,_)
     if Devices[data.deviceId] then
@@ -421,10 +412,16 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       return dev,err
     end
   end,    
+  ["GET/debugMessages"] = function(method,path,args,_)
+    if cfg.offline or cfg.shadow then
+      return {},200
+    elseif not cfg.offline then return HC3Request(method,path)
+    else return nil,501 end
+  end,
   ["POST/debugMessages"] = function(_,_,args,_)
     local str,tag,typ = args.message,args.tag,args.messageType
     FB.__fibaro_add_debug_message(tag,str,typ)
-    return 200
+    return nil,200
   end,
   ["POST/plugins/publishEvent"] = function(_,_,data,_)
     local id = data.source
@@ -448,7 +445,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       return true,200
     else return HC3Request(method,path,data) end
   end,
-  ------------- quickApp ---------
+------------- quickApp ---------
   ["GET/quickApp/#id/files"] = function(method,path,data,_,id)                     --Get files
     local D = Devices[id]
     if D then
@@ -613,10 +610,10 @@ EM.EMEvents('start',function(_)
         EM.addPath(p,fe)
       end
     end
-    
+
     -- Wrap API calls to make them accesible to external users. Register with webserver and make HTTP responses
     for p,f in pairs(API_CALLS) do exportAPIcall(p,f) end
-    
+
     local oldAddApi = EM.addAPI
     function EM.addAPI(p,f) 
       oldAddApi(p,f)
