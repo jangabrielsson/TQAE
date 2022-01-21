@@ -9,20 +9,19 @@ Support for local shadowing global variables, rooms, sections, customEvents - an
 --]]
 local EM,_ = ...
 
---local json,LOG,DEBUG = FB.json,EM.LOG,EM.DEBUG
-local HC3Request=EM.HC3Request
+local HC3Request = EM.HC3Request
 
-local rsrc = { 
-  rooms = {}, 
-  sections={}, 
+local rsrc = {
+  rooms = {},
+  sections={},
   globalVariables={},
   customEvents={},
   devices = {},
   settings_localtion = {},
-  settings_info = {}, 
-  settings_led={}, 
+  settings_info = {},
+  settings_led={},
   settings_network={},
-  alarms_v1_partitions = {}, 
+  alarms_v1_partitions = {},
   alarms_v1_devices={},
   notificationCenter = {},
   profiles = {},
@@ -33,10 +32,10 @@ local rsrc = {
   home = {},
   iosDevices = {},
   energy_devices = {},
-  panels_location = {},  
-  panels_notifications = {}, 
+  panels_location = {},
+  panels_notifications = {},
   panels_family={},
-  panels_sprinklers = {}, 
+  panels_sprinklers = {},
   panels_humidity={},
   panels_favoriteColors = {},
   diagnostics = {},
@@ -100,7 +99,7 @@ rsrc.settings_info = {
   isSlave = false,
 }
 
-rsrc.users = {  
+rsrc.users = {
   [2] = {
     id = 2,
     name = "admin",
@@ -155,7 +154,7 @@ EM.rsrc.profiles  =  profileData
 ---------------- Profile  handling ---------------------
 local function profileInfo(method,client,data,opts,id)
   if method=='GET' and id==nil then return profileData,200 end
-  if method=='GET' and id then 
+  if method=='GET' and id then
     for _,p in ipairs(profileData.profiles) do
       if p.id == id then return p,200 end
     end
@@ -172,15 +171,15 @@ local function profileInfo(method,client,data,opts,id)
         })
     end
     profileData = data
-    return data,200 
+    return data,200
   end
   return 500,nil
 end
 
 local function profileSet(method,client,data,opts,id)
-  if method=='POST' and tonumber(id) then 
+  if method=='POST' and tonumber(id) then
     local old = profileData.activeProfile
-    profileData.activeProfile=id 
+    profileData.activeProfile=id
     if old ~= id then
       EM.addRefreshEvent({
           type='ActiveProfileChangedEvent',
@@ -239,8 +238,8 @@ EM.shadow={}
 for _,name in  ipairs({'globalVariables','rooms','sections','customEvents'}) do
   EM.shadow[name]=function(id)
     if EM.cfg.offline or EM.cfg.shadow and EM.rsrc[name][id] then return end
-    if EM.cfg.shadow then 
-      EM.rsrc[name][id] = HC3Request("/"..name.."/"..gid) 
+    if EM.cfg.shadow then
+      EM.rsrc[name][id] = HC3Request("/"..name.."/"..gid)
     end
   end
 end
@@ -259,7 +258,7 @@ function EM.create.globalVariable(args)
   EM.addRefreshEvent({
       type='GlobalVariableAddedEvent',
       created = EM.osTime(),
-      data={variableName=name, value=v}
+      data={variableName=args.name, value=v}
     })
   return v
 end
@@ -279,7 +278,7 @@ function EM.create.room(args)
   }
   for _,k in ipairs(
     {"id","name","sectionID","isDefault","visible","icon","defaultSensors","meters","defaultThermostat","sortOrder","category"}
-    ) do v[k] = args[k] or v[k] 
+    ) do v[k] = args[k] or v[k]
   end
   if not v.id then v.id = roomID roomID=roomID+1 end
   EM.rsrc.rooms[v.id]=v
@@ -316,7 +315,5 @@ function EM.create.panels_locations(args)
 end
 
 EM.EMEvents('start',function(_)
-    if EM.cfg.offline then setup() end 
+    if EM.cfg.offline then setup() end
   end)
-
-
