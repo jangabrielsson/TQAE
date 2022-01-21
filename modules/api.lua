@@ -19,7 +19,7 @@ LOG.register("api","Log api.* related events")
 local GUI_HANDLERS = {
   ["GET/api/callAction"] = function(_,client,ref,_,opts)
     local args = {}
-    local id,action = tonumber(opts.deviceID),opts.name
+    local id,action = tonumber(opts.deviceID),opts.name 
     for k,v in pairs(opts) do
       if k:sub(1,3)=='arg' then args[tonumber(k:sub(4))]=v end
     end
@@ -54,7 +54,7 @@ local GUI_HANDLERS = {
         --local res = {QA[opts.method](QA,table.unpack(arg))}
         DEBUG("api","sys","Web call: QA(%s):%s%s = %s",opts.qaID,opts.method,json.encode(arg),json.encode(res))
       end)
-    if not stat then
+    if not stat then 
       LOG.error("Web call: QA(%s):%s%s - %s",opts.qaID,opts.method,json.encode(arg),res)
     end
     client:send("HTTP/1.1 302 Found\nLocation: "..ref.."\n\n")
@@ -85,7 +85,7 @@ local GUI_HANDLERS = {
         qa:updateView(slider,"value",tostring(val))
         if not qa.parent then
           env.onUIEvent(id,{deviceId=id,elementName=slider,eventType='onChanged',values={tonumber(val)}})
-        else
+        else 
           local action = qa.uiCallbacks[slider]['onChanged']
           env.onAction(id,{deviceId=id,actionName=action,args={tonumber(val)}})
         end
@@ -93,12 +93,12 @@ local GUI_HANDLERS = {
     if not stat then LOG.error("%s",err) end
     client:send("HTTP/1.1 302 Found\nLocation: "..ref.."\n\n")
     return true
-  end,
+  end,   
   ["GET/TQAE/button/#id/#name"] = function(_,client,ref,_,_,id,btn)
     id = tonumber(id)
     local stat,err = pcall(function()
         local qa,env = EM.getQA(id)
-        if not qa.parent then
+        if not qa.parent then 
           FB.__fibaro_call_UI(id,btn,'onReleased',{})
           --env.onUIEvent(id,{deviceId=id,elementName=btn,eventType='onReleased',values={}})
         else
@@ -117,7 +117,7 @@ local GUI_HANDLERS = {
     EM.setTimeout(function() env.onAction(id,args) end,0,nil,ctx)
     client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
   end,
-  ["POST/TQAE/ui/#id"] = function(_,client,ref,body,_,id)
+  ["POST/TQAE/ui/#id"] = function(_,client,ref,body,_,id) 
     local _,env = EM.getQA(tonumber(id))
     local args = json.decode(body)
     local ctx = EM.Devices[tonumber(id)]
@@ -160,7 +160,7 @@ end
 local function createItem(rname,id,data)
   local cfun = rname:sub(1,-1)
   if cfg.offline or cfg.shadow or EM.rsrc[rname][id] then
-    if EM.rsrc[rname][id] then return nil,404
+    if EM.rsrc[rname][id] then return nil,404 
     elseif EM.create[cfun] then
       return EM.create[cfun](data),200
     else return nil,501 end
@@ -192,7 +192,7 @@ local function filter(list,props)
     local flag = false
     for k,v in pairs(props) do
       if fFuns[k] then flag = fFuns[k](v,rsrc) else flag = rsrc[k]==v end
-      if not flag then break end
+      if not flag then break end 
     end
     if flag then res[#res+1]=rsrc end
   end
@@ -213,20 +213,20 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
 --   api.get("/devices?parentId="..self.id) or {}
   ["GET/devices/#id"] = function(_,path,_,_,id)
-    local d = Devices[id] and Devices[id].dev or EM.rsrc.devices[id]
+    local d = Devices[id] and Devices[id].dev or EM.rsrc.devices[id] 
     if d  then return d,200
     elseif not cfg.offline then return HC3Request("GET",path)
     else return nil,404 end
   end,
-  ["GET/devices/#id/properties/#name"] = function(_,path,_,_,id,prop)
-    local d = Devices[id] and Devices[id].dev or EM.rsrc.devices[id]
-    if d then
-      if d.properties[prop]~=nil then return { value = d.properties[prop], modified=0},200
+  ["GET/devices/#id/properties/#name"] = function(_,path,_,_,id,prop) 
+    local d = Devices[id] and Devices[id].dev or EM.rsrc.devices[id] 
+    if d then 
+      if d.properties[prop]~=nil then return { value = d.properties[prop], modified=0},200 
       else return nil,404 end
     elseif not cfg.offline then return HC3Request("GET",path) end
   end,
-  ["POST/devices/#id/action/#name"] = function(_,path,data,_,id,action)
-    return __fibaro_call(tonumber(id),action,path,data)
+  ["POST/devices/#id/action/#name"] = function(_,path,data,_,id,action) 
+    return __fibaro_call(tonumber(id),action,path,data) 
   end,
   ["PUT/devices/#id"] = function(_,path,data,id)
     if Devices[id] then
@@ -265,9 +265,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   ["POST/rooms"] = function(_,path,data,_) return createItem('rooms',id,data) end,
   ["POST/rooms/#id/action/setAsDefault"] = function(_,path,data,_,id)
     cfg.defaultRoom = id
-    if cfg.offline or cfg.shadow then return id,200
-    elseif not cfg.offline then return HC3Request("POST",path,data)
-    else return nil,501 end
+    if cfg.offline or cfg.shadow then return id,200 else return HC3Request("POST",path,data) end
   end,
   ["PUT/rooms/#id"] = function(_,path,data,_,id) return modifyItem('rooms',id,data) end,
   ["DELETE/rooms/#id"] = function(_,path,data,_,id) return deleteItem('rooms',id,data) end,
@@ -277,7 +275,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   ["POST/sections"] = function(_,path,data,_) return createItem('sections',id,data) end,
   ["PUT/sections/#id"] = function(_,path,data,_,id) return modifyItem('sections',id,data) end,
   ["DELETE/sections/#id"] = function(_,path,data,_,id) return deleteItem('sections',id,data) end,
-
+  
   ["GET/customEvents"] = function(_,path,_,_) return getAllItems('customEvents') end,
   ["GET/customEvents/#name"] = function(_,path,_,name) return getItem('customEvents',name) end,
   ["POST/customEvents"] = function(_,path,data,_) return createItem('customEvents',id,data) end,
@@ -288,7 +286,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
           created = EM.osTime(),
           data={name=name, value=EM.rsrc.customEvents[name].userDescription}
         })
-    elseif not cfg.offline then return HC3Request("POST",path,data)
+    elseif not cfg.offline then return HC3Request("POST",path,data) 
     else return 404,nil end
   end,
   ["PUT/customEvents/#name"] = function(_,path,data,name) return modifyItem('customEvents',name,data) end,
@@ -305,7 +303,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     local D = Devices[data.deviceId]
     if D then
       local oldVal = D.dev.properties[data.propertyName]
-      D.dev.properties[data.propertyName]=data.value
+      D.dev.properties[data.propertyName]=data.value 
       EM.addRefreshEvent({
           type='DevicePropertyUpdatedEvent',
           created = EM.osTime(),
@@ -314,15 +312,15 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       if D.proxy or D.childProxy then
         return HC3Request(method,path,data)
       else return data.value,202 end
-    elseif not cfg.offline then
+    else
       return HC3Request(method,path,data)
-    else return nil,501 end
+    end
   end,
   ["POST/plugins/updateView"] = function(method,path,data)
     local D = Devices[data.deviceId]
     if D and (D.proxy or D.childProxy) then
       HC3Request(method,path,data)
-    else return nil,501 end
+    end
   end,
   ["POST/plugins/restart"] = function(method,path,data,_)
     if Devices[data.deviceId] then
@@ -332,7 +330,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
   ["POST/plugins/createChildDevice"] = function(method,path,props,_)
     local D = Devices[props.parentId]
-    if props.initialProperties and next(props.initialProperties)==nil then
+    if props.initialProperties and next(props.initialProperties)==nil then 
       props.initialProperties = nil
     end
     if not D.proxy then
@@ -348,24 +346,18 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       DEBUG("child","sys","Created local child device %s",dev.id)
       dev.parentId = props.parentId
       return dev,200
-    else
+    else 
       local dev,err = HC3Request(method,path,props)
       if dev then
         DEBUG("child","sys","Created child device %s on HC3",dev.id)
       end
       return dev,err
     end
-  end,
-  ["GET/debugMessages"] = function(method,path,args,_)
-    if cfg.offline or cfg.shadow then
-      return {},200
-    elseif not cfg.offline then return HC3Request(method,path)
-    else return nil,501 end
-  end,
+  end,    
   ["POST/debugMessages"] = function(_,_,args,_)
     local str,tag,typ = args.message,args.tag,args.messageType
     FB.__fibaro_add_debug_message(tag,str,typ)
-    return nil,200
+    return 200
   end,
   ["POST/plugins/publishEvent"] = function(_,_,data,_)
     local id = data.source
@@ -381,14 +373,27 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     if D then
       Devices[id]=nil
       local p = Devices[D.dev.parentId]
-      EM.setTimeout(function() EM.restartQA(p) end,0,nil,p)
+      EM.setTimeout(function() EM.restartQA(p) end,0,nil,p) 
       --EM.restartQA(D.dev.parentId)
       if D.childProxy then
-        return HC3Request(method,path,data)
+        return HC3Request(method,path,data) 
       end
       return true,200
     else return HC3Request(method,path,data) end
   end,
+
+  ["GET/panels/location"] = function(_,path,_,_) return getAllItems('panels_locations') end,
+  ["GET/panels/location/#id"] = function(_,path,_,_,id) return getItem('panels_locations',id) end,
+  ["POST/panels/location"] = function(_,path,data,_) return createItem('panels_locations',id,data) end,
+  ["PUT/panels/location/#id"] = function(_,path,data,_,id) return modifyItem('panels_locations',id,data) end,
+  ["DELETE/panels/location/#id"] = function(_,path,data,_,id) return deleteItem('panels_locations',id,data) end,
+  
+  ["GET/users"] = function(_,path,_,_) return getAllItems('users') end,
+  ["GET/users/#id"] = function(_,path,_,_,id) return getItem('users',id) end,
+  ["POST/users"] = function(_,path,data,_) return createItem('users',id,data) end,
+  ["PUT/users/#id"] = function(_,path,data,_,id) return modifyItem('users',id,data) end,
+  ["DELETE/users/#id"] = function(_,path,data,_,id) return deleteItem('users',id,data) end,
+
 ------------- quickApp ---------
   ["GET/quickApp/#id/files"] = function(method,path,data,_,id)                     --Get files
     local D = Devices[id]
@@ -426,7 +431,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     else return HC3Request(method,path,data) end
   end,
   ["PUT/quickApp/#id/files"]  = function(method,path,data,_,id)                  --Update files
-    local D = Devices[id]
+    local D = Devices[id]   
     if D then
       local args = type(data)=='string' and json.decode(data) or data
       for _,f in ipairs(args) do
@@ -481,8 +486,8 @@ function api.put(cmd,data, remote) return aHC3call("PUT",cmd,data, remote) end
 function api.delete(cmd, remote) return aHC3call("DELETE",cmd, remote) end
 
 local function returnREST(code,res,client,call)
-  if not code or code > 205 then
-    LOG.error("API error:%s - %s",code,call)
+  if not code or code > 205 then 
+    LOG.error("API error:%s - %s",code,call) 
     client:send("HTTP/1.1 "..code.." Not Found\n\n")
     return
   end
@@ -498,7 +503,7 @@ local function returnREST(code,res,client,call)
   client:send("Cache-control: no-cache, no-store\n")
   client:send("Connection: close\n\n")
   client:send(sdata)
-  return true
+  return true 
 end
 
 local function exportAPIcall(p,f)
@@ -517,7 +522,7 @@ local function exportAPIcall(p,f)
   end
 end
 
-EM.EMEvents('start',function(_)
+EM.EMEvents('start',function(_) 
     for p,f in pairs(API_CALLS) do EM.addAPI(p,f) end
     --EM.processPathMap(API_CALLS,API_MAP)
 
@@ -534,14 +539,14 @@ EM.EMEvents('start',function(_)
     function FB.__fibaro_get_scene(id) __assert_type(id,"number") return f4("GET","/scenes/"..id,nil,{},id) end
 
     local f5 = EM.lookupPath("GET","/globalVariables/x",API_MAP)
-    function FB.__fibaro_get_global_variable(name)
-      __assert_type(name,"string") return f5("GET","/globalVariables/"..name,nil,{},name)
+    function FB.__fibaro_get_global_variable(name) 
+      __assert_type(name,"string") return f5("GET","/globalVariables/"..name,nil,{},name) 
     end
 
     local f6 = EM.lookupPath("GET","/devices/0/properties/x",API_MAP)
-    function FB.__fibaro_get_device_property(id,prop)
+    function FB.__fibaro_get_device_property(id,prop) 
       __assert_type(id,"number") __assert_type(prop,"string")
-      return f6("GET","/devices/"..id.."/properties/"..prop,nil,{},id,prop)
+      return f6("GET","/devices/"..id.."/properties/"..prop,nil,{},id,prop) 
     end
 
     local function filterPartitions(filter)
@@ -550,54 +555,8 @@ EM.EMEvents('start',function(_)
       return res
     end
 
-    function FB.__fibaro_get_breached_partitions()
+    function FB.__fibaro_get_breached_partitions() 
       return api.get("/alarms/v1/partitions/breached")
-    end
-
-    local function returnREST(code,res,client,call)
-      if not code or code > 205 then
-        LOG.error("API error:%s - %s",code,call)
-        client:send("HTTP/1.1 "..code.." Not Found\n\n")
-        return
-      end
-      local dl,sdata = 0,""
-      if type(res)=='table' then
-        sdata = json.encode(res)
-        dl = #sdata
-      end
-      client:send("HTTP/1.1 "..code.." OK\n")
-      client:send("server: TQAE\n")
-      client:send("Content-Length: "..dl.."\n")
-      client:send("Content-Type: application/json;charset=UTF-8\n")
-      client:send("Cache-control: no-cache, no-store\n")
-      client:send("Connection: close\n\n")
-      client:send(sdata)
-      return true
-    end
-
-    local function exportAPIcall(p,f)
-      if p ~= "GET/api/callAction" then
-        local method = p:match("^(.-)/")
-
-        local function fe(path,client,ref,data,opts,...)
-          data = data and json.decode(data)
-          DEBUG("api","sys","Incoming API call: %s",path)
-          local res,code = f(method,path:sub(5),data,opts,...)
-          returnREST(code,res,client,path)
-        end
-
-        p = p:gsub("^%w+",function(str) return str.."/api" end)
-        EM.addPath(p,fe)
-      end
-    end
-
-    -- Wrap API calls to make them accesible to external users. Register with webserver and make HTTP responses
-    for p,f in pairs(API_CALLS) do exportAPIcall(p,f) end
-
-    local oldAddApi = EM.addAPI
-    function EM.addAPI(p,f)
-      oldAddApi(p,f)
-      exportAPIcall(p,f)
     end
 
     -- Intercept unimplemented APIs and redicrect to HC3 if online
