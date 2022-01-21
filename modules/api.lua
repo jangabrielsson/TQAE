@@ -161,8 +161,8 @@ local function createItem(rname,id,data)
   local cfun = rname:sub(1,-1)
   if cfg.offline or cfg.shadow or EM.rsrc[rname][id] then
     if EM.rsrc[rname][id] then return nil,404 
-    elseif EM.create[cfun] then
-      return EM.create[cfun](data),200
+    elseif EM.create[cfun] or EM.create[rname] then
+      return (EM.create[cfun] or EM.create[rname])(data),200
     else return nil,501 end
   else return HC3Request("POST","/"..rname,data) end
 end
@@ -382,11 +382,11 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     else return HC3Request(method,path,data) end
   end,
 
-  ["GET/panels/location"] = function(_,path,_,_) return getAllItems('panels_locations') end,
-  ["GET/panels/location/#id"] = function(_,path,_,_,id) return getItem('panels_locations',id) end,
-  ["POST/panels/location"] = function(_,path,data,_) return createItem('panels_locations',id,data) end,
-  ["PUT/panels/location/#id"] = function(_,path,data,_,id) return modifyItem('panels_locations',id,data) end,
-  ["DELETE/panels/location/#id"] = function(_,path,data,_,id) return deleteItem('panels_locations',id,data) end,
+  ["GET/panels/location"] = function(_,path,_,_) return getAllItems('panels/location') end,
+  ["GET/panels/location/#id"] = function(_,path,_,_,id) return getItem('panels/location',id) end,
+  ["POST/panels/location"] = function(_,path,data,_) return createItem('panels/location',id,data) end,
+  ["PUT/panels/location/#id"] = function(_,path,data,_,id) return modifyItem('panels/location',id,data) end,
+  ["DELETE/panels/location/#id"] = function(_,path,data,_,id) return deleteItem('panels/location',id,data) end,
   
   ["GET/users"] = function(_,path,_,_) return getAllItems('users') end,
   ["GET/users/#id"] = function(_,path,_,_,id) return getItem('users',id) end,

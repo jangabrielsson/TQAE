@@ -17,12 +17,12 @@ local rsrc = {
   globalVariables={},
   customEvents={},
   devices = {},
-  settings_localtion = {},
-  settings_info = {},
-  settings_led={},
-  settings_network={},
-  alarms_v1_partitions = {},
-  alarms_v1_devices={},
+  ['settings/localtion'] = {},
+  ['settings/info'] = {},
+  ['settings/led'] ={ },
+  ['settings/network'] = {},
+  ['alarms/v1/partitions'] = {},
+  ['alarms/v1/devices'] = {},
   notificationCenter = {},
   profiles = {},
   users = {},
@@ -31,13 +31,13 @@ local rsrc = {
   debugMessages = {},
   home = {},
   iosDevices = {},
-  energy_devices = {},
-  panels_location = {},
-  panels_notifications = {},
-  panels_family={},
-  panels_sprinklers = {},
-  panels_humidity={},
-  panels_favoriteColors = {},
+  ['energy/devices'] = {},
+  ['panels/location'] = {},
+  ['panels/notifications'] = {},
+  ['panels/family'] = {},
+  ['panels/sprinklers'] = {},
+  ['panels/humidity'] = {},
+  ['panels/favoriteColors'] = {},
   diagnostics = {},
   sortOrder = {},
   loginStatus = {},
@@ -46,13 +46,13 @@ local rsrc = {
 
 EM.rsrc = rsrc
 
-rsrc.settings_location = {
+rsrc['settings/location'] = {
   city = "Berlin",
   latitude = 52.520008,
   longitude = 13.404954,
 }
 
-rsrc.settings_info = {
+rsrc['settings/info'] = {
   serialNumber = "HC3-00000999",
   platform = "HC3",
   zwaveEngineVersion = "2.0",
@@ -113,7 +113,7 @@ rsrc.users = {
   }
 }
 
-rsrc.panels_locations = {
+rsrc['panels/location'] = {
   [6] = {
     id =  6,
     name =  "My Home",
@@ -216,10 +216,10 @@ local function setup()
   -- Intercept some useful APIs...
   local function map2arr(t) local r={}; for k,v in pairs(t) do r[#r+1]=v end return r end
 
-  EM.addAPI("GET/settings/location",function() return rsrc.settings_location,200 end)
-  EM.addAPI("GET/settings/info",function() return rsrc.settings_info,200 end)
-  EM.addAPI("GET/alarms/v1/partitions",function() return rsrc.alarms_v1_partitions,200 end)
-  EM.addAPI("GET/alarms/v1/devices",function() return rsrc.alarms_v1_devices,200 end)
+  EM.addAPI("GET/settings/location",function() return rsrc['settings/location'],200 end)
+  EM.addAPI("GET/settings/info",function() return rsrc['settings/info'],200 end)
+  EM.addAPI("GET/alarms/v1/partitions",function() return rsrc['alarms/v1/partitions'],200 end)
+  EM.addAPI("GET/alarms/v1/devices",function() return rsrc['alarms/v1/devices'],200 end)
   EM.addAPI("GET/notificationCenter",function() return rsrc.notificationCenter,200 end)
   EM.addAPI("POST/notificationCenter",notificationCenter)
   EM.addAPI("GET/profiles",profileInfo)
@@ -231,7 +231,7 @@ local function setup()
   EM.addAPI("GET/home",function() return rsrc.home,200 end)
   EM.addAPI("GET/icons",function() return map2arr(rsrc.icons),200 end)
   EM.addAPI("GET/iosDevices",function() return map2arr(rsrc.iosDevices),200 end)
-  EM.addAPI("GET/energy/devices",function() return rsrc.energy_devices,200 end)
+  EM.addAPI("GET/energy/devices",function() return rsrc['energy/devices'],200 end)
 end
 
 EM.shadow={}
@@ -308,9 +308,9 @@ function EM.create.user(args)
   return u
 end
 
-function EM.create.panels_locations(args)
+EM.create['panels/location'] = function(args)
   local u = {} for k,v in  pairs(args) do u[k]=v end
-  EM.rsrc.panels_locations[u.id]=u
+  EM.rsrc['panels/location'][u.id]=u
   return u
 end
 
