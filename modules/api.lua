@@ -275,7 +275,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   ["POST/sections"] = function(_,path,data,_) return createItem('sections',id,data) end,
   ["PUT/sections/#id"] = function(_,path,data,_,id) return modifyItem('sections',id,data) end,
   ["DELETE/sections/#id"] = function(_,path,data,_,id) return deleteItem('sections',id,data) end,
-  
+
   ["GET/customEvents"] = function(_,path,_,_) return getAllItems('customEvents') end,
   ["GET/customEvents/#name"] = function(_,path,_,name) return getItem('customEvents',name) end,
   ["POST/customEvents"] = function(_,path,data,_) return createItem('customEvents',id,data) end,
@@ -387,7 +387,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   ["POST/panels/location"] = function(_,path,data,_) return createItem('panels/location',id,data) end,
   ["PUT/panels/location/#id"] = function(_,path,data,_,id) return modifyItem('panels/location',id,data) end,
   ["DELETE/panels/location/#id"] = function(_,path,data,_,id) return deleteItem('panels/location',id,data) end,
-  
+
   ["GET/users"] = function(_,path,_,_) return getAllItems('users') end,
   ["GET/users/#id"] = function(_,path,_,_,id) return getItem('users',id) end,
   ["POST/users"] = function(_,path,data,_) return createItem('users',id,data) end,
@@ -463,6 +463,22 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       else return nil,404 end
     else return HC3Request(method,path,data) end
   end,
+
+  ["GET/plugins/#id/variables"] = function(method,path,data,_,id)   -- get keys
+  end,
+  ["GET/plugins/#id/variables/#name"] = function(method,path,data,_,id,name)   -- get key
+  end,
+  ["POST/plugins/#id/variables"] = function(method,path,data,_,id)   -- create key
+    return nil,409
+  end,
+  ["PUT/plugins/#id/variables"] = function(method,path,data,_,id,name)   -- create key
+    return nil,404
+  end,
+  ["DELETE/plugins/#id/variables/#name"] = function(method,path,data,_,id,name)   -- delete key
+  end,
+  ["DELETE/plugins/#id/variables"] = function(method,path,data,_,id,name)   -- delete keys
+  end,
+
 }
 
 local API_MAP={ GET={}, POST={}, PUT={}, DELETE={} }

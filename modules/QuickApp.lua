@@ -38,6 +38,35 @@ function QuickAppBase:callAction(name,...)
   self[name](self,...) 
 end
 
+function QuickAppBase:setName(name)
+  __assert_type(name,'string')
+  api.put("/devices/"..self.id, {name=name})
+end
+
+function QuickAppBase:setEnabled(bool)
+  __assert_type(bool,'boolean')
+  api.put("/devices/"..self.id, {enabled=bool} )
+end
+
+function QuickAppBase:setVisible(bool)
+  __assert_type(bool,'boolean')
+  api.put("/devices/"..self.id, {visible=bool} )
+end
+
+function QuickAppBase:isTypeOf(typ)
+  return getHierarchy():isTypeOf(typ, self.type)
+end
+
+function QuickAppBase:addInterfaces(ifs)
+  __assert_type(ifs,"table")
+  api.post("/plugins/interfaces",{action='add',deviceId=self.id,interfaces=ifs})
+end
+
+function QuickAppBase:deleteInterfaces(ifs)
+  __assert_type(ifs,"table")
+  api.post("/plugins/interfaces",{action='delete',deviceId=self.id,interfaces=ifs})
+end
+
 function QuickAppBase:getVariable(name)
   __assert_type(name,'string')
   for _,v in ipairs(self.properties.quickAppVariables or {}) do if v.name==name then return v.value end end
@@ -118,6 +147,31 @@ function QuickApp:initChildDevices(map)
   end
   self._childsInited = true
 end
+
+function QuickAppBase:internalStorageSet(key, val, hidden)
+  __assert_type(key,'string')
+  local data = { name=key, value=val, isHidden=hidden}
+  local _,stat = api.post("/plugins/"..self.id.."/variables",data)
+  if stat == 409 then return api.put("/plugins/"..self.id.."/variables/"..key,data) end
+end
+
+function QuickAppBase:internalStorageGet(key)
+  __assert_type(key,'string')
+  if key then
+    local res, stat = api.get("/plugins/"..self.id.."/variables/"..key)
+    return stat == 200 and res.value or nil
+  else
+    local res, stat = api.get("/plugins/"..self.id.."/variables")
+    if stat ~= 200 then return nil end
+    local values = {}
+    for _,v in pairs(res) do values[v.name]=v.value end
+    return values
+  end
+end
+
+function QuickAppBase:internalStorageRemove(key) api.delete("/plugins/"..self.id.."/variables/"..key) end
+
+function QuickAppBase:internalStorageClear() api.delete("/plugins/"..self.id.."/variables") end
 
 class 'QuickAppChild'(QuickAppBase)
 
