@@ -103,7 +103,7 @@ QuickApp options: (set with --%% directive in file)
 --]]
 
 local embedded=...              -- get parameters if emulator included from QA code...
-local version = "0.48"
+local version = "0.49"
 local EM = { cfg = embedded or {} }
 local cfg,pfvs = EM.cfg
 local function DEF(x,y) if x==nil then return y else return x end end
@@ -161,7 +161,11 @@ end
 ---------------------------------------- TQAE -------------------------------------------------------------
 do
   local stat,mobdebug = pcall(require,'mobdebug'); -- If we have mobdebug, enable coroutine debugging
-  if stat then mobdebug.coro() end
+  if stat then
+    local fid = function() end
+    EM.mobdebug = stat and mobdebug or {coro=fid, pause=fid, setbreakpoint=fid, on=fid, off=fid}
+    mobdebug.coro() 
+  end
 end
 
 local socket = require("socket") 
@@ -455,8 +459,8 @@ function EM.createDevice(info) -- Creates device structure
   return dev
 end
 
-local function extractInfo(file,code) -- Creates info structure from file/code
-  local files,info = EM.loadFile(code,file)
+local function extractInfo(file,code,args) -- Creates info structure from file/code
+  local files,info = EM.loadFile(code,file,args)
   info.properties = info.properties or {}
   info.properties.quickAppVariables = info.properties.quickAppVariables or {}
   for k,v in pairs(info.quickVars or {}) do table.insert(info.properties.quickAppVariables,1,{name=k,value=v}) end
@@ -480,7 +484,7 @@ local function extractInfo(file,code) -- Creates info structure from file/code
 end
 
 local function createQA(args) -- Create QA/info struct from file or code string.
-  local info = extractInfo(args.file,args.code)
+  local info = extractInfo(args.file,args.code,args)
   for _,p in ipairs({"id","name","type","properties","interfaces"}) do 
     if args[p]~=nil then info[p]=args[p] end 
   end

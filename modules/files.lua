@@ -114,25 +114,41 @@ local function loadSource(code,fileName) -- Load code and resolve info and --FIL
 end
 
 local function loadLua(fileName) return loadSource(readFile(fileName),fileName) end
+local function findFirstCodeLine(code,name)  -- Try to find first code line
+  local n,first,init = 1
+  for line in string.gmatch(code,"([^\r\n]*)[\r\n]?") do
+    if not (line=="" or line:match("^[%-%s]+")) then 
+      if not first then first = n end
+    end
+    if line:match("%s*QuickApp%s*:%s*onInit%s*%(") then
+      if not init then init = n end
+    end
+    n=n+1
+  end
+  return first or 1,init
+end
 
-local function loadFQA(fqa)  -- Load FQA
+local function loadFQA(fqa,args)  -- Load FQA
   local files,main = {}
   for _,f in ipairs(fqa.files) do
     local fname = createTemp(f.name,f.content) or f.name..crc16(f.content) -- Create temp files for fqa files, easier to debug
     if f.isMain then f.fname=fname main=f
     else files[#files+1] = {name=f.name,content=f.content,type='lua',isOpen=false,isMain=f.isMain,fname=fname} end
+    local first,init = findFirstCodeLine(f.content,f.name)
+    if args.breakOnLoad then EM.mobdebug.setbreakpoint(fname,first) end
+    if args.breakOnInit and init then EM.mobdebug.setbreakpoint(fname,init) end
   end
   table.insert(files,{name=main.name,content=main.content,type='lua',isOpen=false,isMain=true,fname=main.fname})
   return files,{name=fqa.name,type=fqa.type,properties=fqa.initialProperties}
 end
 
-local function loadFile(code,file)
+local function loadFile(code,file,args)
   if file and not code then
-    if file:match("%.fqa$") then return loadFQA(json.decode(readFile(file)))
-    elseif file:match("%.lua$") then return loadLua(file)
+    if file:match("%.fqa$") then return loadFQA(json.decode(readFile(file)),args)
+    elseif file:match("%.lua$") then return loadLua(file,args)
     else error("No such file:"..file) end
   elseif type(code)=='table' then  -- fqa table
-    return loadFQA(code)
+    return loadFQA(code,args)
   elseif code then
     local fname = file or createTemp("main",code) or "main"..crc16(code) -- Create temp file for string code easier to debug
     return loadSource(code,fname)

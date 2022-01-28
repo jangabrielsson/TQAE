@@ -105,7 +105,9 @@ class 'QuickApp'(QuickAppBase)
 function QuickApp:__init(device)
   QuickAppBase.__init(self,device)
   self.childDevices = {}
-  if self.onInit then self:onInit() end
+  if self.onInit then 
+    self:onInit() 
+  end
   if self._childsInited==nil then self:initChildDevices() end
   quickApp = self
 end
