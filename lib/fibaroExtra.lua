@@ -378,6 +378,11 @@ do
   local function print_debug(typ,tag,str)
     --__fibaro_add_debug_message(tag or __TAG,str or "",typ or "debug")
     api.post("/debugMessages",{message=str,messageType=typ or "debug",tag=tag or __TAG})
+    if typ=='error' and debugFlags.eventError then
+      fibaro.post({type='error',message=str,tag=tag})
+    elseif typ=='warning' and debugFlags.eventWarning then
+      fibaro.post({type='warning',message=str,tag=tag})
+    end
     return str
   end
 
@@ -774,7 +779,7 @@ do
     ActiveProfileChangedEvent = function(d) 
       post({type='profile',property='activeProfile',value=d.newActiveProfile, old=d.oldActiveProfile}) 
     end,
-    ClimateZoneChangedEvent = function(d)
+    ClimateZoneChangedEvent = function(d) --ClimateZoneChangedEvent
       if d.changes and type(d.changes)=='table' then
         for _,c in ipairs(d.changes) do
           c.type,c.id='ClimateZone',d.id
