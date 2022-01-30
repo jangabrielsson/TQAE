@@ -167,5 +167,82 @@ local function post2Proxy(id,path,data)
     {args={path,data}})
 end
 
+local proxyPinger = nil
+local function startProxyPinger()
+  if proxyPinger then return end --only start once
+  api.post("/globalVariables",{ name=EM.EMURUNNING,value=""  },'remote')
+  local tick=0
+  proxyPinger = os.setTimer2(function()
+      api.put("/globalVariables/"..EM.EMURUNNING,{value=tostring(tick)..":"..hc3.IPaddress..":"..hc3.webPort},'remote')
+      tick  = tick+1
+    end,EM.EMURUNNING_INTERVAL,true)
+end
+
+local function injectProxy(id)
+  local code = [[
+do
+   local actionH,UIh,patched = nil,nil,false
+   local function urlencode (str)
+     return str and string.gsub(str ,"([^% w])",function(c) return string.format("%%% 02X",string.byte(c))  end)
+   end
+   local IGNORE={updateView=true,setVariable=true,updateProperty=true,PROXY=true,APIPOST=true,APIPUT=true,APIGET=true} -- Rewrite!!!!
+   local function enable(ip)
+     if patched==false then
+        actionH,UIh = quickApp.actionHandler,quickApp.UIHandler
+        local function POST2IDE(path,payload)
+          url = "http://"..ip..path
+          net.HTTPClient():request(url,{options={method='POST',data=json.encode(payload)}})
+        end
+        function quickApp:actionHandler(action)
+           if IGNORE[action.actionName] then
+             return quickApp:callAction(action.actionName, table.unpack(action.args))
+           end
+           POST2IDE("/TQAE/action/"..self.id,action)
+        end
+        function quickApp:UIHandler(UIEvent) POST2IDE("/TQAE/ui/"..self.id,UIEvent) end
+        quickApp:debug("Events intercepted by emulator at "..ip)
+      end
+      patched=true
+   end
+
+   local function disable()
+    if patched==true then
+      if actionH then quickApp.actionHandler = actionH end
+      if UIh then quickApp.UIHandler = UIh end
+      actionH,UIh=nil,nil
+      quickApp:debug("Events restored from emulator")
+      patched=false
+    end
+   end
+   
+   setInterval(function()
+    local stat,res = pcall(function()
+    local var,err = __fibaro_get_global_variable("HC3Emulator")
+    if var then
+      local modified = var.modified
+      local ip = var.value
+      --print(modified,os.time()-5,modified-os.time()+5)
+      if modified > os.time()-5 then enable(ip:match(":(.*)"))
+      else disable() end
+    end
+   end)
+   if not stat then print(res) end
+   end,3000)
+end
+]]
+  local dev = api.get("/devices/"..id,'remote')
+  assert(dev,"No such device "..id)
+  if not api.get("/quickApp/"..id.."/files/PROXY",'remote') then
+    api.post("/quickApp/"..id.."/files",{
+        name="PROXY",
+        isMain=false,
+        isOpen=false,
+        content=code,
+        type='lua'
+      },'remote')
+  end
+  return dev
+end
+
 EM.createProxy = createProxy
 EM.post2Proxy = post2Proxy

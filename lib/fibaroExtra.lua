@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.930"
+fibaro.FIBARO_EXTRA = "v0.931"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
@@ -1505,6 +1505,42 @@ do
       end
     end
   end
+
+  do
+    local var,cid,n = "RPC"..plugin.mainDeviceId,plugin.mainDeviceId,0
+    api.post("/plugins/"..cid.."/variables",{ name=var, value=""}) -- create var if not exist
+    local path ="/plugins/"..cid.."/variables/"..var
+    function QuickApp:rpc(id,fun,args,timeout,qaf)
+      n = n + 1
+      fibaro.call(id,"RPC_CALL",path,var,n,fun,args,qaf)
+      timeout = os.time()+(timeout or 3)
+      while os.time() < timeout do
+        local r,g = api.get(path)
+        if r and r.value~="" then
+          r = r.value
+          if r[1] == n then
+            if not r[2] then error(r[3],3) else return select(3,table.unpack(r)) end
+          end
+        end 
+      end
+      error(string.format("RPC timeout %s:%d",fun,id),3)
+    end
+    function QuickApp:rpcq(id,fun,args,timeout) return self:rpc(id,fun,args,timeout,true) end
+    function QuickApp:RPC_CALL(path,var,n,fun,args,qaf)
+      local res
+      if qaf then
+        res = {n,pcall(self[fun],self,table.unpack(args))}
+      else res = {n,pcall(_G[fun],table.unpack(args))} end
+      api.put(path,{name=var, value=json.encode(res)}) 
+    end
+  end
+
+--function QuickApp:onInit()
+--    self:debug("onInit")
+--    for i=1,100 do
+--      self:rpc(801,"foo",{3,i},3) -- call QA 972, function foo, arguments 3,i and a timeout of 3s
+--    end
+--end
 end -- QA
 
 --------------------- Misc -----------------------------------------------------

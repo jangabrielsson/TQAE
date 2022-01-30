@@ -465,18 +465,54 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   end,
 
   ["GET/plugins/#id/variables"] = function(method,path,data,_,id)   -- get keys
+    local D = Devices[id]
+    if cfg.offline or D then
+      if D then
+        D.storage = D.storage or {}
+      
+      else return nil, 404 end
+    else return HC3Request(method,path) end
   end,
-  ["GET/plugins/#id/variables/#name"] = function(method,path,data,_,id,name)   -- get key
+  ["GET/plugins/#id/variables/#name"] = function(method,path,data,_,id,key)   -- get key
+    local D = Devices[id]
+    if cfg.offline or D then
+      if D then
+        D.storage = D.storage or {}
+        if D.storage[key] then return {name=key,value=D.storage[key],200} else return nil,404 end
+      else return nil, 404 end
+    else return HC3Request(method,path) end
   end,
   ["POST/plugins/#id/variables"] = function(method,path,data,_,id)   -- create key
-    return nil,409
+    local D = Devices[id]
+    if cfg.offline or D then
+      if D then
+        D.storage = D.storage or {}
+        D.storage[data.name]=data.value 
+        return true,200
+      else return nil, 409 end
+    else return HC3Request(method,path,data) end
+    --return nil,409
   end,
-  ["PUT/plugins/#id/variables"] = function(method,path,data,_,id,name)   -- create key
-    return nil,404
+  ["PUT/plugins/#id/variables"] = function(method,path,data,_,id,key)   -- modify key
+    local D = Devices[id]
+    if cfg.offline or D then
+      if D then
+        D.storage = D.storage or {}
+        if D.storage[key] then
+          D.storage[key] = data.value
+          return true,200
+        else return nil,404 end
+      else return nil,404 end
+    else return HC3Request(method,path,data) end
+    --return nil,404
   end,
   ["DELETE/plugins/#id/variables/#name"] = function(method,path,data,_,id,name)   -- delete key
+    if cfg.offline then
+    else return HC3Request(method,path) end
   end,
   ["DELETE/plugins/#id/variables"] = function(method,path,data,_,id,name)   -- delete keys
+    if cfg.offline then
+    else return HC3Request(method,path) end
   end,
 
 }

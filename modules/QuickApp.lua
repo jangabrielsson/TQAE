@@ -153,8 +153,8 @@ end
 function QuickAppBase:internalStorageSet(key, val, hidden)
   __assert_type(key,'string')
   local data = { name=key, value=val, isHidden=hidden}
-  local _,stat = api.post("/plugins/"..self.id.."/variables",data)
-  if stat == 409 then return api.put("/plugins/"..self.id.."/variables/"..key,data) end
+  local _,stat = api.put("/plugins/"..self.id.."/variables/"..key,data)
+  if stat==404 then api.post("/plugins/"..self.id.."/variables",data) end
 end
 
 function QuickAppBase:internalStorageGet(key)
