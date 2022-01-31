@@ -48,8 +48,8 @@ function QuickApp:main()    -- EventScript version
   Util.defvars(HT)
   Util.reverseMapDef(HT)
 
-  rule("log('Current version is %s - %s',E_VERSION,E_FIX)"
-
+  rule("log('Current version is %s - %s',E_VERSION,E_FIX)")
+  rule("foo bar too")
 --[[
   rule("@sunset => lamp:value=40; sched=40")
   rule("@00:00 => lamp:value=20; sched=20")
