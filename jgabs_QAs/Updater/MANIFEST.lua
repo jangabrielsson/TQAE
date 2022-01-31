@@ -28,24 +28,24 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.70,
-        vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.70"
-        },
-        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "log() with colors",
-        files = "generate",
-        keep= { "main" },
-        viewLayout = "generate",
-        interfaces= {"quickApp"},
-        quickAppVariables = {},
-      },
       { version = 0.72,
         vars= {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.72"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "better errors",
+        files = "generate",
+        keep= { "main" },
+        viewLayout = "generate",
+        interfaces= {"quickApp"},
+        quickAppVariables = {},
+      },
+      { version = 0.75,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.75"
+        },
+        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
+        descr = "error events and multiPositionSwitch support",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",
