@@ -25,6 +25,7 @@ _=loadfile and loadfile("TQAE.lua"){
 ----------- Code -----------------------------------------------------------
 _debugFlags.trigger = true -- log incoming triggers
 _debugFlags.trigger2 = true -- log incoming triggers
+_debugFlags.sourceTrigger = true
 _debugFlags.fcall=true     -- log fibaro.call
 _debugFlags.post = true    -- log internal posts
 _debugFlags.rule=true      -- log rules being invoked (true or false)
@@ -47,9 +48,7 @@ function QuickApp:main()    -- EventScript version
   Util.defvars(HT)
   Util.reverseMapDef(HT)
 
-  rule("log('Current version is %s - %s',E_VERSION,E_FIX)")
-
-  rule("#foo => log('FOO=%s',tjson(env.event))")
+  rule("log('Current version is %s - %s',E_VERSION,E_FIX)"
 
 --[[
   rule("@sunset => lamp:value=40; sched=40")

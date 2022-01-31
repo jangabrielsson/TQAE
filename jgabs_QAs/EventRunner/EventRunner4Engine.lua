@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.73,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.75,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -1478,6 +1478,7 @@ function Module.eventScript.init()
       end
       local function setProfile(id,_,val) if val then fibaro.profile("activateProfile",id) end return val end
       local function setState(id,cmd,val) fibaro.call(id,"updateProperty","state",val); return val end
+      local function setProps(id,cmd,val) fibaro.call(id,"updateProperty",cmd,val); return val end
       local function profile(id,_) return api.get("/profiles/"..id.."?showHidden=true") end
       local function call(id,cmd) fibaro.call(id,cmd); return true end
       local function set(id,cmd,val) fibaro.call(id,cmd,val); return val end
@@ -1519,6 +1520,7 @@ function Module.eventScript.init()
       getFuns.isClosed={off,'value',mapAnd,true}
       getFuns.lux={get,'value',nil,true}
       getFuns.volume={get,'volume',nil,true}
+      getFuns.position={get,'position',nil,true}
       getFuns.temp={get,'value',nil,true}
       getFuns.coolingThermostatSetpoint={get,'coolingThermostatSetpoint',nil,true}
       getFuns.coolingThermostatSetpointCapabilitiesMax={get,'coolingThermostatSetpointCapabilitiesMax',nil,true}
@@ -1595,6 +1597,8 @@ function Module.eventScript.init()
       setFuns.scheduleState={set,'setScheduleState'}
       setFuns.color={set2,'setColor'}
       setFuns.volume={set,'setVolume'}
+      setFuns.position={set,'setPosition'}
+      setFuns.positions={setProps,'availablePositions'}
       setFuns.mute={set,'setMute'}
       setFuns.thermostatSetpoint={set2,'setThermostatSetpoint'}
       setFuns.thermostatMode={set,'setThermostatMode'}
@@ -2227,7 +2231,8 @@ function QuickApp:onInit()
       end)
     if not stat then
       res=trimError(res)
-      self:setView("ERname","text","Error in main()") error("Main() ERROR:"..res) 
+      self:setView("ERname","text","Error in main()")
+      self:error("Main() ERROR:"..res) 
     end
     Util.printBanner("Running")
     self:setView("ERname","text","EventRunner4 %s",_version)
