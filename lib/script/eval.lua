@@ -41,6 +41,9 @@ dofile("lib/json.lua")
 (print [<expr_1> ...<expr_n>])
 (table [<val_1> ...<val_n>])
 (aref <table> <key>)
+(aset <table> <key>)
+(getprop <id> <key>)
+(setprop <id> <key> <value>)
 (quote <expr>)
 (encode <table>)
 (decode <string>)
@@ -64,7 +67,8 @@ function makeCompiler()
 
   local fmt = string.format
   local function printf(fm,...) print(fmt(fm,...))  end
-  local compile,compileExpr,runCode,renderInstr,instr,optimizeExpr,optimizeCode
+  local compile,compileExpr,runCode,renderInstr,instr
+  local hooks = {}
   local trace = false
 
   local function makeStack()
@@ -95,7 +99,8 @@ function makeCompiler()
       while i <= x do  res[#res+1]=stack[i] i=i+1 end
       p=p+n; x=p
       return res
-    end    
+    end
+    function self.trimX(n) x=x+n end
     function self.peek(n) n=n or 0 if p+n <= x then return stack[p+n] end end
     function self.peekEOS(n) n=n or 0 if p+n <= x then return stack[p+n] else return "_EOS_" end end
     function self.size() return p end
@@ -160,6 +165,7 @@ function makeCompiler()
 
   local assert_types = {}
   assert_types['list'] = function(t) return type(t)=='table' and (t[1] or next(t)~=nil) end
+  assert_types['string'] = function(t) return type(t)=='string' end
   assert_types['empty_list'] = function(t) return type(t)=='table' and next(t)==nil end
   assert_types['string_list'] = function(t) 
     if type(t)~='table' then return false end
@@ -412,6 +418,23 @@ end
     val = compConst(val,code) 
     code.emit('aset',key,val)
   end
+    comp['getprop'] = function(code,_,id,key) 
+    assert_type('string',key,"id property must be string")
+    local c = compConst(id,code) 
+    code.emit('getprop',key,c)
+  end
+  comp['setprop'] = function(code,_,id,key,val) 
+    compileExpr(tab,code)
+    key = compConst(key,code) 
+    val = compConst(val,code) 
+    code.emit('aset',key,val)
+  end
+--  comp['table'] = function(code,_,tab,key,val) 
+--    compileExpr(tab,code)
+--    key = compConst(key,code) 
+--    val = compConst(val,code) 
+--    code.emit('aset',key,val)
+--  end
   comp['assert']  = function(code,_,typ,msg) code.emit('assert',typ,msg) end
 
   --[[
@@ -429,6 +452,7 @@ end
 
   function compileExpr(expr,code,top)
     if type(expr) == 'table' then
+      if #expr==0 then return code.emit('push',expr) end
       local op = expr[1]
       if op=='fun' then
         local f = compFun(code,table.unpack(expr))
@@ -450,9 +474,9 @@ end
 
   function compile(expr,d)
     local code = makeCode()
-    expr=optimizeExpr(expr)
+    expr=hooks.optimizeExpr(expr)
     local f = compileExpr(expr,code,true)
-    code.code=optimizeCode(code.code)
+    code.code=hooks.optimizeCode(code.code)
     if type(f)=='function' then
       local c = f('_INSPECT_')
       if d then dump(c) end
@@ -518,13 +542,13 @@ end
       return opfuns[op](a,b)
     else return e end
   end
-  opts['quote'] = function(e,op,a,b) return e end
+  opts['quote'] = function(e,op) return e end
 
-  function optimizeExpr(expr)
+  function hooks.optimizeExpr(expr)
     if type(expr)=='table' and expr[1] then
       local op = expr[1]
       local expr2 = {table.unpack(expr)}
-      for i=2,#expr2 do expr2[i]=optimizeExpr(expr2[i]) end
+      for i=2,#expr2 do expr2[i]=hooks.optimizeExpr(expr2[i]) end
       local opm = opmap[op] or op
       local opf = opts[opm]
       if opf then return opf(expr,op,select(2,table.unpack(expr2))) else return expr2 end
@@ -532,7 +556,7 @@ end
     return expr
   end
 
-  function optimizeCode(code)
+  function hooks.optimizeCode(code)
     return code
   end
   ---------------- Running code --------------
@@ -562,6 +586,7 @@ end
   function instr.call1(i,st,env)
     local f,n = st.pop(),i[2]
     if type(f)~='function' then error(fmt("Undefined global function '%s'",tostring(f)),3)  end
+    st.trimX(-1)
     st.pushValues({f(table.unpack(st.popValues(-n)))})
   end
   function instr.mval(i,st) st.push(st.getValues()) end
@@ -685,6 +710,8 @@ end
   instrFmt['decvar'] = function(i) return fmt("%s %s/%s %s",i[1],i[2],i[3] and 'L' or 'G',cArg(i[4])) end
   instrFmt['block'] = function(i) return fmt("%s %s %s",i[1],i[2],notNil(i[3],"") and json.encode(i[3])) end
   instrFmt['assert'] = function(i) return fmt("%s '%s' '%s'",i[1],i[2],i[3]) end
+  instrFmt['aset'] = function(i) return fmt("%s [%s] '%s'",i[1],cArg(i[2]),cArg(i[3])) end
+  instrFmt['getprop'] = function(i) return fmt("%s %s %s",i[1],i[2],cArg(i[3])) end
 
   function renderInstr(i) return instrFmt[i[1]] and instrFmt[i[1]](i) or defInstrFmt(i) end
 
@@ -709,10 +736,14 @@ end
     else return true,'dead',p,st.popValues(-1) end
   end
 
+  function hooks.addInstr(i,f) instr[i]=f end
+  hooks.getArg = getArg
+  
   return {
     dump = dump,
     compile = compile,
     coroutine = _coroutine,
     trace = function(b) trace = b end,
+    hooks = hooks
   }
 end

@@ -6,7 +6,7 @@ _=loadfile and loadfile("TQAE.lua"){
     onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true, -- timersSched=true
   },
   --startTime="10:00:00 5/12/2020",
-  --speed = 48,
+  speed = 48,
   --deploy=true,
   --offline=true,
 }
@@ -25,7 +25,7 @@ _=loadfile and loadfile("TQAE.lua"){
 ----------- Code -----------------------------------------------------------
 _debugFlags.trigger = true -- log incoming triggers
 _debugFlags.trigger2 = true -- log incoming triggers
-_debugFlags.sourceTrigger = true
+--_debugFlags.sourceTrigger = true
 _debugFlags.fcall=true     -- log fibaro.call
 _debugFlags.post = true    -- log internal posts
 _debugFlags.rule=true      -- log rules being invoked (true or false)
@@ -48,8 +48,27 @@ function QuickApp:main()    -- EventScript version
   Util.defvars(HT)
   Util.reverseMapDef(HT)
 
-  rule("log('Current version is %s - %s',E_VERSION,E_FIX)")
-  rule("foo bar too")
+  function nameBreachedDevices(list)
+    local res = {}
+    for _,id in ipairs(list) do 
+      if fibaro.getValue(id,'value') then res[#res+1]=fibaro.getName(id)..":"..id end end
+    return res
+  end
+  
+  rule("user=2")
+  rule("0:alarm='watch'")
+  rule([[#alarm{id='$id',property='willArm',value='$secs'} => -- Notification that alarm is about to be armed
+        local alarm = id:alarm;
+        if alarm.devices:safe then                            -- Check that devices are safe
+          user:msg = log("Alarm partition '%s' is about to arm in %s seconds",alarm.name,secs) 
+        else
+           id:alarm=false;
+           local bd = nameBreachedDevices(alarm.devices);
+           user:msg = log("Alarm partition '%s' has breached devices, cancelling arming (%s)",alarm.name,tjson(bd)) 
+        end
+        ]])
+
+
 --[[
   rule("@sunset => lamp:value=40; sched=40")
   rule("@00:00 => lamp:value=20; sched=20")

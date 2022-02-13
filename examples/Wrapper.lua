@@ -1,4 +1,5 @@
 _=loadfile and loadfile("TQAE.lua"){
+  refreshStates=true,
   user="admin", 
   pwd="admin", 
   host="192.168.1.57",
@@ -9,4 +10,5 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%name="Wrapper"
 
 --Example of loading and running another QA
-hc3_emulator.installQA{id=88,file='TQAEexamples/Pong.lua'}
+hc3_emulator.installQA{id=88,file='examples/Pong.lua'} -- from file
+--hc3_emulator.installQA{breakOnInit=true,id=811,code=api.get("/quickApp/export/811")} -- from the HC3

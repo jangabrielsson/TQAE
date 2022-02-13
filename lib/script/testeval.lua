@@ -101,15 +101,28 @@ local function runCTests(ts,d)
   end
 end
 
-function foo2(a,b) return a*b end
-function foo1(a) return 8*a  end
-function foo0() return 64 end
+function foo2(...) 
+  local a={...} 
+  return a[1]*a[2] 
+end
+function foo1(...) 
+  local a = {...}
+  return 8*a[1] 
+end
+function foo0(...) 
+  local a = {...}
+  return 64 
+end
 function bar(...) return {...} end
 function ret(...) return ... end
+ppp = print
+function ppp2() return print end
 
 local tests = {
   {1,"(fun(x) (+ $x $x))",{7},{14}},
   {1.1,"(fun(x) (+ 8 9))",{7},{17}},
+  {1.2,"(fun(x) (call $print 8) 17)",{7},{17}},
+  {1.3,"(fun(x) {4,2,3})",{7},{14}},
   {2,"(fun(x ...) (table (varargs)))",{3,2,1},{{2,1}}},
   {3,"(fun(x ...) (table 66 (varargs)))",{3,2,1},{{66,2,1}}},
   {4,"(fun(...) (return (varargs)))",{3,2,1},{3,2,1}},
@@ -181,7 +194,7 @@ local ctests = {
   {2,"(fun(x y) (yield  $x $y))",{7,8},{7,8}},
 }
 
-singleTest(10.1,tests)
+singleTest(1.3,tests)
 
 --runTests(tests)
 --runCTests(ctests)
