@@ -61,6 +61,15 @@ function makeParser()
       local v=self.next(); 
       assert(v.type==t,"Expected:"..t); return v.value 
     end
+    function self.findNext(c)
+      local n,p = 0
+      repeat
+        n=n+1
+        p = self.peek(n).value
+      until p==c or p == self.eof
+      return p==c and n or nil
+    end
+    function self.patch(n,v) tab[p+n]=v end
     function self.matchA(t) local v=self.next(); assert(v.type==t,"Expected:"..t); return v end
     function self.matchO(w) local v=self.next(); assert(v.type=='operator' and  v.value==w,"Expected:"..w); return v end
     function self.test(t) local v=self.peek(); if v.type==t then self.next(); return true else return false end end
@@ -132,7 +141,7 @@ function makeParser()
   local opT={['and']=true,['or']=true,['not']=true,}
   local reservedT={
     ['if']=true,['else']=true,['then']=true,['elseif']=true,['while']=true,['repeat']=true,['local']=true,['for']=true,['in']=true,
-    ['do']=true,['until']=true,['end']=true,['return']=true,['true']=true,['false']=true,['function']=true,['nil']=true,['break']=true,
+    ['do']=true,['until']=true,['end']=true,['return']=true,['true']=true,['false']=true,['function']=true,['nil']=true,['break']=true,['setp']=true
   }
 
   local opers
@@ -143,9 +152,10 @@ function makeParser()
   token("$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_","([%$A-Za-z_][%w_]*)", function (w) 
       if reservedT[w] then return {type=w, value=w}
       elseif opT[w] then return {type='operator', value = w}
+      elseif w:sub(1,1)=='$' then return {type='global', value=w:sub(2)}
       else return {type='Name', value=w} end
     end)
-  token(".","(%.%.%.?)",function(op) return {type=op=='..' and 'operator' or op, value=op} end)
+  token(".","(%.%.%.?)",function(op) return {type=op=='..' and 'operator' or op, value=opMap[op] or op} end)
   token("0123456789","(%d%d):(%d%d):?(%d*)", function (h,m,s) 
       return {type="number", value = 3600*tonumber(h)+60*tonumber(m)+(tonumber(s) or 0)} 
     end)
@@ -163,7 +173,6 @@ function makeParser()
   token("@","(@@)",function(op) return {type= "operator", value=op} end)
   token("<","(<=)",function(oop) return {type= "operator", value=op} end)
   token(">","(>=)",function(op) return {type= "operator", value=op} end)
-  token("%.","(%.%.)",function(op) return {type= "operator", value=op} end)
   token("=","(=>)",function(op) isRule = #tokens return {type= "operator", value=op} end)
   token("=","(=)",function(op) return {type= "operator", value=op} end)
   token(">","(>>)",function(op) return {type= "operator", value=op} end)
@@ -208,7 +217,7 @@ function makeParser()
   opers = {
     ['not']={12,1},['#']={12,1},['%neg']={12,1},['%nor']={12,1},['^']={13,2},
     ['+']={8,2}, ['-']={8,2}, ['*']={11,2}, ['/']={11,2}, ['//']={11,2},['%']={11,2},
-    ['..']={7,2},
+    ['betw']={7,2},
     ['|']={0,2},['~']={4,2},['&']={1,2},['<<']={6,2},['>>']={6,2},
     ['<']={2,2}, ['<=']={2,2}, ['>']={2,2}, ['>=']={2,2}, ['==']={2,2}, ['~=']={2,2},
     ['or']={0,2},['and']={1,2},
@@ -221,7 +230,15 @@ function makeParser()
       local val,ref = st.pop(),st.pop()
       if ref[1]=='aref' then
         return st.push({'aset',ref[2],ref[3],val})
+      elseif ref[1]=='getprop' then
+        return st.push({'setprop',ref[2],ref[3],val})
+      elseif ref[1]=='getglobal' then
+        return st.push({'setglobal',ref[2],val})
       else return st.push({'setvar',ref[2],val}) end
+    elseif t.value=='$' then
+      local v = st.pop()
+      if type(v)=='table' and v[1]=='var' then v=v[2] end
+      st.push({'global',v}) 
     else
       return st.push(st.popn(opers[t.value][2],{t.value})) 
     end
@@ -254,6 +271,11 @@ function makeParser()
       else
         st.push(t.value) 
       end
+    end,
+    ['global'] = function(inp,st,ops,t,pt,ctx)
+      inp.next();
+      local p,v = inp.peek(),{'getglobal',t.value}
+      if PREFIXTKNS[p.type] then st.push(gram.prefixExp(inp,v,ctx)) else st.push(v) end
     end,
     ['string']=function(inp,st,ops,t,pt,ctx) inp.next(); st.push(t.value) end,
     ['function']=function(inp,st,ops,t,pt,ctx) 
@@ -392,6 +414,28 @@ prefixexp ::= ( exp ) [ afterpref ]
 --varlist ::= var {‘,’ var}
 --var ::=  Name | prefixexp ‘[’ exp ‘]’ | prefixexp ‘.’ Name 
 
+  function gram.lvList(inp,ctx,loc)
+    local res = {}
+    local p = inp.findNext('=')
+    assert(p,"Bad assignment list")
+    inp.patch(p,inp.eof)
+    while true do
+      local v = gram.expr(inp,ctx)
+      if type(v)=='table' then
+        if v[1]=='var' then
+          res[#res+1]={'var',v[2]}
+        elseif v[1]=='aref' then
+          res[#res+1]={'tab',v[2],v[3]}
+        elseif v[1]=='getglobal' then
+          res[#res+1]={'gv',v[2]}
+        else error("Bad LV") end
+      else error("Bad LV") end
+      if inp.peek().value~=',' then break else inp.next() end
+    end
+    inp.next()
+    return res
+  end
+
   function gram.varList(inp,ctx,loc)
     local res = {}
     local p = inp.peek()
@@ -460,22 +504,10 @@ prefixexp ::= ( exp ) [ afterpref ]
       end
       inp.match('end')
       return {'if',e,b,eif,els}
-    elseif t == 'Name' and t2.value==',' then
-      inp.back(n)
-      local vars=gram.varList(inp,ctx)
-      if inp.testO('=') then
-        local exprs = gram.exprList(inp,ctx)
-        if #exprs==1 then
-          if vars[1][1]=='aref' then
-            return conc('aset',vars[1][2],vars[1][3],exprs)
-          else return conc('setvar',vars[1][2],exprs) end
-        else return conc('setvars',vars,exprs) end
-      else
-        assert(#vars==1,"Bad expression1")
-        vars = vars[1]
-        assert(vars[1]=='call' or vars[1]=='callobj',"Bad expression2")
-        return vars
-      end
+    elseif t == 'setp' then
+      local lvs=gram.lvList(inp,ctx)
+      local exprs = gram.exprList(inp,ctx)
+      return {'setp',lvs,table.unpack(exprs)}
     elseif t == 'function' then
       local name,ft = gram.funcName(inp,ctx)
       local args,varargs,body = gram.funcBody(inp,ctx)
@@ -624,10 +656,11 @@ parlist ::= namelist [‘,’ ‘...’] | ‘...’
 
   local p = function(str,locals)
     locals = locals or {}
-    local stat,res = pcall(function()
+    local stat,res,ir = pcall(function()
         local expr
         mTokens = mkStream(tokenize(str))
-        if mTokens.isRule then
+        local ir = mTokens.isRule
+        if ir then
           local e,b = mTokens.split(mTokens.isRule+1)
           mTokens = b
           e = gram.expr(e,{l=locals})
@@ -639,9 +672,9 @@ parlist ::= namelist [‘,’ ‘...’] | ‘...’
         if mTokens.peek() ~= mTokens.eof then
           error({err="Unexpected token at eof",token=mTokens.next()})
         end
-        return expr
+        return expr,ir
       end)
-    if stat then return res
+    if stat then return res,ir
     else
       if type(res)=='table' then
         error(res.err.." - "..tokenToError(res.token,str),1)

@@ -124,8 +124,21 @@ local function uiStruct2uiCallbacks(UI)
   return cb
 end
 
+local function updateUI(UI)
+  transformUI(UI)
+  local viewLayout = mkViewLayout(UI)
+  local uiCallbacks = uiStruct2uiCallbacks(UI)
+  return api.put("/devices/"..plugin.mainDeviceId,{
+      properties={
+        viewLayout= viewLayout,
+        uiCallbacks =  uiCallbacks,
+      }
+    })
+end
+
 fibaro.UI = {
   uiStruct2uiCallbacks = uiStruct2uiCallbacks,
   transformUI = transformUI,
-  mkViewLayout = mkViewLayout
+  mkViewLayout = mkViewLayout,
+  updateUI =  updateUI
 }

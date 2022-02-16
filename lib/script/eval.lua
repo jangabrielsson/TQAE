@@ -1,7 +1,5 @@
 -- luacheck: globals ignore makeCompiler json
 
-dofile("lib/json.lua")
-
 --[[
   ToDo:
   V -loop,break,continue and rewrite while/repeat
@@ -15,19 +13,24 @@ dofile("lib/json.lua")
 --[[
 (progn [<expr_1> ...<expr_n>])
 (return [<expr_1> ...<expr_n>])
-(setvar name <expr>)
 (and <expr> <expr>)
 (or <expr> <expr>)
 ([+,-,*,/,modulo,>,>=,<,<=,==,~=,not,neg] <expr> <expr>)
-(var name)
 (incvar name <value>)
 (decvar name <value>)
 (local (<name_1> [...<name_n>]) <expr>)
 (params (<name_1> [...<name_n>]) <expr>)
 (fun (<p_1> [...<p_n>]) <expr>)
 (call name [<expr_1> ...<expr_n>])
+(var name)
+(aref <table> <key>)
+(getglobal <name>)
+(getprop <id> <key>)
 (setvar name <expr>)
-(setvars (<name_1> [...<name_n>]) [<expr_1> ...<expr_n>])
+(aset <table> <key>)
+(setglobal <name>)
+(setprop <id> <key> <value>)
+(setvars (<ref_1> [...<ref2_n>]) [<expr_1> ...<expr_n>]
 (if <test> <then> [<else>])
 (loop [<expr_1> ...<expr_n>]) -- block
 (break)
@@ -40,10 +43,6 @@ dofile("lib/json.lua")
 (resume [<expr_1> ...<expr_n>])
 (print [<expr_1> ...<expr_n>])
 (table [<val_1> ...<val_n>])
-(aref <table> <key>)
-(aset <table> <key>)
-(getprop <id> <key>)
-(setprop <id> <key> <value>)
 (quote <expr>)
 (encode <table>)
 (decode <string>)
@@ -371,15 +370,29 @@ end
     end
     code.emit('local',vars,false,#vars,#exprs); code.pushLocals(vars)
   end
-  comp['setvars'] = function(code,_,vars,...) 
-    assert_type('string_list',vars,"setvars with non-list vars field")
+  local function classifySV(v,code)
+    if type(v)=='table' then
+      if v[1] == 'var' then return {code.isLocal(v[2]) and "local" or "global",v[2]}
+      elseif v[1]=='aref' then 
+        compileExpr(v[2],code)
+        key = compConst(v[3],code) 
+        val = compConst(v[4],code) 
+        return {'tab',key,val}
+      elseif v[1]=='getglobal' then return {"gv",v[2]} end
+    end
+    error("Unexpected LV")
+  end
+  comp['setp'] = function(code,_,lvs,...) 
+    assert_type('list',lvs,"setvars with non-list vars field")
     local exprs = {...}
     for i=1,#exprs do
       compileExpr(exprs[i],code)
     end
-    local locls = {}
-    for _,v in ipairs(vars) do locls[#locls+1]=code.isLocal(v) end
-    code.emit('setvars',vars,locls,#vars,#exprs)
+    local  lvs1={}
+    for _,e in  ipairs(lvs) do 
+      lvs1[#lvs1+1]= e[1]=='var' and {code.isLocal(fun) and 'local'  or  'global',  e[2]} or e
+    end
+    code.emit('setp',lvs1,#lvs1,#exprs)
   end
   comp['call'] = function(code,_,fun,...)
     local exprs={...}
@@ -418,16 +431,25 @@ end
     val = compConst(val,code) 
     code.emit('aset',key,val)
   end
-    comp['getprop'] = function(code,_,id,key) 
+  comp['getprop'] = function(code,_,id,key) 
     assert_type('string',key,"id property must be string")
     local c = compConst(id,code) 
     code.emit('getprop',key,c)
   end
-  comp['setprop'] = function(code,_,id,key,val) 
-    compileExpr(tab,code)
-    key = compConst(key,code) 
+  comp['setprop'] = function(code,_,id,key,val)
+    assert_type('string',key,"id property must be string")
+    local c = compConst(id,code)
     val = compConst(val,code) 
-    code.emit('aset',key,val)
+    code.emit('setprop',key,c,val)
+  end
+  comp['getglobal'] = function(code,_,name)
+    assert_type('string',name,"Global name must be string")
+    code.emit('getglobal',name)
+  end
+  comp['setglobal'] = function(code,_,name,val)
+    assert_type('string',name,"Global name must be string")
+    local c = compConst(val,code)
+    code.emit('setglobal',name,c)
   end
 --  comp['table'] = function(code,_,tab,key,val) 
 --    compileExpr(tab,code)
@@ -641,9 +663,28 @@ end
     local val,locl = getArg(i[4],st),i[3]
     st.push(env.set(i[2],val,locl)) 
   end
-  function instr.setvars(i,st,env) 
-    local  vars,locls,vn,en,val = i[2],i[3],i[4],i[5]
-    for j=1,vn do val=st.peek(j-en) env.set(vars[j],val,locls[j]) end
+
+  local setpF={
+    ['local'] =  function(lv,val,env,st) st.push(env.set(lv[2],val,true)) end,
+    ['global'] =  function(lv,val,env,st) st.push(env.set(lv[2],val,false)) end,
+    ['gv'] =  function(lv,val,env,st) 
+      fibaro.setGlobalVariable(lv[2],tostring(val))
+      st.push(val)
+    end,
+    ['tab'] = function(lv,val,env,st)
+      local tab=st.pop()
+      local key = getArg(lv[3],st)
+      val = getArg(val,st)
+      tab[key]=val
+      st.push(val)
+    end,
+  }
+  function instr.setp(i,st,env) 
+    local  lvs,lvn,en = i[2],i[3],i[4]
+    for j=1,lvn do 
+      local lv,val=lvs[j],st.peek(j-en) 
+      setpF[lv[1]](lv,val,env,st)
+    end
     st.pop(en) st.push(val)
   end
   function instr.incvar(i,st,env)  -- name,local,const
@@ -695,6 +736,15 @@ end
   instr['assert']=function(i,st) if type(st.peek(0))~=i[2] then error(i[3],2) end end
   instr['trace']=function(i,st) trace = st.peek(0) end
 
+  instr['getglobal']=function(i,st)
+    local name = i[2]
+    st.push((fibaro.getGlobalVariable(name)))
+  end
+  instr['setglobal']=function(i,st)
+    local name,value = i[2],getArg(i[3],st)
+    fibaro.setGlobalVariable(name,tostring(value))
+    st.push(value)
+  end
   local function isReturn(r) return type(r)=='table'  and r[1]=='_RET_' end
 
   local function cArg(v) if type(v)=='table' then return v[1] else return "" end end
@@ -738,7 +788,7 @@ end
 
   function hooks.addInstr(i,f) instr[i]=f end
   hooks.getArg = getArg
-  
+
   return {
     dump = dump,
     compile = compile,

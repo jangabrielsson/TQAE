@@ -1,7 +1,8 @@
+dofile("lib/json.lua")
 dofile("lib/script/eval.lua")
 dofile("lib/script/parser.lua")
 
---local gdump = true
+local gdump = true
 --local gtrace = true
 local gstruct = true
 
@@ -38,9 +39,11 @@ local tests = {
   {5.12,"g={44}:bar",{},{"table:42"}}, 
   {5.13,"ID:bar",{},{"number:42"}}, 
   {5.14,"44:bar",{},{"number:42"}}, 
-  {5.15,"{44}:bar",{},{"table:42"}},
+  {5.15,"{44}:bar",{},{"table:42"}},  
+  {5.16,"44:bar=77",{},{"table:42"}},
   {6.1,"a = 07:00..10:00",{},{false}},  
-  {7.1,"a = true & false",{},{false}},    
+  {7.1,"a = true & false",{},{false}},
+  {8.1,"a = $barf",{},{false}},   
   {10,"true => a=66",{},{66}}, 
   {10.1,"@10:00 => a=66",{},{66}},
   {10.2,"@{10:00,22:00} => a=66",{},{66}},  
@@ -121,6 +124,11 @@ compiler.hooks.addInstr('getprop',
     st.push(props[i[2]](getArg(i[3],st)))
   end
 )
+compiler.hooks.addInstr('setprop',
+  function (i,st,env)
+    st.push(props[i[2]](getArg(i[3],st)))
+  end
+)
 compiler.hooks.addInstr('..',
   function (i,st,env)
     local t2,t1=st.pop(),st.pop()
@@ -140,4 +148,4 @@ compiler.hooks.addInstr('@@',
   function (i,st,env) st.push(st.pop()) end
 )
 --for _,e in ipairs(tests) do runTest(e) end
-runTests(20.3)
+runTests(8.1)
