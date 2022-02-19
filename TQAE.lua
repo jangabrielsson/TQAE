@@ -279,14 +279,18 @@ function FB.__fibaro_add_debug_message(tag,str,typ)
   typ=typ:upper()
   str = debugFlags.html and html2color(str) or str:gsub("(</?font.->)","") -- Remove color tags
   typ = debugFlags.color and (ANSICOLORS[(fibColors[typ] or "black")]..typ..ANSIEND) or typ
-  str=str:gsub("(&nbsp;)"," ")      -- remove html space
-  print(fmt("%s [%s] [%s]: %s",EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),typ,tag,str))
+  str = str:gsub("(&nbsp;)"," ")      -- remove html space
+  if debugFlags.color then
+    local tcolor = ANSICOLORS[(fibColors['TEXT'] or "black")]
+    print(fmt("%s [%s%s] [%s]: %s%s",EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),typ,tcolor,tag,str,ANSIEND))
+  else print(fmt("%s [%s] [%s]: %s",EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),typ,tag,str)) end
 end
 
 local function _LOG(typ,...)
   if debugFlags.color then
-    local colorCode = ANSICOLORS[logColors[typ]]
-    print(fmt("%s |%s%-5s%s| %s",EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),colorCode,typ,ANSIEND,fmt(...)))
+    local colorCode = ANSICOLORS[logColors[typ]  or 'black']
+    local textColor = ANSICOLORS[logColors['TEXT'] or 'black'] 
+    print(fmt("%s |%s%-5s|%s %s%s%s",EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),colorCode,typ,ANSIEND,textColor,fmt(...),ANSIEND))
   else
     print(fmt("%s |%-5s| %s",EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),typ,fmt(...)))
   end

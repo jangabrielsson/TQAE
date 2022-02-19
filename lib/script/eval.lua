@@ -62,13 +62,17 @@
 (jmp_false_j <n>)
 --]]
 
-function makeCompiler()
+EVENTSCRIPT = EVENTSCRIPT or {}
+function EVENTSCRIPT.makeCompiler()
 
   local fmt = string.format
   local function printf(fm,...) print(fmt(fm,...))  end
   local compile,compileExpr,runCode,renderInstr,instr
-  local hooks = {}
+  local function idF(x) return x end
+  local hooks = { marshallTo=idF, marshallFrom = idF, reservedVars = {} }
   local trace = false
+  local reservedVars = hooks.reservedVars
+  local function map(f,l) local r={} for i=1,#l do r[#r+1]=f(l[i]) end return r end
 
   local function makeStack()
     local p,x,self,stack  = 0,0,{},{}
@@ -370,30 +374,34 @@ end
     end
     code.emit('local',vars,false,#vars,#exprs); code.pushLocals(vars)
   end
-  local function classifySV(v,code)
-    if type(v)=='table' then
-      if v[1] == 'var' then return {code.isLocal(v[2]) and "local" or "global",v[2]}
-      elseif v[1]=='aref' then 
-        compileExpr(v[2],code)
-        key = compConst(v[3],code) 
-        val = compConst(v[4],code) 
-        return {'tab',key,val}
-      elseif v[1]=='getglobal' then return {"gv",v[2]} end
-    end
-    error("Unexpected LV")
+
+  local function compConst(expr,code)
+    if type(expr)=='table' and expr[1]=='const' then return {expr}
+    elseif type(expr)~='table' then return {expr} else compileExpr(expr,code) end 
   end
+  local setpComp = {
+    ['var'] = function(lv,code) local var = lv[2] return {code.isLocal(var) and "local" or "global",var,1} end,
+    ['tab'] = function(lv,code)
+      local tab,key = lv[2],lv[3]
+      assert(false,"Not implemented yet")
+    end,
+    ['gv'] = function(lv,code) return {'gv',lv[2],1} end,
+  }
+
   comp['setp'] = function(code,_,lvs,...) 
-    assert_type('list',lvs,"setvars with non-list vars field")
+    assert_type('list',lvs,"setp with non-list LVs field")
     local exprs = {...}
     for i=1,#exprs do
       compileExpr(exprs[i],code)
     end
-    local  lvs1={}
-    for _,e in  ipairs(lvs) do 
-      lvs1[#lvs1+1]= e[1]=='var' and {code.isLocal(fun) and 'local'  or  'global',  e[2]} or e
+    local lvsi = {}
+    for _,v in ipairs(lvs) do
+      assert(type(v)=='table' and setpComp[v[1]],"Bad LV for setp")
+      lvsi[#lvsi+1]=setpComp[v[1]](v,code) 
     end
-    code.emit('setp',lvs1,#lvs1,#exprs)
+    code.emit('setp',lvsi,#lvsi,#exprs)
   end
+
   comp['call'] = function(code,_,fun,...)
     local exprs={...}
     for i=1,#exprs do
@@ -407,10 +415,12 @@ end
     end
   end
 
-  local function compConst(expr,code) if type(expr)~='table' then return {expr} else compileExpr(expr,code) end end
-
   comp['quote'] = function(code,_,expr) code.emit('push',expr) end
-  comp['var'] = function(code,_,var) code.emit('var',var,code.isLocal(var)) end
+  comp['var'] = function(code,_,var)
+    if reservedVars[var] then
+      code.emit(var,1) 
+    else code.emit('var',var,code.isLocal(var)) end
+  end
   comp['setvar'] = function(code,_,var,expr) local c = compConst(expr,code) code.emit('setvar',var,code.isLocal(var),c) end
   comp['incvar'] = function(code,_,var,expr) local c = compConst(expr,code) code.emit('incvar',var,code.isLocal(var),c) end
   comp['decvar'] = function(code,_,var,expr) local c = compConst(expr,code) code.emit('decvar',var,code.isLocal(var),c) end
@@ -583,6 +593,7 @@ end
   end
   ---------------- Running code --------------
   local function getArg(iv,st) if iv then return iv[1] else return st.pop() end end
+  local function peekArg(iv,st) if iv then return iv[1] else return st.peek() end end
 
   instr = {}
   instr['+']  = function(i,st) st.push(st.pop()+st.pop()) end
@@ -665,26 +676,19 @@ end
   end
 
   local setpF={
-    ['local'] =  function(lv,val,env,st) st.push(env.set(lv[2],val,true)) end,
-    ['global'] =  function(lv,val,env,st) st.push(env.set(lv[2],val,false)) end,
-    ['gv'] =  function(lv,val,env,st) 
-      fibaro.setGlobalVariable(lv[2],tostring(val))
-      st.push(val)
+    ['local'] =  function(lv,val,st,env) env.set(lv[2],val,true) end,
+    ['global'] =  function(lv,val,st,env) env.set(lv[2],val,false) end,
+    ['gv'] =  function(lv,val,st,env) 
+      fibaro.setGlobalVariable(lv[2],tostring(hooks.marshallTo(val)))
     end,
-    ['tab'] = function(lv,val,env,st)
-      local tab=st.pop()
-      local key = getArg(lv[3],st)
-      val = getArg(val,st)
-      tab[key]=val
-      st.push(val)
-    end,
+    ['tab'] = function(lv,val,st,env) assert(false,"Not implemented yet") end,
   }
   function instr.setp(i,st,env) 
-    local  lvs,lvn,en = i[2],i[3],i[4]
-    for j=1,lvn do 
-      local lv,val=lvs[j],st.peek(j-en) 
-      setpF[lv[1]](lv,val,env,st)
-    end
+    local  vars,vn,en,val,var = i[2],i[3],i[4]
+    for j=1,vn do 
+      var,val=vars[j],st.peek(j-en) 
+      setpF[var[1]](var,val,st,env) 
+    end 
     st.pop(en) st.push(val)
   end
   function instr.incvar(i,st,env)  -- name,local,const
@@ -738,22 +742,29 @@ end
 
   instr['getglobal']=function(i,st)
     local name = i[2]
-    st.push((fibaro.getGlobalVariable(name)))
+    local v,t = fibaro.getGlobalVariable(name)
+    st.push(hooks.marshallFrom(v))
   end
   instr['setglobal']=function(i,st)
     local name,value = i[2],getArg(i[3],st)
-    fibaro.setGlobalVariable(name,tostring(value))
+    fibaro.setGlobalVariable(name,tostring(hooks.marshallTo(value)))
     st.push(value)
   end
   local function isReturn(r) return type(r)=='table'  and r[1]=='_RET_' end
 
   local function cArg(v) if type(v)=='table' then return v[1] else return "" end end
   local function notNil(v,op) if v==nil then return op else return v end end 
+  local lvMap = {
+    ['local']=function(lv) return lv[2].."/L" end,
+    ['global']=function(lv) return lv[2].."/G" end,
+    ['gv']=function(lv) return "$"..lv[2] end,
+  }
+
   local instrFmt = {}
   local defInstrFmt = function(i) return fmt("%s %s %s",i[1],i[2] or "",i[3] or "") end
   instrFmt['local'] = function(i) return fmt("%s %s %s",i[1],table.concat(i[2],","),notNil(i[3],"") and "trim" or "") end
   instrFmt['params'] = function(i) return fmt("%s %s %s",i[1],table.concat(i[2],","),notNil(i[3],"")) end
-  instrFmt['setvars'] = function(i) return fmt("%s %s",i[1],table.concat(i[2],",")) end
+  instrFmt['setp'] = function(i) return fmt("%s %s",i[1],table.concat(map(function(v) return lvMap[v[1]](v) end,i[2]),",")) end
   instrFmt['setvar'] = function(i) return fmt("%s %s/%s %s",i[1],i[2],i[3] and 'L' or 'G',cArg(i[4])) end
   instrFmt['var'] = function(i) return fmt("%s %s/%s",i[1],i[2],i[3] and 'L' or 'G') end
   instrFmt['incvar'] = function(i) return fmt("%s %s/%s %s",i[1],i[2],i[3] and 'L' or 'G',cArg(i[4])) end
@@ -786,8 +797,10 @@ end
     else return true,'dead',p,st.popValues(-1) end
   end
 
-  function hooks.addInstr(i,f) instr[i]=f end
+  function hooks.addInstr(i,f,c) instr[i]=f comp[i]=c or comp[i] end
   hooks.getArg = getArg
+  hooks.peekArg = peekArg
+  hooks.compConst = compConst
 
   return {
     dump = dump,

@@ -43,8 +43,11 @@ binop ::=  ‘+’ | ‘-’ | ‘*’ | ‘/’ | ‘//’ | ‘^’ | ‘%’ 
 unop ::= ‘-’ | not | ‘#’ | ‘~’
 --]]
 
-function makeParser()
+EVENTSCRIPT = EVENTSCRIPT or {}
+EVENTSCRIPT.builtins = EVENTSCRIPT.builtins or {}
 
+function EVENTSCRIPT.makeParser()
+  local builtins = EVENTSCRIPT.builtins
   local mTokens
   local format = string.format
   local function assert(t,str) if not t then error({err=str,token=mTokens.last()}) end end
@@ -174,6 +177,7 @@ function makeParser()
   token("<","(<=)",function(oop) return {type= "operator", value=op} end)
   token(">","(>=)",function(op) return {type= "operator", value=op} end)
   token("=","(=>)",function(op) isRule = #tokens return {type= "operator", value=op} end)
+  token("=","(==)",function(op) return {type= "operator", value=op} end)  
   token("=","(=)",function(op) return {type= "operator", value=op} end)
   token(">","(>>)",function(op) return {type= "operator", value=op} end)
   token("|","(||)",function(op) return {type= "operator", value=op} end)
@@ -379,7 +383,8 @@ prefixexp ::= ( exp ) [ afterpref ]
     elseif inp.peek().type == '(' or inp.peek().type == '{' then
       local args = gram.args(inp,ctx)
       if type(r)=='table' and r[1]=='var' then r=r[2] end
-      return gram.prefixExp(inp,{'call',r,table.unpack(args)},ctx) 
+      if builtins[r] then return gram.prefixExp(inp,{r,table.unpack(args)},ctx) 
+      else return gram.prefixExp(inp,{'call',r,table.unpack(args)},ctx) end
     elseif inp.test(':') then
       local key = inp.match('Name')
       if inp.peek().type == '(' then

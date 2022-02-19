@@ -71,14 +71,14 @@ local function mkViewLayout(list,height)
       body = {
         header = {
           style = {height = tostring(height or #list*50)},
-          title = "quickApp_device_23"
+          title = "quickApp_device_"..plugin.mainDeviceId
         },
         sections = {
           items = items
         }
       },
       head = {
-        title = "quickApp_device_23"
+        title = "quickApp_device_"..plugin.mainDeviceId
       }
     }
   }
@@ -124,16 +124,46 @@ local function uiStruct2uiCallbacks(UI)
   return cb
 end
 
-local function updateUI(UI)
-  transformUI(UI)
-  local viewLayout = mkViewLayout(UI)
-  local uiCallbacks = uiStruct2uiCallbacks(UI)
-  return api.put("/devices/"..plugin.mainDeviceId,{
-      properties={
-        viewLayout= viewLayout,
-        uiCallbacks =  uiCallbacks,
-      }
-    })
+local function setVariable(self,name,value)
+  local vars = __fibaro_get_device(self.id).properties.quickAppVariables or {}
+  for _,v in ipairs(vars) do
+    if v.name == name then 
+      v.value,v.type = value, 'password' 
+      self:updateProperty('quickAppVariables',vars)
+      return
+    end
+  end
+  vars[#vars+1] = {name = name, value = value, type = 'password'}
+  self:updateProperty('quickAppVariables',vars)
+end
+
+local function equal(e1,e2)
+  if e1==e2 then return true
+  else
+    if type(e1) ~= 'table' or type(e2) ~= 'table' then return false
+    else
+      for k1,v1 in pairs(e1) do if e2[k1] == nil or not equal(v1,e2[k1]) then return false end end
+      for k2,_  in pairs(e2) do if e1[k2] == nil then return false end end
+      return true
+    end
+  end
+end
+
+local function updateUI(self,UI)
+  local oldUI = self:getVariable('userUI')
+  if not equal(oldUI,UI)  then
+    setVariable(self,'userUI',UI)
+    self:debug("Updating UI...")
+    transformUI(UI)
+    local viewLayout = mkViewLayout(UI)
+    local uiCallbacks = uiStruct2uiCallbacks(UI)
+    return api.put("/devices/"..plugin.mainDeviceId,{
+        properties={
+          viewLayout= viewLayout,
+          uiCallbacks =  uiCallbacks,
+        }
+      })
+  else return "Already updated",200 end
 end
 
 fibaro.UI = {
