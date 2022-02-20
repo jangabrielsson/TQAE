@@ -13,13 +13,15 @@ local function setupES()
   local function fstr(e) return tonumber(e) end
   local getTriggers
 
+  local rules = {}
   local function createRule(nr,str,events)
     local r = {}
     local _str = fmt("Rule:%s %s",nr,str:sub(1,40))
     function r.__tostring() return _str  end
     function r.enable() end
-    function r.disabel() end
-    
+    function r.disable() end
+    function r.start() end
+    rules[nr]=r
     return r
   end
 
@@ -121,14 +123,13 @@ local function setupES()
       rules = {}
       if #daily>0 then
         for _,t in ipairs(daily) do -- {daily=id}
-          rules[#rules+1] = fibaro.event({daily=nRules},f)
+          rules[#rules+1] = fibaro.event({type='daily',  rule=nRules},f)
         end
       elseif #interv>0 then
       elseif #events>0 then
       else error("No triggers in rule") end
-      print(json.encode(events))
     end
-    return {rules = rules }
+    return createRule(nRules,str,events)
   end
   EVENTSCRIPT.rule=rule
 end

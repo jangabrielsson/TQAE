@@ -114,12 +114,14 @@ local GUI_HANDLERS = {
     local args = json.decode(body)
     local _,env = EM.getQA(tonumber(id))
     local ctx = EM.Devices[tonumber(id)]
+    if ctx==nil then return end
     EM.setTimeout(function() env.onAction(id,args) end,0,nil,ctx)
     client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
   end,
   ["POST/TQAE/ui/#id"] = function(_,client,ref,body,_,id) 
     local _,env = EM.getQA(tonumber(id))
     local args = json.decode(body)
+    if ctx==nil then return end
     local ctx = EM.Devices[tonumber(id)]
     EM.setTimeout(function() env.onUIEvent(id,args) end,0,nil,ctx)
     client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")

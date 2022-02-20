@@ -13,6 +13,11 @@ local rule
 --local g_dump   = true
 --local g_trace  = true 
 
+print(fibaro.utils.sunCalc())
+local sunrise,sunset = fibaro.utils.sunCalc(os.time()+24*3600)
+fibaro.post({type='sunrise'},"n/"..sunrise)
+print(fibaro.utils.sunCalc(os.time()+24*3600))
+
 _MARSHALL = true
 local fmt = string.format
 local function printf(f,...) print(fmt(f,...)) end
@@ -65,7 +70,7 @@ function QuickApp:main()
     {10.1,"@10:00 => a=66",{},{66}},
     {10.2,"@{10:00,22:00} => a=66",{},{66}},  
     {10.3,"@@10:00 => a=66",{},{66}},
-    {20,"true => 66:bar; 77:bar",{},{"number:42"}},
+    {20,"@now => 66:bar; 77:bar",{},{"number:42"}},
     {20.1,"true => true & true & true",{},{true}},
     {20.2,"true => true & true & false",{},{false}},
     {20.3,"true => true & true & a=9",{},{9}},
@@ -83,8 +88,17 @@ function QuickApp:main()
     end
   end
 
+  local function encode(e)
+    if type(e)=='table' then
+      if e.__tostring then return e:__tostring()  else
+        local r = {}
+        for _,v in ipairs(e) do r[#r+1]=encode(v) end
+        return json.encode(r)
+      end
+    else return e end
+  end
   local function pres(n,correct,r0,r1,t)
-    printf("%05.2f:%s %-36s => %-20s %.2fms",n,correct and "OK" or  "NO",(json.encode(r0)):sub(2,-2),(json.encode(r1)):sub(2,-2),t)
+    printf("%05.2f:%s %-36s => %-20s %.2fms",n,correct and "OK" or  "NO",(encode(r0)):sub(2,-2),(encode(r1)):sub(2,-2),t)
   end
 
   local function runTest(e)
@@ -105,7 +119,7 @@ function QuickApp:main()
   end
 
 --for _,e in ipairs(tests) do runTest(e) end
-  runTests()
+  runTests(20)
 end
 
 function QuickApp:onInit()

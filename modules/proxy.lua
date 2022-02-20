@@ -41,7 +41,7 @@ local function POST2IDE(path,payload)
     url = "http://"..IP..path
     net.HTTPClient():request(url,{options={method='POST',data=json.encode(payload)}})
 end
-local IGNORE={updateView=true,setVariable=true,updateProperty=true,APIPOST=true,APIPUT=true,APIGET=true} -- Rewrite!!!!
+local IGNORE={updateView=true,setVariable=true,updateProperty=true,MEMORYWATCH=true,APIPOST=true,APIPUT=true,APIGET=true} -- Rewrite!!!!
 function QuickApp:actionHandler(action)
       if IGNORE[action.actionName] then
         return self:callAction(action.actionName, table.unpack(action.args))
@@ -185,7 +185,7 @@ do
    local function urlencode (str)
      return str and string.gsub(str ,"([^% w])",function(c) return string.format("%%% 02X",string.byte(c))  end)
    end
-   local IGNORE={updateView=true,setVariable=true,updateProperty=true,PROXY=true,APIPOST=true,APIPUT=true,APIGET=true} -- Rewrite!!!!
+   local IGNORE={updateView=true,setVariable=true,updateProperty=true,MEMORYWATCH=true,PROXY=true,APIPOST=true,APIPUT=true,APIGET=true} -- Rewrite!!!!
    local function enable(ip)
      if patched==false then
         actionH,UIh = quickApp.actionHandler,quickApp.UIHandler

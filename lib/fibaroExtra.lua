@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.931"
+fibaro.FIBARO_EXTRA = "v0.932"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
@@ -227,11 +227,16 @@ do
     return start <= optTime and optTime <= stop
   end
 
-  local function hm2sec(hmstr)
+  local function hm2sec(hmstr,ns)
     local offs,sun
     sun,offs = hmstr:match("^(%a+)([+-]?%d*)")
     if sun and (sun == 'sunset' or sun == 'sunrise') then
-      hmstr,offs = fibaro.getValue(1,sun.."Hour"), tonumber(offs) or 0
+      if ns then
+        local sunrise,sunset = fibaro.utils.sunCalc(os.time()+24*3600)
+        hmstr,offs = sun=='sunrise' and sunrise or sunset, tonumber(offs) or 0
+      else
+        hmstr,offs = fibaro.getValue(1,sun.."Hour"), tonumber(offs) or 0
+      end
     end
     local sg,h,m,s = hmstr:match("^(%-?)(%d+):(%d+):?(%d*)")
     assertf(h and m,"Bad hm2sec string %s",hmstr)
@@ -255,7 +260,7 @@ do
     local p = time:sub(1,2)
     if p == '+/' then return hm2sec(time:sub(3))+os.time()
     elseif p == 'n/' then
-      local t1,t2 = midnight()+hm2sec(time:sub(3)),os.time()
+      local t1,t2 = midnight()+hm2sec(time:sub(3),true),os.time()
       return t1 > t2 and t1 or t1+24*60*60
     elseif p == 't/' then return  hm2sec(time:sub(3))+midnight()
     else return hm2sec(time) end
