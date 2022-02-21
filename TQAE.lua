@@ -49,17 +49,17 @@ configFile = <filename>
   File used to load in emulator options instead of specifying them in the QA file.
   Great place to keep credentials instead of listing them in the QA code, and forget to remove them when uploading codeto forums...
   Default "TQAEconfigs.lua"
-modPath = <path>, 
-  Path to TQAE modules. 
+modPath = <path>,
+  Path to TQAE modules.
   Default "modules/"
 temp = <path>
-  Path to temp directory. 
+  Path to temp directory.
   Default "temp/"
 startTime=<time string>
   Start date for the emulator. Ex. "12/24/2024-07:00" to start emulator at X-mas morning 07:00 2024.
   Default, current local time.
 copas=<boolean>
-   If true will use the copas scheduler. 
+   If true will use the copas scheduler.
    Default true.
 noweb=<boolean>
    If true will not start up local web interface.
@@ -73,25 +73,25 @@ debug={
   -- If set to a value will be used to notify if timers are late to execute. Default false
   verboseTimer=<boolean>
   -- If true prints timer reference with extended information (expiration time etc). Default true
-  traceFibaro=<boolean>,   
+  traceFibaro=<boolean>,
   --If true logs fibaro calls. Default 'call','getValue'
-  qa=<boolean>,            
+  qa=<boolean>,
   -- If true logs QA creation related events. Default true
-  module=<boolean>,        
+  module=<boolean>,
   -- If true logs module loading related events. Defaul true
   module2=<boolean>,       --defaul false
-  lock=<boolean>,          
+  lock=<boolean>,
   -- If true logs internal thread lock events.
   child=<boolean>,
   -- If true logs child creation related events.
-  device=<boolean>, 
+  device=<boolean>,
   -- If true logs device creation related events.
-  refreshStates=<boolean>, 
+  refreshStates=<boolean>,
   -- If true logs incoming events from refreshStates loop.
-  webserver=<boolean>, 
+  webserver=<boolean>,
   -- If true logs internal webserver incoming requests
 }
-  
+
 QuickApp options: (set with --%% directive in file)
 --%%name=<name>
 --%%id=<number>
@@ -224,7 +224,7 @@ local function HC3Request(method,path,data,extra)
     headers = {["Accept"] = '*/*',["X-Fibaro-Version"] = 2, ["Fibaro-User-PIN"] = EM.cfg.pin},
   }
   for k,v in pairs(extra or {}) do req[k]=v end
-  local res,stat,headers,resp = httpRequest(req)
+  local res,stat,headers,_ = httpRequest(req)
   if res~=nil then
     local a,b = pcall(FB.json.decode,res)
     if a then return b,stat,headers
@@ -405,7 +405,7 @@ FB.setTimeout = EM.setTimeout
 FB.clearTimeout = EM.clearTimeout
 
 function FB.type(o) local t = type(o) return t=='table' and o._TYPE or t end
--- Check arguments and print a QA error message 
+-- Check arguments and print a QA error message
 local function check(name,stat,err)
   if type(err)=='table' then return end
   if not stat then 
@@ -522,7 +522,7 @@ local LOADLOCK = EM.createLock()
 function runQA(id,cont)         -- Creates an environment and load file modules and starts QuickApp (:onInit())
   local info,co = Devices[id],coroutine.running()
   info.cont = cont
-  local env = {             -- QA environment, all Lua functions available for  QA, 
+  local env = {             -- QA environment, all Lua functions available for  QA,
     plugin={ mainDeviceId = info.id },
     os={
       time=EM.osTime, date=EM.osDate, clock=os.clock, difftime=os.difftime, exit=EM.exit
@@ -546,7 +546,7 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
   for s,v in pairs(FB) do env[s]=v end                        -- Copy local exports to QA environment
   for s,v in pairs(info.extras or {}) do env[s]=v end         -- Copy user provided environment symbols
   loadModules(localModules or {},env,info.scene)              -- Load default QA specfic modules into environment
-  loadModules(EM.cfg.localModules or {},env,info.scene)       -- Load optional user specified module into environment    
+  loadModules(EM.cfg.localModules or {},env,info.scene)       -- Load optional user specified module into environment
   EM.postEMEvent({type='infoEnv', info=info})
   procs[co]=info
   LOADLOCK:get()
