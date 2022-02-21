@@ -322,12 +322,17 @@ end
 
 local var = {["#id"]=true,["#name"]=true}
 local function addPath(p,f,map)
-  local t,sp0,t0 = map or GUI_MAP
-  for _,sp in ipairs(p:split("/")) do
-    if t[sp]==nil or var[sp] then t[sp] = t[sp] or {} end 
-    sp0,t0,t=sp,t,t[sp]
+  local stat,res = pcall(function()
+      local t,sp0,t0 = map or GUI_MAP
+      for _,sp in ipairs(p:split("/")) do
+        if t[sp]==nil or var[sp] then t[sp] = t[sp] or {} end 
+        sp0,t0,t=sp,t,t[sp]
+      end
+      if sp0=="#rest" then t0["#rest"]=f else t["#fun"]=f end
+    end)
+  if not stat then 
+    LOG.error("addPath error %s - %s",res,p or "<nopath>")
   end
-  if sp0=="#rest" then t0["#rest"]=f else t["#fun"]=f end
 end
 
 local function processPathMap(pmap,map)

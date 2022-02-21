@@ -103,7 +103,7 @@ QuickApp options: (set with --%% directive in file)
 --]]
 
 local embedded=...              -- get parameters if emulator included from QA code...
-local version = "0.50"
+local version = "0.51"
 local EM = { cfg = embedded or {} }
 local cfg,pfvs = EM.cfg
 local function DEF(x,y) if x==nil then return y else return x end end
@@ -236,6 +236,9 @@ local function HC3Request(method,path,data,extra)
     if tonumber(stat) and (stat > 400 and stat < 403) then 
       LOG.error("Bad credential when logging in to HC3, exiting to avoid account lockout")
       os.exit()
+    end
+    if tonumber(stat) and stat > 209 then
+      DEBUG("api","error","Bad HC3 call: %s (%s)",path,stat)
     end
     return nil,stat,headers 
   end

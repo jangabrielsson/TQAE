@@ -529,7 +529,7 @@ function aHC3call(method,path,data, remote) -- Intercepts some cmds to handle lo
     local stat,res,code = pcall(fun,method,path2,data,opts,table.unpack(args))
     if not stat then return LOG.error("Bad API call:%s",res)
     elseif code~=false then return res,code end
-  elseif fun~=nil then return LOG.error("Bad API call:%s",fun) end
+  elseif fun~=nil or cfg.offline then return LOG.error("Bad API call:%s",fun or path) end
   return HC3Request(method,path,data) -- No intercept, send request to HC3
 end
 
