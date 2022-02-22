@@ -18,7 +18,7 @@ local downloads = {
   },
   ["libs/fibaroExtra.lua"] = {
     url="https://raw.githubusercontent.com/jangabrielsson/TQAE/master/lib/fibaroExtra.lua",
-    path = "Libs/fibaroExtra.lua"
+    path = "lib/fibaroExtra.lua"
   },
   ["QAs/EventRunner/EventRunner4.lua"] = {
     url="https://raw.githubusercontent.com/jangabrielsson/TQAE/master/jgabs_QAs/EventRunner/EventRunner4.lua",

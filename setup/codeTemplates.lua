@@ -57,7 +57,7 @@ end
 --%%type="com.fibaro.deviceController"
 -- %%proxy=true
 
---FILE:Libs/fibaroExtra.lua,fibaroExtra;
+--FILE:lib/fibaroExtra.lua,fibaroExtra;
 
 ----------- Code -----------------------------------------------------------
 function QuickApp:onInit()

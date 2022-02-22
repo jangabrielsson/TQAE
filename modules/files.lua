@@ -1,7 +1,7 @@
 local EM,FB = ...
 
 local json,LOG,DEBUG = FB.json,EM.LOG,EM.DEBUG
-local copy = EM.utilities.copy
+local copy,cfg = EM.utilities.copy,EM.cfg
 
 LOG.register("files","Log filesystem events")
 
@@ -111,8 +111,14 @@ local function loadSource(code,fileName) -- Load code and resolve info and --FIL
   end
   mergeUI(info)
   if info and info.uiFrom then
-    local d = FB.api.get("/devices/"..info.uiFrom)
-    info.UI = EM.UI.view2UI(d.properties.viewLayout,d.properties.uiCallbacks)
+    if cfg.offline then
+      LOG.warn("Can't have both offline and uiFrom - ignoring uiFrom")
+    else 
+      local d = FB.api.get("/devices/"..info.uiFrom)
+      if d then
+        info.UI = EM.UI.view2UI(d.properties.viewLayout,d.properties.uiCallbacks)
+      end
+    end
   end
   return files,(info or {})
 end
