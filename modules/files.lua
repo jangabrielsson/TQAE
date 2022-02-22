@@ -110,6 +110,10 @@ local function loadSource(code,fileName) -- Load code and resolve info and --FIL
     if res then error(res) end
   end
   mergeUI(info)
+  if info and info.uiFrom then
+    local d = FB.api.get("/devices/"..info.uiFrom)
+    info.UI = EM.UI.view2UI(d.properties.viewLayout,d.properties.uiCallbacks)
+  end
   return files,(info or {})
 end
 

@@ -182,6 +182,29 @@ local function view2UI(view,callbacks)
   return UI
 end
 
+local function dumpQAui(id)
+  local d = FB.api.get("/devices/"..id)
+  local UI = view2UI(d.properties.viewLayout,d.properties.uiCallbacks)
+  local fmt = string.format
+  local function luaStr(e)
+    local b = {}
+    if e[1] then
+      local b2={}
+      for _,e2 in ipairs(e) do b2[#b2+1]=luaStr(e2) end
+      b[#b+1]=table.concat(b2,",")
+    else
+      local r = {}
+      for k,v in pairs(e) do r[#r+1]={k,v} end
+      table.sort(r,function(a,b) return a[1]<b[1] end)
+      for _,k in ipairs(r) do b[#b+1]=fmt("%s=%s",k[1],tonumber(k[2]) and k[2] or '"'..k[2]..'"') end
+    end
+    return "{"..table.concat(b,",").."}"
+  end
+  for i,e in ipairs(UI) do
+    print(fmt("--%%u%d=%s",i,luaStr(e)))
+  end
+end
+
 local customUI = {}
 customUI['com.fibaro.binarySwitch'] = 
 {{{button='__turnon', text="Turn On",onReleased="turnOn"},{button='__turnoff', text="Turn Off",onReleased="turnOff"}}}
@@ -266,4 +289,5 @@ EM.UI.uiStruct2uiCallbacks = uiStruct2uiCallbacks
 EM.UI.transformUI = transformUI
 EM.UI.mkViewLayout = mkViewLayout
 EM.UI.view2UI = view2UI
+EM.UI.dumpQAui = dumpQAui
 
