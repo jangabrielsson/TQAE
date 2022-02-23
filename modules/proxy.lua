@@ -172,10 +172,10 @@ local function startProxyPinger()
   if proxyPinger then return end --only start once
   api.post("/globalVariables",{ name=EM.EMURUNNING,value=""  },'remote')
   local tick=0
-  proxyPinger = os.setTimer2(function()
-      api.put("/globalVariables/"..EM.EMURUNNING,{value=tostring(tick)..":"..hc3.IPaddress..":"..hc3.webPort},'remote')
+  proxyPinger = EM.systemTimer(function()
+      api.put("/globalVariables/"..EM.EMURUNNING,{value=tostring(tick)..":"..EM.IPAddress..":"..EM.PORT},'remote')
       tick  = tick+1
-    end,EM.EMURUNNING_INTERVAL,true)
+    end,EM.EMURUNNING_INTERVAL,"proxyPinger")
 end
 
 local function injectProxy(id)
@@ -217,7 +217,7 @@ do
    
    setInterval(function()
     local stat,res = pcall(function()
-    local var,err = __fibaro_get_global_variable("HC3Emulator")
+    local var,err = __fibaro_get_global_variable("TQAE_running")
     if var then
       local modified = var.modified
       local ip = var.value
@@ -246,3 +246,5 @@ end
 
 EM.createProxy = createProxy
 EM.post2Proxy = post2Proxy
+EM.injectProxy = injectProxy
+EM.startProxyPinger = startProxyPinger

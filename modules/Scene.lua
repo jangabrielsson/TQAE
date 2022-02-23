@@ -316,6 +316,7 @@ local EventTypes = { -- There are more, but these are what I seen so far...
     post({type='global-variable', name=d.variableName, value=d.newValue, old=d.oldValue}) 
   end,
   GlobalVariableAddedEvent = function(d) 
+    if d.variableName == EM.EMURUNNING then return true end
     post({type='global-variable', name=d.variableName, value=d.value, old=nil}) 
   end,
   DevicePropertyUpdatedEvent = function(d)

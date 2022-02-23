@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.932"
+fibaro.FIBARO_EXTRA = "v0.933"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
@@ -718,6 +718,7 @@ end --- Climate panel
 --------------------- sourceTrigger & refreshStates ----------------------------
 do
   fibaro.REFRESH_STATES_INTERVAL = 1000
+  fibaro.REFRESHICONSTATUS = "icon"
   local sourceTriggerCallbacks,refreshCallbacks,refreshRef,pollRefresh={},{}
   local ENABLEDSOURCETRIGGERS,DISABLEDREFRESH={},{}
   local post,sourceTriggerTransformer,filter
@@ -729,7 +730,8 @@ do
     HomeDisarmStateChangedEvent = function(d) post({type='alarm', property='homeArmed', value=not d.newValue}) end,
     HomeBreachedEvent = function(d) post({type='alarm', property='homeBreached', value=d.breached}) end,
     WeatherChangedEvent = function(d) post({type='weather',property=d.change, value=d.newValue, old=d.oldValue}) end,
-    GlobalVariableChangedEvent = function(d) 
+    GlobalVariableChangedEvent = function(d)
+      if hc3_emulator and d.variableName==hc3_emulator.EM.EMURUNNING then return true end
       post({type='global-variable', name=d.variableName, value=d.newValue, old=d.oldValue}) 
     end,
     GlobalVariableAddedEvent = function(d) 
@@ -744,7 +746,7 @@ do
           end
         end
       else
-        if d.property == "icon" or filter(d.id,d.property,d.newValue) then return end
+        if d.property == fibaro.REFRESHICONSTATUS or filter(d.id,d.property,d.newValue) then return end
         post({type='device', id=d.id, property=d.property, value=d.newValue, old=d.oldValue})
       end
     end,

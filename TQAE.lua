@@ -149,6 +149,8 @@ local localModules  = { -- default local modules loaded into every QA environmen
   {"class.lua","QA"}, "fibaro.lua", "fibaroPatch.lua", {"QuickApp.lua","QA"} 
 } 
 
+EM.EMURUNNING = "TQAE_running"
+EM.EMURUNNING_INTERVAL = 4
 --EM.cfg.copas = true
 --EM.cfg.noweb=true
 local function main(FB) -- For running test examples. Running TQAE.lua directly will run this test.
@@ -449,15 +451,20 @@ function EM.createDevice(info) -- Creates device structure
   info.dev = dev
   EM.addUI(info)
 
-  if info.proxy then  -- Move out?
-    local l = FB.__fibaro_local(false)
-    local stat,res = pcall(EM.createProxy,dev)
-    FB.__fibaro_local(l)
-    if not stat then 
-      LOG.error("Proxy: %s",res)
-      info.proxy = false
-    else
-      info.id = res.id
+  if not cfg.offline then
+    assert(not(info.proxy and info.zombie),"Can't have both proxy and zombie") 
+    if info.proxy then  -- Move out?
+      local l = FB.__fibaro_local(false)
+      local stat,res = pcall(EM.createProxy,dev)
+      FB.__fibaro_local(l)
+      if not stat then 
+        LOG.error("Proxy: %s",res)
+        info.proxy = false
+      else
+        info.id = res.id
+      end
+    elseif info.zombie then
+      if EM.injectProxy(info.zombie) then EM.startProxyPinger() end
     end
   end
 
