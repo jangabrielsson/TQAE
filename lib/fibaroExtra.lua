@@ -903,6 +903,13 @@ do
                 fibaro._postRefreshState(e)
               end
             end
+            if states.changes and #states.changes>0 then
+              for _,e in ipairs(states.changes) do
+                if e.log then
+                  fibaro._postRefreshState({type='DevicePropertyUpdatedEvent', data={id=e.id,property='log',newValue=e.log}})
+                end
+              end
+            end
           end 
           refreshRef = setTimeout(pollRefresh,fibaro.REFRESH_STATES_INTERVAL or 0)
         end,

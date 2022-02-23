@@ -132,6 +132,14 @@ local function pollOnce(cb)
       lastRefresh=states.last
       if states.events and #states.events>0 then 
         refreshStatesQueue.addEvents(states.events) 
+        --- {changes = {{id = 815, log = "12", logTemp = ""}}
+        if states.changes then
+          for _,e in ipairs(states.changes) do
+            if e.log then
+              refreshStatesQueue.addEvents({type='DevicePropertyUpdatedEvent', data={id=e.id,property='log',newValue=e.log}})
+            end
+          end
+        end
       end
     end
   end
