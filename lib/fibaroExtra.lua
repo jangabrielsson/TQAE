@@ -909,8 +909,8 @@ do
                   fibaro._postRefreshState({type='DevicePropertyUpdatedEvent', data={id=e.id,property='log',newValue=e.log}})
                 end
               end
-            end
-          end 
+            end 
+          end
           refreshRef = setTimeout(pollRefresh,fibaro.REFRESH_STATES_INTERVAL or 0)
         end,
         error=function(res) 

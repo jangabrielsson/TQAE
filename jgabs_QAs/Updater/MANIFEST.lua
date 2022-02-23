@@ -40,9 +40,9 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.76,
+      { version = 0.77,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.76"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.77"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "log property event support",
