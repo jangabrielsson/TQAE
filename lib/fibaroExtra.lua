@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.933"
+fibaro.FIBARO_EXTRA = "v0.934"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
