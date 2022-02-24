@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.934"
+fibaro.FIBARO_EXTRA = "v0.935"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
@@ -1778,27 +1778,57 @@ do
   function fibaro.stopSequence(ref) clearTimeout(ref[1]) end
 
   function fibaro.trueFor(time,test,action,delay)
-    delay = delay or 1000
-    local state = false
-    local  function loop()
-      if test() then
-        if state == false then
-          state=os.time()+time
-        elseif state == true then
-          state = state -- NOP
-        elseif state <=  os.time() then
-          if action() then
-            state = os.time()+time
-          else
-            state = true 
-          end
+    if type(delay)=='table' then
+      local state,ref = false
+      local function ac()
+        if action() then
+          state = os.time()+time
+          ref = setTimeout(ac,1000*(state-os.time()))
+        else
+          ref = nil
+          state = true 
         end
-      else
-        state=false
       end
-      setTimeout(loop,delay)
+      local  function check()
+        if test() then
+          if state == false then
+            state=os.time()+time
+            ref = setTimeout(ac,1000*(state-os.time()))
+          elseif state == true then
+            state = state -- NOP
+          end
+        else
+          if ref then ref = clearTimeout(ref) end
+          state=false
+        end
+      end
+      for _,e in ipairs(events) do
+        fibaro.event(e,check)
+      end
+      check()
+    else
+      delay = delay or 1000
+      local state = false
+      local  function loop()
+        if test() then
+          if state == false then
+            state=os.time()+time
+          elseif state == true then
+            state = state -- NOP
+          elseif state <=  os.time() then
+            if action() then
+              state = os.time()+time
+            else
+              state = true 
+            end
+          end
+        else
+          state=false
+        end
+        setTimeout(loop,delay)
+      end
+      loop()
     end
-    loop()
   end
 
 end -- Misc
