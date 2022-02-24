@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.935"
+fibaro.FIBARO_EXTRA = "v0.936"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
@@ -85,6 +85,19 @@ do
     for i=1,math.max(#a,#b) do res[#res+1] = fun(a[i],b[i],c and c[i],d and d[i]) end
     return res
   end
+
+  table.member = member
+  table.delete = remove
+  table.copy = copy
+  table.copyShallow = copy
+  function table.map(l,f) local r={}; for _,e in ipairs(l) do r[#r+1]=f(e) end; return r end
+  function table.mapf(l,f) for _,e in ipairs(l) do f(e) end; end
+  function table.mapAnd(l,f) for _,e in ipairs(l) do if f(e) then return false end end return true end
+  function table.mapOr(l,f) for i,e in ipairs(l) do if f(e) then return i end end end
+  function table.reduce(l,f) local r = {}; for _,e in ipairs(l) do if f(e) then r[#r+1]=e end end; return r end
+  function table.mapk(l,f) local r={}; for k,v in pairs(l) do r[k]=f(v) end; return r end
+  function table.mapkv(l,f) local r={}; for k,v in pairs(l) do k,v=f(k,v) r[k]=v end; return r end
+  function table.size(l) local n=0; for _,_ in pairs(l) do n=n+1 end return n end 
 
   function utils.basicAuthorization(user,password) return "Basic "..utils.base64encode(user..":"..password) end
   function utils.base64encode(data)
@@ -1448,7 +1461,7 @@ do
     function QuickerAppChild:__init(args)
       assert(args.uid,"QuickerAppChild missing uid")
       if uidMap[args.uid] then
-        if not args.silent then fibaro.warning(__TAG,"Child devices "..uid.." already exists") end
+        if not args.silent then fibaro.warning(__TAG,"Child devices "..args.uid.." already exists") end
         return uidMap[args.uid],false
       end
       local props,created,dev,res={},false
@@ -1802,7 +1815,7 @@ do
           state=false
         end
       end
-      for _,e in ipairs(events) do
+      for _,e in ipairs(delay) do
         fibaro.event(e,check)
       end
       check()
