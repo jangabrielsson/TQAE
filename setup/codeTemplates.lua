@@ -1,7 +1,7 @@
 local version = "1.0"
 local code = {
   ['Scene template'] =
-[[_=loadfile and loadfile("TQAE.lua"){
+[[local _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { traceFibaro=true },
 --offline = true,
@@ -32,7 +32,7 @@ end
 
 ]],
   ['QA template'] = 
-[[_=loadfile and loadfile("TQAE.lua"){
+[[local _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true },
 --offline = true,
@@ -47,7 +47,7 @@ end
 
 ]],
   ['QA template with fibaroExtra'] = 
-[[_=loadfile and loadfile("TQAE.lua"){
+[[local _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true },
 --offline = true,
@@ -66,7 +66,7 @@ end
 ]],
 
   ['MultilevelSwitch'] =
-[[_=loadfile and loadfile("TQAE.lua"){
+[[local _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true },
 --offline = true,

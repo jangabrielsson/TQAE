@@ -69,6 +69,13 @@ end
 
 function QuickAppBase:getVariable(name)
   __assert_type(name,'string')
+  if hc3_emulator then
+    local d = hc3_emulator.EM.Devices[self.id]
+    if d.proxy or d.childProxy then
+      local qvs = api.get("/devices/"..self.id.."/properties/quickAppVariables","remote")
+      if qvs then self.properties.quickAppVariables = qvs end
+    end
+  end
   for _,v in ipairs(self.properties.quickAppVariables or {}) do if v.name==name then return v.value end end
   return ""
 end

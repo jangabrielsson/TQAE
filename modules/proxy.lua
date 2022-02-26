@@ -172,10 +172,12 @@ local function startProxyPinger()
   if proxyPinger then return end --only start once
   api.post("/globalVariables",{ name=EM.EMURUNNING,value=""  },'remote')
   local tick=0
-  proxyPinger = EM.systemTimer(function()
-      api.put("/globalVariables/"..EM.EMURUNNING,{value=tostring(tick)..":"..EM.IPAddress..":"..EM.PORT},'remote')
-      tick  = tick+1
-    end,EM.EMURUNNING_INTERVAL,"proxyPinger")
+  local function ping()
+    api.put("/globalVariables/"..EM.EMURUNNING,{value=tostring(tick)..":"..EM.IPAddress..":"..EM.PORT},'remote')
+    tick  = tick+1
+    proxyPinger = EM.systemTimer(ping,EM.EMURUNNING_INTERVAL,"proxyPinger")
+  end
+  ping()
 end
 
 local function injectProxy(id)
@@ -239,7 +241,7 @@ end
         isOpen=false,
         content=code,
         type='lua'
-      },'remote')
+        },'remote')
   end
   return dev
 end
