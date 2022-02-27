@@ -103,7 +103,7 @@ QuickApp options: (set with --%% directive in file)
 --]]
 
 local embedded=...              -- get parameters if emulator included from QA code...
-local version = "0.52"
+local version = "0.53"
 local EM = { cfg = embedded or {} }
 local cfg,pfvs = EM.cfg
 local function DEF(x,y) if x==nil then return y else return x end end
@@ -146,7 +146,7 @@ local globalModules = { -- default global modules loaded once into emulator envi
   "refreshStates.lua", "stdQA.lua", "Scene.lua", "settings.lua",
 } 
 local localModules  = { -- default local modules loaded into every QA environment
-  {"class.lua","QA"}, "fibaro.lua", "fibaroPatch.lua", {"QuickApp.lua","QA"} 
+  {"class.lua","QA"}, "fibaro.lua", "fibaroPatch.lua", {"QuickApp.lua","QA"}, {"bit32.lua","QA"} 
 } 
 
 EM.EMURUNNING = "TQAE_running"
@@ -464,7 +464,8 @@ function EM.createDevice(info) -- Creates device structure
         info.id = res.id
       end
     elseif info.zombie then
-      if EM.injectProxy(info.zombie) then EM.startProxyPinger() end
+      if not info.id then info.id = gID; gID=gID+1 end
+      if EM.injectProxy(info.zombie,info.id) then EM.startProxyPinger() end
     end
   end
 
@@ -541,7 +542,7 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
     },
     coroutine=EM.userCoroutines,
     table=table,select=select,pcall=pcall,xpcall=xpcall,print=print,string=string,error=error,
-    collectgarbage=collectgarbage,
+    collectgarbage=collectgarbage,unpack=table.unpack,
     next=next,pairs=pairs,ipairs=ipairs,tostring=tostring,tonumber=tonumber,math=math,assert=assert
   }
   if info.fullLUA then
