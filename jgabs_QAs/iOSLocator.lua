@@ -384,7 +384,6 @@ end
 function QuickApp:onInit()
   self:debugf("%s deviceId:%s, v%s",self.name,self.id,VERSION)
   self:setVersion("iOSLOcator",SERIAL,VERSION)
-  fibaro.updateFibaroExtra()
   quickApp:tracef("iOSLocator, deviceId:%s",self.id)
   self:setView("version","text","iOSLocator, %s (Users:%d)",version,#USERS)
   self:setView("home","text","Home status: Unknown")

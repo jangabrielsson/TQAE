@@ -38,10 +38,10 @@ function class(name)    -- Version that tries to avoid __index & __newindex to m
   local cl,mt,cmt,props,parent= {['_TYPE']='userdata'},{},{},{}  -- We still try to be Luabind class compatible
   function cl.__copyObject(clo,obj)
     for k,v in pairs(clo) do if metas[k] then cmt[k]=v else obj[k]=v end end
-    return obj
+    return obj,cmt
   end
   function mt.__call(tab,...)        -- Instantiation  <name>(...)
-    local obj = tab.__copyObject(tab,tab.__obj or {}) tab.__obj = nil
+    local obj,cmt = tab.__copyObject(tab,tab.__obj or {}) tab.__obj = nil
     if not tab.__init then error("Class "..name.." missing initialiser") end
     tab.__init(obj,...)
     local trapF = false
@@ -51,7 +51,7 @@ function class(name)    -- Version that tries to avoid __index & __newindex to m
     if trapF then trapIndex(props,cmt,obj) end
     local str = "Object "..name..":"..tostring(obj):match("%s(.*)")
     setmetatable(obj,cmt)
-    if not obj.__tostring then 
+    if not cmt.__tostring then 
       function obj:__tostring() local _=self return str end
     end
     return obj

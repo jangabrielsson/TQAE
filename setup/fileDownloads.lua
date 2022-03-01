@@ -57,6 +57,7 @@ local downloads = {
       ["ui.lua"]="ui.lua",
       ["utilities.lua"]="utilities.lua",
       ["webserver.lua"]="webserver.lua",
+      ["bit32.lua"]="bit32.lua",
     }
   },
 }
