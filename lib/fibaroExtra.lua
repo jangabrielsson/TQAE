@@ -28,9 +28,9 @@ do
       return res
     else return obj end
   end
-  utils.copy = copy 
+  table.copy = copy 
 
-  function utils.copyShallow(t)
+  function table.copyShallow(t)
     if type(t)=='table' then
       local r={}; for k,v in pairs(t) do r[k]=v end 
       return r 
@@ -48,25 +48,42 @@ do
       end
     end
   end
-  utils.equal=equal
+  table.equal=equal
 
   if not table.maxn then 
     function table.maxn(tbl) local c=0; for _ in pairs(tbl) do c=c+1 end return c end
   end
+  function member(tab,k) for i,v in ipairs(tab) do if equal(v,k) then return i end end return false end
+  function remove(list,obj) local i = member(list,obj); if i then table.remove(list,i) return i end end
+
+  table.member = member
+  table.delete = remove
+  table.copy = copy
+
+  function table.map(l,f) local r={}; for _,e in ipairs(l) do r[#r+1]=f(e) end; return r end
+  function table.mapf(l,f) for _,e in ipairs(l) do f(e) end; end
+  function table.mapAnd(l,f) for _,e in ipairs(l) do if f(e) then return false end end return true end
+  function table.mapOr(l,f) for i,e in ipairs(l) do if f(e) then return i end end end
+  function table.reduce(l,f) local r = {}; for _,e in ipairs(l) do if f(e) then r[#r+1]=e end end; return r end
+  function table.mapk(l,f) local r={}; for k,v in pairs(l) do r[k]=f(v) end; return r end
+  function table.mapkv(l,f) local r={}; for k,v in pairs(l) do k,v=f(k,v) r[k]=v end; return r end
+  function table.size(l) local n=0; for _,_ in pairs(l) do n=n+1 end return n end 
+
+  utils.equal = table.equal
+  utils.copy = table.copy
+  utils.shallowCopy = table.shallowCopy
+  function utils.member(e,l) return member(l,e) end  
+  function utils.remove(k,tab) return remove(tab,k) end
+  function utils.map(f,l) return l:map(f) end
+  function utils.mapf(f,l) return l:mapf(f) end
+  function utils.mapAnd(f,l) return l:mapAnd(f) end
+  function utils.mapOr(f,l) return l:mapOr(f) end
+  function utils.reduce(f,l) return l:reduce(f) end
+  function utils.mapk(f,l) return l:mapk(f) end
+  function utils.mapkv(f,l) return l:mapkv(f) end
+  function utils.size(l) return l:size() end
 
   function utils.gensym(s) return (s or "G")..fibaro._orgToString({}):match("%s(.*)") end
-  function member(k,tab) for i,v in ipairs(tab) do if equal(v,k) then return i end end return false end
-  function remove(obj,list) local i = member(obj,list); if i then table.remove(list,i) return true end end
-  utils.member,utils.remove = member,remove
-  function utils.remove(k,tab) local r = {}; for _,v in ipairs(tab) do if not equal(v,k) then r[#r+1]=v end end return r end
-  function utils.map(f,l) local r={}; for _,e in ipairs(l) do r[#r+1]=f(e) end; return r end
-  function utils.mapf(f,l) for _,e in ipairs(l) do f(e) end; end
-  function utils.mapAnd(f,l) for _,e in ipairs(l) do if f(e) then return false end end return true end
-  function utils.mapOr(f,l) for i,e in ipairs(l) do if f(e) then return i end end end
-  function utils.reduce(f,l) local r = {}; for _,e in ipairs(l) do if f(e) then r[#r+1]=e end end; return r end
-  function utils.mapk(f,l) local r={}; for k,v in pairs(l) do r[k]=f(v) end; return r end
-  function utils.mapkv(f,l) local r={}; for k,v in pairs(l) do k,v=f(k,v) r[k]=v end; return r end
-  function utils.size(t) local n=0; for _,_ in pairs(t) do n=n+1 end return n end 
 
   function utils.keyMerge(t1,t2)
     local res = utils.copy(t1)
@@ -85,19 +102,6 @@ do
     for i=1,math.max(#a,#b) do res[#res+1] = fun(a[i],b[i],c and c[i],d and d[i]) end
     return res
   end
-
-  table.member = member
-  table.delete = remove
-  table.copy = copy
-  table.copyShallow = copy
-  function table.map(l,f) local r={}; for _,e in ipairs(l) do r[#r+1]=f(e) end; return r end
-  function table.mapf(l,f) for _,e in ipairs(l) do f(e) end; end
-  function table.mapAnd(l,f) for _,e in ipairs(l) do if f(e) then return false end end return true end
-  function table.mapOr(l,f) for i,e in ipairs(l) do if f(e) then return i end end end
-  function table.reduce(l,f) local r = {}; for _,e in ipairs(l) do if f(e) then r[#r+1]=e end end; return r end
-  function table.mapk(l,f) local r={}; for k,v in pairs(l) do r[k]=f(v) end; return r end
-  function table.mapkv(l,f) local r={}; for k,v in pairs(l) do k,v=f(k,v) r[k]=v end; return r end
-  function table.size(l) local n=0; for _,_ in pairs(l) do n=n+1 end return n end 
 
   function utils.basicAuthorization(user,password) return "Basic "..utils.base64encode(user..":"..password) end
   function utils.base64encode(data)
@@ -230,7 +234,9 @@ do
 
   local function midnight() local t = os.date("*t"); t.hour,t.min,t.sec = 0,0,0; return os.time(t) end
   fibaro.midnight = midnight
-
+  function fibaro.getWeekNumber(tm) return tonumber(os.date("%V",tm)) end
+  function fibaro.now() return os.time()-midnight() end  
+  
   function fibaro.between(start,stop,optTime)
     __assert_type(start,"string" )
     __assert_type(stop,"string" )
@@ -830,7 +836,7 @@ do
 
   function fibaro.registerSourceTriggerCallback(callback)
     __assert_type(callback,"function")
-    if member(callback,sourceTriggerCallbacks) then return end
+    if member(sourceTriggerCallbacks,callback) then return end
     if #sourceTriggerCallbacks == 0 then
       fibaro.registerRefreshStatesCallback(sourceTriggerTransformer)
     end
@@ -839,7 +845,7 @@ do
 
   function fibaro.unregisterSourceTriggerCallback(callback)
     __assert_type(callback,"function")
-    if member(callback,sourceTriggerCallbacks) then remove(callback,sourceTriggerCallbacks) end
+    if member(sourceTriggerCallbacks,callback) then sourceTriggerCallbacks:remove(callback) end
     if #sourceTriggerCallbacks == 0 then
       fibaro.unregisterRefreshStatesCallback(sourceTriggerTransformer) 
     end
@@ -935,14 +941,14 @@ do
 
   function fibaro.registerRefreshStatesCallback(callback)
     __assert_type(callback,"function")
-    if member(callback,refreshCallbacks) then return end
+    if member(refreshCallbacks,callback) then return end
     refreshCallbacks[#refreshCallbacks+1] = callback
     if not refreshRef then refreshRef = setTimeout(pollRefresh,0) end
     if debugFlags._refreshStates then fibaro.debug(__TAG,"Polling for refreshStates") end
   end
 
   function fibaro.unregisterRefreshStatesCallback(callback)
-    remove(callback,refreshCallbacks)
+    refreshCallbacks:remove(callback)
     if #refreshCallbacks == 0 then
       if refreshRef then clearTimeout(refreshRef); refreshRef = nil end
       if debugFlags._refreshStates then fibaro.debug(nil,"Stop polling for refreshStates") end
@@ -1999,12 +2005,13 @@ do
       function table.maxn(tbl)local c=0; for _ in pairs(tbl) do c=c+1 end return c end
     end
 
-    local function rule2str(rule) return rule.doc end
     local function comboToStr(r)
-      local res = { r.src }
+      local res = { r.doc }
       for _,s in ipairs(r.subs) do res[#res+1]="   "..tostring(s) end
       return table.concat(res,"\n")
     end
+    local function rule2str(rule) return rule.doc end
+    
     local function map(f,l,s) s = s or 1; local r={} for i=s,table.maxn(l) do r[#r+1] = f(l[i]) end return r end
     local function mapF(f,l,s) s = s or 1; local e=true for i=s,table.maxn(l) do e = f(l[i]) end return e end
 
@@ -2178,7 +2185,7 @@ do
       if subs == "" then subs = {} end
       for _,e in ipairs(events) do
         assert(type(e)=='table' and e.type,"Not an event")
-        if not member(e,subs) then subs[#subs+1]=e end
+        if not member(subs,e) then subs[#subs+1]=e end
       end
       DEBUG("Setting subscription")
       quickApp:setVariable(SUB_VAR,subs)
