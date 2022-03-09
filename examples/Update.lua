@@ -12,18 +12,17 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --Example of updating QAs on the HC3 with new a file
 --Based on that your file on the HC3 is uniquely named
---In this case we update all files named "fibaroExtra"
+--In this case we update all files named "fibaroExtra". 
+--Files to update needs to be included in this QA with the --FILE: directive.
 --Note that a QA that gets a file updated will restart
 
 local files2update = {"fibaroExtra"}
-
-local function member(e,l) for _,e2 in ipairs(l) do if e==e2 then return true end end end
 
 function QuickApp:onInit()
   for _,qa in ipairs(api.get("/devices?interface=quickApp")) do
     local files = api.get("/quickApp/"..qa.id.."/files") or {}
     for _,f in ipairs(files) do
-      if member(f.name,files2update) then
+      if files2update:member(f.name) then
         local newFile = api.get("/quickApp/"..self.id.."/files/"..f.name)
         f.content = newFile.content
         f.type = "lua"

@@ -314,6 +314,8 @@ EM.create['panels/location'] = function(args)
   return u
 end
 
+EM.create.globalVariables = EM.create.globalVariable
+
 EM.EMEvents('start',function(_)
     if EM.cfg.offline then setup() end
   end)

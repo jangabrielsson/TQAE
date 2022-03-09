@@ -69,10 +69,19 @@ function EVENTSCRIPT.makeCompiler()
   local function printf(fm,...) print(fmt(fm,...))  end
   local compile,compileExpr,runCode,renderInstr,instr
   local function idF(x) return x end
-  local hooks = { marshallTo=idF, marshallFrom = idF, reservedVars = {} }
+  local hooks = { marshallTo=idF, marshallFrom = idF, reservedVars = {}, globalLuaVar={} }
+  function hooks.globalLuaVar.set(n,v) _G[n]=v end
+  function hooks.globalLuaVar.get(n) return _G[n] end
+  local getGlobalLuaVar,setGlobalLuaVar = hooks.globalLuaVar.get,hooks.globalLuaVar.set
+  local marshallTo,marshallFrom = hooks.marshallTo,hooks.marshallFrom 
   local trace = false
   local reservedVars = hooks.reservedVars
   local function map(f,l) local r={} for i=1,#l do r[#r+1]=f(l[i]) end return r end
+
+  local function setupHooks()
+    getGlobalLuaVar,setGlobalLuaVar = hooks.globalLuaVar.get,hooks.globalLuaVar.set
+    marshallTo,marshallFrom = hooks.marshallTo,hooks.marshallFrom
+  end
 
   local function makeStack()
     local p,x,self,stack  = 0,0,{},{}
@@ -111,8 +120,8 @@ function EVENTSCRIPT.makeCompiler()
     return self
   end
 
-  local function makeEnv()
-    local self,env  = {},{}
+  local function makeEnv(locals)
+    local self,env  = {},locals or {} self._vars=env
     function self.bind(x,val) env[x]={val} end
     function self.pop() env = env._next or {} end
     function self.push() local e = { _next=env };  env = e end
@@ -121,14 +130,14 @@ function EVENTSCRIPT.makeCompiler()
         local e = env
         while e and e[var]==nil do e = e._next end
         return e and e[var][1]
-      else return _G[var] end
+      else return getGlobalLuaVar(var) end
     end
     function self.set(var,val,locl)
       if locl then 
         local e = env
         while e and e[var]==nil do e = e._next end
-        if e then e[var][1] = val else _G[var]=val end
-      else _G[var]=val end
+        if e then e[var][1] = val else setGlobalLuaVar(var,val) end
+      else setGlobalLuaVar(var,val) end
       return val
     end
     return self
@@ -376,8 +385,8 @@ end
   end
 
   local function compConst(expr,code)
-    if type(expr)=='table' and expr[1]=='const' then return {expr}
-    elseif type(expr)~='table' then return {expr} else compileExpr(expr,code) end 
+    if type(expr)=='table' and expr[1]=='quote' then return {expr[2]}
+    elseif type(expr)~='table' then return {expr} else compileExpr(expr,code) return '<st>' end 
   end
   local setpComp = {
     ['var'] = function(lv,code) local var = lv[2] return {code.isLocal(var) and "local" or "global",var,1} end,
@@ -461,12 +470,6 @@ end
     local c = compConst(val,code)
     code.emit('setglobal',name,c)
   end
---  comp['table'] = function(code,_,tab,key,val) 
---    compileExpr(tab,code)
---    key = compConst(key,code) 
---    val = compConst(val,code) 
---    code.emit('aset',key,val)
---  end
   comp['assert']  = function(code,_,typ,msg) code.emit('assert',typ,msg) end
 
   --[[
@@ -504,26 +507,32 @@ end
     else code.emit('push',expr) end
   end
 
-  function compile(expr,d)
+  function compile(expr,opts)
+    opts = opts or {}
+    setupHooks()
     local code = makeCode()
+    if opts.locals then
+      local vs = {} for v,_ in pairs(opts.locals) do vs[#vs+1]=v end
+      code.pushLocals(vs) 
+    end
     expr=hooks.optimizeExpr(expr)
     local f = compileExpr(expr,code,true)
     code.code=hooks.optimizeCode(code.code)
     if type(f)=='function' then
       local c = f('_INSPECT_')
-      if d then dump(c) end
+      if opts.dump then dump(c) end
       return f
     end
-    if d then dump(code.code) end
+    if opts.dump then dump(code.code) end
     code.resolveLabels()
-    local c,p,st,env = code.code,1,makeStack(),makeEnv()
+    local c,p,st,env = code.code,1,makeStack(),makeEnv(opts.locals)
     return function(e,...)
       if e == '_INSPECT_' then return c,st,env end
       local args =  {e,...}
       env.args = args
       local stat,err,_,vals =runCode(c,p,st,env)
       if stat then return table.unpack(vals) else error(err) end
-    end
+    end,env
   end
 
   local _coroutine,running = {}
@@ -592,8 +601,8 @@ end
     return code
   end
   ---------------- Running code --------------
-  local function getArg(iv,st) if iv then return iv[1] else return st.pop() end end
-  local function peekArg(iv,st) if iv then return iv[1] else return st.peek() end end
+  local function getArg(iv,st) if iv~='<st>' then return iv[1] else return st.pop() end end
+  local function peekArg(iv,st) if iv~='<st>' then return iv[1] else return st.peek() end end
 
   instr = {}
   instr['+']  = function(i,st) st.push(st.pop()+st.pop()) end
@@ -679,7 +688,7 @@ end
     ['local'] =  function(lv,val,st,env) env.set(lv[2],val,true) end,
     ['global'] =  function(lv,val,st,env) env.set(lv[2],val,false) end,
     ['gv'] =  function(lv,val,st,env) 
-      fibaro.setGlobalVariable(lv[2],tostring(hooks.marshallTo(val)))
+      fibaro.setGlobalVariable(lv[2],tostring(marshallTo(val)))
     end,
     ['tab'] = function(lv,val,st,env) assert(false,"Not implemented yet") end,
   }
@@ -743,7 +752,7 @@ end
   instr['getglobal']=function(i,st)
     local name = i[2]
     local v,t = fibaro.getGlobalVariable(name)
-    st.push(hooks.marshallFrom(v))
+    st.push(marshallFrom(v))
   end
   instr['setglobal']=function(i,st)
     local name,value = i[2],getArg(i[3],st)
@@ -760,6 +769,8 @@ end
     ['gv']=function(lv) return "$"..lv[2] end,
   }
 
+  local function safeEncode(t) local stat,res = pcall(json.encode,t) return stat and res or tostring(t) end
+
   local instrFmt = {}
   local defInstrFmt = function(i) return fmt("%s %s %s",i[1],i[2] or "",i[3] or "") end
   instrFmt['local'] = function(i) return fmt("%s %s %s",i[1],table.concat(i[2],","),notNil(i[3],"") and "trim" or "") end
@@ -772,6 +783,7 @@ end
   instrFmt['block'] = function(i) return fmt("%s %s %s",i[1],i[2],notNil(i[3],"") and json.encode(i[3])) end
   instrFmt['assert'] = function(i) return fmt("%s '%s' '%s'",i[1],i[2],i[3]) end
   instrFmt['aset'] = function(i) return fmt("%s [%s] '%s'",i[1],cArg(i[2]),cArg(i[3])) end
+  instrFmt['aref'] = function(i) return fmt("%s '%s'",i[1],cArg(i[2])) end
   instrFmt['getprop'] = function(i) return fmt("%s %s %s",i[1],i[2],cArg(i[3])) end
 
   function renderInstr(i) return instrFmt[i[1]] and instrFmt[i[1]](i) or defInstrFmt(i) end
@@ -784,7 +796,7 @@ end
             str =  fmt("%03d:%02d %s",p,st.size(),renderInstr(i))
             p = p + (instr[i[1]](i,st,env) or 1)
             local res = st.peek()
-            printf("%-40s -> %02d:%s",str,st.size(),type(res)=='table' and json.encode(res) or tostring(res))
+            printf("%-40s -> %02d:%s",str,st.size(), tostring(res):sub(1,40))
           else
             p = p + (instr[i[1]](i,st,env) or 1)
           end
@@ -797,7 +809,7 @@ end
     else return true,'dead',p,st.popValues(-1) end
   end
 
-  function hooks.addInstr(i,f,c) instr[i]=f comp[i]=c or comp[i] end
+  function hooks.addInstr(i,f,c) instr[i]=f or instr[i]; comp[i]=c or comp[i] end
   hooks.getArg = getArg
   hooks.peekArg = peekArg
   hooks.compConst = compConst

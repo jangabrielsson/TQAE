@@ -1,12 +1,3 @@
-local _=loadfile and loadfile("TQAE.lua"){
-  refreshStates=true,
-  debug = { onAction=true, http=false, UIEevent=true },
---offline = true,
-}
-
---%%name="My QA"
---%%type="com.fibaro.binarySwitch"
-
 --- https://github.com/lunarmodules/Penlight/blob/master/lua/pl/Date.lua
 --- Date and Date Format classes.
 -- See  @{05-dates.md|the Guide}.
@@ -920,7 +911,7 @@ function parse_date(s)
   end
 end
 
-
+--[[
 function QuickApp:onInit()
   self:debug(self.name, self.id)
   local d = Date()
@@ -931,3 +922,4 @@ function QuickApp:onInit()
   d = d+ikl
   print(d)
 end
+--]]

@@ -4,6 +4,10 @@ _=loadfile and loadfile("TQAE.lua"){
 --offline = true,
 }
 
+--[[
+NodeRed server (node-red-contrib-aedes) that answers to the messages.
+--]]
+
 --%%name="MMQTT"
 --%%type="com.fibaro.binarySwitch"
 

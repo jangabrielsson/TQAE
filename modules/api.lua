@@ -160,7 +160,7 @@ local function getItem(rname,id)
 end
 
 local function createItem(rname,id,data)
-  local cfun = rname:sub(1,-1)
+  local cfun = rname:sub(1,-2)
   if cfg.offline or cfg.shadow or EM.rsrc[rname][id] then
     if EM.rsrc[rname][id] then return nil,404 
     elseif EM.create[cfun] or EM.create[rname] then

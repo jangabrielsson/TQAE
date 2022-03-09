@@ -43,7 +43,7 @@ local function pres(correct,n,r0,r1,t)
 end
 
 local function runTest(expr,args,dump,trace)
-  local f = c.compile(expr,dump)
+  local f = c.compile(expr,{dump=dump})
   c.trace(trace==true)
   local t0 = os.clock()
   local res1 = {f(table.unpack(args))}
@@ -84,7 +84,7 @@ end
 local function runCTests(ts,d)
   for  _,e in ipairs(ts) do
     local expr,args,res,trace,dump = parse(e[2]),e[3],e[4],e[5],e[6]
-    local f = c.compile(expr,dump)
+    local f = c.compile(expr,{dump=dump})
     local co = c.coroutine.create(f)
     c.trace(trace==true)
     local t0 = os.clock()
@@ -185,8 +185,7 @@ local tests = {
 --       )]],{8},{16}},
 }
 
---silent = true
---alwaysDump = true
+--silent = true--alwaysDump = true
 alwaysTrace = false
 
 local ctests = {

@@ -1,5 +1,9 @@
 _=loadfile and loadfile("TQAE.lua"){
-  refreshStates=true,
+  --refreshStates=true,
+  debug = { webserver = true },
+  copas=true,
+  shadow=true
+  --speed=48,
 }
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
@@ -13,16 +17,14 @@ local rule
 --local g_dump   = true
 --local g_trace  = true 
 
-print(fibaro.utils.sunCalc())
-local sunrise,sunset = fibaro.utils.sunCalc(os.time()+24*3600)
-fibaro.post({type='sunrise'},"n/"..sunrise)
-print(fibaro.utils.sunCalc(os.time()+24*3600))
-
 _MARSHALL = true
 local fmt = string.format
 local function printf(f,...) print(fmt(f,...)) end
+api.post("/globalVariables",{name='T',value='16:00'})
 
 function QuickApp:main()
+  --fibaro.debugFlags.post=true
+
   EVENTSCRIPT.addPropHandler('bar',
     {method=function(id,prop) return type(id)..":"..id end, prop='bar',  table=false, trigger=true},
     {method=function(id,prop,val) return type(id)..":"..id end,p='bar'}
@@ -32,6 +34,17 @@ function QuickApp:main()
   g = {h=9}
   function foo(...) local  a = {...} return a[1]+a[2] end
   ID = 88
+
+  EVENTSCRIPT.defTriggerVar("V")
+
+  local function describe(str) print("\n"..rule(str).describe()) end
+--  describe("!44:value & 10:00..14:00 => log('X')")
+--  describe("@{10:00,$T} => log('X')")
+--  describe("@00:05 & ID:bar => log('X')")
+--  describe("@@00:05 & ID:bar => log('X')")
+--  describe("@{catch,22:00} & ID:bar => log('X')")
+--  describe("#foo & 10:00..15:00 => log('X')")
+--  describe("ID:bar => log('X')")
 
   local tests = {
     {1,"a = 9",{},{9}},
@@ -64,16 +77,26 @@ function QuickApp:main()
     {7.1,"a = true & false",{},{false}},
     {8.1,"$A=99",{},{99}}, 
     {8.2,"a = $A",{},{99}},    
-    {8.2,"a = now",{},{fibaro.now()}},
-    {8.2,"a = midnight",{},{fibaro.midnight()}},   
+    {8.3,"a = now",{},{fibaro.now()}},
+    {8.4,"a = t/10:00",{},{fibaro.midnight()+3600*10}}, 
+    {8.5,"a = n/10:00",{},{fibaro.midnight()+3600*10+24*3600}},  
+    {8.6,"a = +/10:00",{},{os.time()+3600*10}},  
+    {8.7,"a = midnight",{},{fibaro.midnight()}},  
     {10,"true => a=66",{},{66}}, 
     {10.1,"@10:00 => a=66",{},{66}},
-    {10.2,"@{10:00,22:00} => a=66",{},{66}},  
+    {10.2,"@{10:00,22:00} => a=66",{},{66}},
+    {10.22,"@{catch,10:00} => a=66",{},{66}},  
     {10.3,"@@10:00 => a=66",{},{66}},
-    {20,"@now => 66:bar; 77:bar",{},{"number:42"}},
-    {20.1,"true => true & true & true",{},{true}},
-    {20.2,"true => true & true & false",{},{false}},
-    {20.3,"true => true & true & a=9",{},{9}},
+    {20,"@now => 66:bar; 77:bar",{},{"number:77"}},
+    {20.1,"@now => true & true & true",{},{true}},
+    {20.2,"@now => true & true & false",{},{false}},
+    {20.3,"@now => true & true & a=9",{},{9}},
+    {20.4,"77:bar => env.event.value",{},{88},nil,{type='device', id=77, property='bar', value=88}},    
+    {20.5,"@@-00:00:05 => 88",{},{88}},
+    {20.6,"#foo{val='$a'} => env.p.a",{},{22},nil,{type='foo',val=22}},
+    {20.7,"add({6},77)",{},{{6,77}},nil},    
+    {20.8,"V => V",{},{88},nil},
+    {20.8,"V = 88; fopp(); S1.click",{},{16},nil},
   }
 
   local function equal(e1,e2)
@@ -102,13 +125,24 @@ function QuickApp:main()
   end
 
   local function runTest(e)
-    local tag,expr,args,res,dumpcode,trace,dumpstruct = e[1],e[2],e[3],e[4],e[5] or g_dump,e[6] or g_trace, e[7] or g_struct
+    local tag,expr,args,res = e[1],e[2],e[3],e[4]
+    local la = e[5] or {}
+    local dumpcode,trace,dumpstruct = la.c or g_dump, la.t or g_trace, la.s or g_struct
+    local event = e[6]
     local t = os.clock()
-    local r = {rule(expr,{trace=trace,dumpstruct=dumpstruct,dumpcode=dumpcode})}
-    if equal(r,res) then
-      pres(tag,true,r,res,os.clock()-t)
+    local function checkRes(...)
+      local r = {...}
+      if equal(r,res) then
+        pres(tag,true,r,res,os.clock()-t)
+      else
+        pres(tag,false,r,res,os.clock()-t)
+      end
+    end
+    if expr:match("=>") then
+      rule(expr,{trace=trace,dumpstruct=dumpstruct,dumpcode=dumpcode,bodyFun=checkRes})
+      if event then fibaro.post(event) end
     else
-      pres(tag,false,r,res,os.clock()-t)
+      checkRes(rule(expr,{trace=trace,dumpstruct=dumpstruct,dumpcode=dumpcode}))
     end
   end
 
@@ -116,10 +150,11 @@ function QuickApp:main()
     for _,e in ipairs(tests) do
       if n==nil or e[1]==n then runTest(e) end
     end
+    printf("Done")
   end
 
 --for _,e in ipairs(tests) do runTest(e) end
-  runTests(20)
+  runTests(20.8)
 end
 
 function QuickApp:onInit()

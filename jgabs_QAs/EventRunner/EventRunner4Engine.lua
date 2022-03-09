@@ -2232,7 +2232,8 @@ function QuickApp:onInit()
     if not stat then
       res=trimError(res)
       self:setView("ERname","text","Error in main()")
-      self:error("Main() ERROR:"..res) 
+      self:error("Main() ERROR:"..res)
+      error()
     end
     Util.printBanner("Running")
     self:setView("ERname","text","EventRunner4 %s",_version)

@@ -136,7 +136,6 @@ function EVENTSCRIPT.makeParser()
     end
   end
 
-  local opMap  = { ['&']='and', ['|']='or', ['..']='betw'}
   local specT={
     ['(']=true,[')']=true,['{']=true,['}']=true,['[']=true,[']']=true,[',']=true,
     ['.']=true,['=']=true,[';']=true,[':']=true,['#']=true,
@@ -152,13 +151,14 @@ function EVENTSCRIPT.makeParser()
   local function TABEsc(str) return str:gsub("\\x(%x%x)",function(s) return string.char(tonumber(s,16)) end) end
   token(" \t\r","([ \t\r]+)")
   token("\n","(\n[\r\t ]*)",nil,function(str) cursor = -1; lineNr=lineNr+1 end)
+  token("t+n","([t+n]/)", function (op) return {type="operator", value=opers[op][3]} end)
   token("$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_","([%$A-Za-z_][%w_]*)", function (w) 
       if reservedT[w] then return {type=w, value=w}
       elseif opT[w] then return {type='operator', value = w}
       elseif w:sub(1,1)=='$' then return {type='global', value=w:sub(2)}
       else return {type='Name', value=w} end
     end)
-  token(".","(%.%.%.?)",function(op) return {type=op=='..' and 'operator' or op, value=opMap[op] or op} end)
+  token(".","(%.%.%.?)",function(op) return {type=op=='..' and 'operator' or op, value=opers[op][3] or op} end)
   token("0123456789","(%d%d):(%d%d):?(%d*)", function (h,m,s) 
       return {type="number", value = 3600*tonumber(h)+60*tonumber(m)+(tonumber(s) or 0)} 
     end)
@@ -173,8 +173,8 @@ function EVENTSCRIPT.makeParser()
   token("-","(%-%-.-\n)")
   token("-","(%-%-.*)")
   token("#","(##)",function(op) return {type= "operator", value=op} end)  
-  token("@","(@@)",function(op) return {type= "operator", value=op} end)
-  token("<","(<=)",function(oop) return {type= "operator", value=op} end)
+  token("@","(@@)",function(op) return {type= "operator", value=opers[op][3]} end)
+  token("<","(<=)",function(op) return {type= "operator", value=op} end)
   token(">","(>=)",function(op) return {type= "operator", value=op} end)
   token("=","(=>)",function(op) isRule = #tokens return {type= "operator", value=op} end)
   token("=","(==)",function(op) return {type= "operator", value=op} end)  
@@ -183,7 +183,7 @@ function EVENTSCRIPT.makeParser()
   token("|","(||)",function(op) return {type= "operator", value=op} end)
   token("#@$=<>!+.-*&|/%^~;:","([#@%$=<>!+%.%-*&|/%^~;:])", 
     function (op) 
-      return {type= specT[op] and op or "operator", value=opMap[op]  or op} 
+      return {type= specT[op] and op or "operator", value=opers[op] and opers[op][3] or op} 
     end)
   token("[]{}(),#%","([{}%(%),%[%]#%%])", function (op) return {type=specT[op] and op or "operator", value=op} end)
 
@@ -219,13 +219,16 @@ function EVENTSCRIPT.makeParser()
   local gram = {}
 
   opers = {
-    ['not']={12,1},['#']={12,1},['%neg']={12,1},['%nor']={12,1},['^']={13,2},
+    ['not']={12,1},['!']={12,1,"not"},['#']={12,1},['neg']={12,1},['%nor']={12,1},['^']={13,2},
+    ['t/']={12,1,'%today'},['n/']={12,1,'%nexttime'},['+/']={12,1,'%plustime'},
+    ['%today']={12,1,},['%nexttime']={12,1},['%plustime']={12,1},
     ['+']={8,2}, ['-']={8,2}, ['*']={11,2}, ['/']={11,2}, ['//']={11,2},['%']={11,2},
-    ['betw']={7,2},
-    ['|']={0,2},['~']={4,2},['&']={1,2},['<<']={6,2},['>>']={6,2},
+    ['betw']={7,2},['..']={7,2,"betw"},
+    ['|']={0,2,"or"},['~']={4,2},['&']={1,2,"and"},['<<']={6,2},['>>']={6,2},
     ['<']={2,2}, ['<=']={2,2}, ['>']={2,2}, ['>=']={2,2}, ['==']={2,2}, ['~=']={2,2},
     ['or']={0,2},['and']={1,2},
-    ['@']={7,1},['@@']={7,1},['##']={13,1},
+    ['@']={7,1,"daily"},['@@']={7,1,"interv"},['##']={13,1,"len"},
+    ['daily']={7,1},['interv']={7,1},['len']={13,1},
     ['=']={-2,2},
   }
 
@@ -323,7 +326,7 @@ function EVENTSCRIPT.makeParser()
     end,
     ['operator']=function(inp,st,ops,t,pt,ctx) 
       if opers[t.value] then
-        if t.value == '-' and not(pt.type == 'Name' or pt.type == 'number' or pt.type == '(') then t.value='%neg' end
+        if t.value == '-' and not(pt.type == 'Name' or pt.type == 'number' or pt.type == '(') then t.value='neg' end
         while ops.peek() and lessp(t,ops.peek()) do apply(ops.pop(),st) end
         ops.push(t)
         inp.next()
@@ -599,10 +602,17 @@ prefixexp ::= ( exp ) [ afterpref ]
       return {'quote',{}}
     end
     local r = {}
+    local function isConst(e) return type(e)~='table' or e[1]=='quote' end
+    local c=true
     for _,e in ipairs(res) do
-      if e[2] then r[#r+1]='__KEY_' r[#r+1]=e[2] r[#r+1]=e[1] else r[#r+1]=e[1] end
+      if e[2] then r[#r+1]='__KEY_' r[#r+1]=e[2] r[#r+1]=e[1] else r[#r+1]=e[1] end 
+      c = c and isConst(e[1])
     end
-    return {'table',table.unpack(r)}
+    if c then
+      r={}
+      for _,e in ipairs(res) do if e[2] then r[e[2]]=e[1] else r[#r+1]=e[1] end end
+      return {'quote',r}
+    else return {'table',table.unpack(r)} end
   end
 --[[
 functiondef ::= function funcbody
@@ -670,7 +680,7 @@ parlist ::= namelist [‘,’ ‘...’] | ‘...’
           mTokens = b
           e = gram.expr(e,{l=locals})
           b = gram.block(b,{l=locals})
-          expr = {'if',e,b}
+          expr = {'if',{'%header',e},{'%body',b}}
         else 
           expr = gram.block(mTokens,{l=locals})
         end

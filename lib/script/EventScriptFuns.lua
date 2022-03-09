@@ -5,13 +5,23 @@ function EVENTSCRIPT.setupFuns()
   local compiler = EVENTSCRIPT.compiler
   local builtins = EVENTSCRIPT.builtins
   local fmt = string.format
-  
+
   local util = fibaro.utils
   local mapOr,mapAnd,mapF=util.mapOr,util.mapAnd,function(f,l,s) util.mapF(f,l,s); return true end
-  local midnight = fibaro.midnight
-  
+  local midnight,toTime = fibaro.midnight,util.toTime
+
   local function _assert(t,f,...) if not t then error(fmt(f,...)) end end
-  
+
+  local function userLogFunction(fm,...)
+    local args,t1,t0,str,c1 = {...},__TAG,__TAG
+    str = #args==0 and fm or fmt(fm,...)
+    str = str:gsub("(#T:)(.-)(#)",function(_,t) t1=t return "" end)
+    str = str:gsub("(#C:)(.-)(#)",function(_,c) c1=c return "" end)
+    if c1 then str=fmt("<font color=%s>%s</font>",c1,str) end
+    __TAG = t1; quickApp:trace(str); __TAG = t0
+    return str
+  end
+
   local alarmCache = {}
   for _,p in ipairs(api.get("/alarms/v1/partitions") or {}) do -- prime alarm cache
     alarmCache[p.id] = { 
@@ -317,34 +327,67 @@ function EVENTSCRIPT.setupFuns()
     st.push(setProp(id,prop,value))
   end
 
-  instr['##'] = function(i,st,env) st.push(#st.pop()) end
-  instr['@'] = function(i,st,env) st.push(st.pop()) end
-  instr['@@'] = function(i,st,env) st.push(st.pop()) end
+  instr['%header'] = function(i,st,env)
+    local f = env.headerFun
+    if f then st.push(f(st.pop())) else st.push(st.pop()) end
+  end
+  instr['%body'] = function(i,st,env)
+    local f = env.bodyFun
+    if f then st.push(f(st.pop())) else st.push(st.pop()) end
+  end
+
+  instr['len'] = function(i,st,env) st.push(#st.pop()) end
+
+  local function log(m,t)
+    print(m,fmt("%02d:%02d:%02d",t//3600,t//60 % 60, t % 60))
+    return t
+  end
+
+  instr['daily'] = function(i,st,env)
+    local v,e,isTrue = st.pop(),env.env,false
+    local now,rnow,catch,pCatch,rule = e.event.now,os.time()-fibaro.midnight(),e.event.catch,false,e.rule
+    rule.timers = rule.timers or {}
+    v = type(v)~='table' and {v} or v
+    for _,t in ipairs(v) do
+      if t ~= math.maxinteger then
+        if rule.timers[t] then if t~= now then fibaro.cancel(rule.timers[t]) end rule.timers[t]=nil end
+        if t > now then
+          rule.timers[t] = fibaro.post({type='%daily', rule=e.event.rule, now=t, _sh=true},math.max(0,t-rnow))
+        elseif t <= now then
+          pCatch = true
+          if t==now then isTrue = true end
+          rule.timers[t] = fibaro.post({type='%daily', rule=e.event.rule, now=t, _sh=true},t-rnow+24*3600)    
+        end
+      end
+    end
+    isTrue = isTrue or pCatch and catch  -- catchup
+    st.push(isTrue)
+  end
+  instr['interv'] = function(i,st,env) 
+    local v,e,isTrue = st.pop(),env.env,false
+    local nxt = e.event.nxt + math.abs(v)
+    fibaro.post({type='%interv', rule=e.event.rule, nxt=nxt, _sh=true},nxt-os.time())
+    st.push(true)
+  end
 
 --  local simpleFuns={num=tonumber,str=tostring,idname=Util.reverseVar,time=toTime,['type']=type,
 --    tjson=safeEncode,fjson=json.decode}
 --  for n,f in pairs(simpleFuns) do instr[n]=function(s,_,_,_) return s.push(f(s.pop())) end end
 
   local reservedVars = {
-    "sunset","sunrise","midnight","dawn","dusk","now","wnum"
+    "sunset","sunrise","midnight","dawn","dusk","now","wnum","env"
   }
   for _,n in ipairs(reservedVars) do compiler.hooks.reservedVars[n]=true end
-  
+
+  instr['env']=function(i,s,env) s.push(env.env) end
   instr['sunset']=function(i,s) s.push(toTime(fibaro.getValue(1,'sunsetHour'))) end
   instr['sunrise']=function(i,s) s.push(toTime(fibaro.getValue(1,'sunriseHour'))) end
   instr['midnight']=function(i,s) s.push(midnight()) end
   instr['dawn']=function(i,s) s.push(toTime(fibaro.getValue(1,'dawnHour'))) end
   instr['dusk']=function(i,s) s.push(toTime(fibaro.getValue(1,'duskHour'))) end
   instr['now']=function(i,s) s.push(os.time()-midnight()) end
-  instr['wnum']=function(i,s) s.push(Util.getWeekNumber(os.time())) end
-  instr['%today']=function(i,s) s.push(midnight()+s.pop()) end
-  instr['%nexttime']=function(i,s) local t=s.pop()+midnight(); s.push(t >= os.time() and t or t+24*3600) end
-  instr['%plustime']=function(i,s) s.push(os.time()+s.pop()) end
-  instr['%daily'] = function(i,s) s.pop() s.push(true) end
-  instr['%interv'] = function(i,s) local _ = s.pop(); s.push(true) end
-  instr['redaily'] = function(i,s) s.push(Rule.restartDaily(s.pop())) end
-  instr['%always'] = function(i,s) local v = s.pop(n) s.push(v or true) end
-  instr['betw'] = function(i,s) local t2,t1,time=s.pop(),s.pop(),os.time()
+  instr['wnum']=function(i,s) s.push(fibaro.getWeekNumber(os.time())) end
+  instrc['betw'] = function(i,s) local t2,t1,time=getArg(i[4],s),getArg(i[3],s),os.time()
     _assert(tonumber(t1) and tonumber(t2),"Bad arguments to between '...', '%s' '%s'",t1 or "nil", t2 or "nil")
     if t1  > 24*60*60 then
       s.push(t1 <= time and t2 >= time)
@@ -353,14 +396,10 @@ function EVENTSCRIPT.setupFuns()
       if t1<=t2 then s.push(t1 <= now and now <= t2) else s.push(now >= t1 or now <= t2) end 
     end
   end
-  instr['%eventmatch'] = function(s,_,e,i) 
-    local ev,evp=i[4],i[3]; 
-    local vs = fibaro.EM.match(evp,e.event)
-    if vs then for k,v in pairs(vs) do e.locals[k]={v} end end -- Uneccesary? Alread done in head matching.
-    s.push(e.event and vs and ev or false) 
-  end
 
-
+  instrc['%today']=function(i,s) s.push(midnight()+getArg(i[3],s)) end
+  instrc['%nexttime']=function(i,s) local x = getArg(i[3],s); local t=x+midnight(); s.push(t >= os.time() and t or t+24*3600) end
+  instrc['%plustime']=function(i,s) s.push(os.time()+getArg(i[3],s)) end
   instrc['HM'] = function(i,s) local t = getArg(i[3],s); s.push(os.date("%H:%M",t < os.time() and t+midnight() or t)) end
   instrc['HMS'] = function(i,s) local t = getArg(i[3],s); s.push(os.date("%H:%M:%S",t < os.time() and t+midnight() or t)) end
   instrc['sign'] = function(i,s) s.push(tonumber(getArg(i[3],s)) < 0 and -1 or 1) end
@@ -373,58 +412,83 @@ function EVENTSCRIPT.setupFuns()
   instrc['sum'] = function(i,s) local m,res=getArg(i[3],s),0 for _,x in ipairs(m) do res=res+x end s.push(res) end
   instrc['average'] = function(i,s) local m,res=getArg(i[3],s),0 for _,x in ipairs(m) do res=res+x end s.push(res/#m) end
   instrc['size'] = function(i,s) s.push(#(getArg(i[3],s))) end
-  local function getNargs(i,s)
-    if type(peekArg(i[3],s)) == 'table' then return getArg(i[3],s) end
+  local function getVargs(i,s)
     local args = {}
     for j=i[2]+2,3,-1 do args[j-2]=getArg(i[j],s) end
-    return args
+    return table.unpack(args)
   end
-  instrc['min'] = function(i,s) s.push(math.min(table.unpack(getNargs(i,s)))) end
-  instrc['max'] = function(i,s) s.push(math.min(table.unpack(getNargs(i,s)))) end
-  instrc['sort'] = function(i,s) local a = getNargs(i,s); table.sort(a) s.push(a) end
+  local function getNargs(i,s)
+    if type(peekArg(i[3],s)) == 'table' then return table.unpack(getArg(i[3],s)) else return getVargs(i,s) end
+  end
+  instrc['log'] = function(i,s) s.push(userLogFunction(getVargs(i,s))) end
+  instrc['min'] = function(i,s) s.push(math.min(getNargs(i,s))) end
+  instrc['max'] = function(i,s) s.push(math.min(getNargs(i,s))) end
+  instrc['sort'] = function(i,s) local a = {getNargs(i,s)}; table.sort(a) s.push(a) end
   instrc['match'] = function(i,s) local a,b=getArg(i[4],s),getArg(i[3],s); s.push(string.match(b,a)) end
   instrc['osdate'] = function(i,s) local n=i[2] local t,str = n>1 and getArg(i[4],s) or nil,getArg(i[3],s) s.push(os.date(str,t)) end
   instrc['ostime'] = function(i,s) s.push(os.time()) end
-  instrc['fmt'] = function(i,s) s.push(string.format(table.unpack(getNargs(i,s)))) end
+  instrc['fmt'] = function(i,s) s.push(fmt(getNargs(i,s))) end
   instrc['eval'] = function(i,s) s.push(Rule.eval(getArg(i[3],s),{print=false})) end
   instrc['global'] = function(i,s)  s.push(api.post("/globalVariables/",{name=getArg(i[3],s)})) end
   instrc['listglobals'] = function(i,s) s.push(api.get("/globalVariables/")) end
   instrc['deleteglobal'] = function(i,s) s.push(api.delete("/globalVariables/"..getArg(i[3],s))) end
   instrc['once'] = function(i,s) 
+    local n = i[2]
     if n==1 then local f; i[4],f = s.pop(),i[4]; s.push(not f and i[4]) 
     elseif n==2 then local f,g,e; e,i[4],f = s.pop(),s.pop(),i[4]; g=not f and i[4]; s.push(g) 
-      if g then quickApp:cancel(i[5]) i[5]=quickApp:post(function() i[4]=nil end,e) end
+      if g then fibaro.cancel(i[5]) i[5]=fibaro.post(function() i[4]=nil end,e) end
     else local f; i[4],f=os.date("%x"),i[4] or ""; s.push(f ~= i[4]) end
   end
-  instrc['enable'] = function(s,n,e,_) 
-    if n == 0 then fibaro.EM.enable(e.rule) s.push(true) return end
+  instrc['enable'] = function(i,s,e)
+    local n = i[2]
+    if n == 0 then fibaro.EM.enable(e.env.rule) s.push(true) return end
     local t,g = s.pop(),false; if n==2 then g,t=t,s.pop() end 
     s.push(fibaro.EM.enable(t,g)) 
   end
-  instrc['disable'] = function(s,n,e,_) 
-    if n == 0 then fibaro.EM.disable(e.rule) s.push(true) return end
-    s.push(fibaro.EM.disable(s.pop())) 
+  instrc['disable'] = function(i,s,e) 
+    local n = i[2]
+    if n == 0 then fibaro.EM.disable(e.env.rule) s.push(true) return end
+    s.push(fibaro.EM.disable(getArg(i[3],s))) 
   end
-  instrc['post'] = function(s,n,ev) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end s.push(quickApp:post(e,t,ev.rule)) end
-  instrc['subscribe'] = function(s,_,_) quickApp:subscribe(s.pop()) s.push(true) end
-  instrc['publish'] = function(s,n,_) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end quickApp:publish(e,t) s.push(e) end
-  instrc['remote'] = function(s,n,_) _assert(n==2,"Wrong number of args to 'remote/2'"); 
-    local e,u=s.pop(),s.pop(); 
-    quickApp:postRemote(u,e) 
+--  instrc['post'] = function(i,s) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end s.push(quickApp:post(e,t,ev.rule)) end
+  instrc['subscribe'] = function(i,s) fibaro.subscribe(getArg(i[3],s)) s.push(true) end
+--  instrc['publish'] = function(i,s) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end fibaro.publish(e,t) s.push(e) end
+  instrc['remote'] = function(i,s)
+    local event,id=getArg(i[4],s),getArg(i[3],s) 
+    fibaro.postRemote(id,event) 
     s.push(true) 
   end
-  instrc['cancel'] = function(s,_) quickApp:cancel(s.pop()) s.push(nil) end
-  instrc['add'] = function(s,_) local v,t=s.pop(),s.pop() table.insert(t,v) s.push(t) end
-  instrc['remove'] = function(s,_) local v,t=s.pop(),s.pop() table.remove(t,v) s.push(t) end
-  instrc['again'] = function(s,n,e) 
-    local v = n>0 and s.pop() or math.huge
-    e.rule._again = (e.rule._again or 0)+1
-    if v > e.rule._again then setTimeout(function() e.rule.start(e.rule._event) end,0) else e.rule._again,e.rule._event = nil,nil end
-    s.push(e.rule._again or v)
+  instrc['cancel'] = function(i,s) fibaro.cancel(getArg(i[3],s)) s.push(nil) end
+  instrc['add'] = function(i,s) 
+    local v,t=getArg(i[4],s),getArg(i[3],s) 
+    table.insert(t,v) s.push(t) 
   end
-  instrc['trueFor'] = function(s,_,e,i)
-    local val,time = s.pop(),s.pop()
-    e.rule._event = e.event
+--  instrc['remove'] = function(s,_) local v,t=s.pop(),s.pop() table.remove(t,v) s.push(t) end
+  instrc['match_event'] = function(i,s,e)
+    local ie,pe,ce = e.env.event,s.pop(),i[5]
+    if ce==nil then
+      ce=fibaro.EM.compilePattern(pe)
+      i[5]=ce
+    end
+    local vs = fibaro.EM.match(ce,ie)
+    if vs then
+      e.env.p = {}
+      local p = e.env.p
+      for k,v in pairs(vs) do p[k]=v end
+      s.push(p)
+    else s.push(false) end
+  end
+  instrc['again'] = function(i,s,e) 
+    local v = i[2]>0 and getArg(i[3],s) or math.huge
+    local rule = e.env.rule
+    rule._again = (rule._again or 0)+1
+    if v > rule._again then setTimeout(function() rule.start(rule._event) end,0) else rule._again,rule._event = nil,nil end
+    s.push(rule._again or v)
+  end
+  instrc['trueFor'] = function(i,s,e)
+    local val,time = getArg(i[4],s),getArg(i[3],s)
+    local rule = e.env.rule
+    rule._event = e.env.event
     local flags = i[5] or {}; i[5]=flags
     if val then
       if flags.expired then 
@@ -434,18 +498,16 @@ function EVENTSCRIPT.setupFuns()
       end
       if flags.timer then s.push(false); return end
       flags.timer = setTimeout(function() 
-          --  Event._callTimerFun(function()
           flags.expired,flags.timer=true,nil; 
-          quickApp:post({type='trueFor',stop=true,expired=true,rule=e.rule,_sh=true})
-          e.rule.start(e.rule._event) 
-          --      end)
+          fibaro.post({type='trueFor',stop=true,expired=true,rule=rule,_sh=true})
+          rule.start(rule._event) 
         end,1000*time);
-      quickApp:post({type='trueFor',start=true,rule=e.rule,_sh=true})
+      quickApp:post({type='trueFor',start=true,rule=rule,_sh=true})
       s.push(false); return
     else
       if flags.timer then 
         flags.timer=clearTimeout(flags.timer)
-        quickApp:post({type='trueFor',stop=true,rule=e.rule,_sh=true})
+        fibaro.post({type='trueFor',stop=true,rule=e.rule,_sh=true})
       end
       s.push(false)
     end
@@ -454,7 +516,7 @@ function EVENTSCRIPT.setupFuns()
   local compConst = compiler.hooks.compConst
   local function compileInstr(code,exp,...)
     local args,comps = {...},{}
-    for _,e in ipairs(args) do comps[#comps+1]=compConst(e,code) end
+    for i,e in ipairs(args) do comps[i]=compConst(e,code) end
     code.emit(exp,#args,table.unpack(comps))
   end
 
@@ -476,5 +538,9 @@ function EVENTSCRIPT.setupFuns()
     elseif marshalBool[v ]~=nil then return marshalBool[v ] end
     local s,t = pcall(toTime,v); return s and t or v
   end
+
+-----------------------------------------------------------------------------  
+
 end
+
 
