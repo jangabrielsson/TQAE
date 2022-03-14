@@ -2025,7 +2025,7 @@ do
     end
 
     function fibaro.event(pattern,fun,doc)
-      doc = doc or format("Event(%s) => ..",json.encode(pattern))
+      doc = doc or format("Event(%s) => ..",json.encodeFast(pattern))
       if type(pattern) == 'table' and pattern[1] then 
         return comboEvent(pattern,fun,map(function(es) return fibaro.event(es,fun) end,pattern),doc) 
       end

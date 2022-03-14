@@ -48,10 +48,10 @@ Supported events:
 --]]
 
 local function setupES()
+  EVENTSCRIPT.ruleOpts = { logRes=true }
   local parser = EVENTSCRIPT.makeParser()
   local compiler = EVENTSCRIPT.makeCompiler()
   EVENTSCRIPT.compiler = compiler
-  EVENTSCRIPT.setupFuns()
 
   local fmt,gLocals = string.format
 
@@ -74,13 +74,15 @@ local function setupES()
   local function getVar(n) if vars[n] then return vars[n][1] else return _G[n] end end
   local function setVar(n,v)
     local oldref=vars[n]
-    local oldval=oldref[1]
+    local oldval=oldref and oldref[1] or nil
     if oldref then oldref[1] = v else vars[n]={v} end
     if isTriggerVar(n) and oldval and oldval[1]~=v or oldval==nil then fibaro.post({type='%triggervar',name=n, value=v}) end
   end
   EVENTSCRIPT.defvar,EVENTSCRIPT.defvars = defvar,defvars
   EVENTSCRIPT.defTriggerVar,EVENTSCRIPT.reverseMapDef = defTriggerVar,reverseMapDef
 
+  EVENTSCRIPT.setupFuns()
+  
   compiler.hooks.globalLuaVar.get = getVar
   compiler.hooks.globalLuaVar.set = setVar
 
@@ -88,14 +90,18 @@ local function setupES()
     local f = compiler.compile(expr,{locals=gLocals})
     return f() 
   end
-  local function tstr(e) return tostring(e) end
-  local function fstr(e) return tonumber(e) end
+  function EVENTSCRIPT.evalStr(str)
+    local p,isRule = parser(str)
+    return eval(p)
+  end
+  local function tstr(e) return e end
+  local function fstr(e) return e end
   local function now() return os.time() - fibaro.midnight() end
   local getTriggers
 
   local rules = {}
   local function createRule(nr,str,event,doc)
-    local r = {}
+    local r = { opts = opts, doc = doc }
     function r.__tostring() return doc  end
     function r.enable() return event.enable() end
     function r.disable() return event.disable() end
@@ -112,6 +118,22 @@ local function setupES()
     tab[typ][id][prop]=true
   end
 
+  local function scheduler(f)
+    return function(...)
+      local args = {...}
+      local co = compiler.coroutine.create(f)
+      local function loop()
+        local res = {compiler.coroutine.resume(co,table.unpack(args))}
+        if res[1] then
+          if co.state=='suspended'  and tonumber(res[2])  then
+            setTimeout(loop,1000*res[2])
+          else return select(2,table.unpack(res))  end
+        else error(res[2])  end
+      end
+      loop()
+    end
+  end
+
   local trigC
   trigC = {
     ['getprop'] = function(e,trs)
@@ -120,7 +142,6 @@ local function setupES()
         for _,id in ipairs(ids) do addTrigger(trs.trigger,'device',id,prop) end
       elseif type(ids)=='number' then
         addTrigger(trs.trigger,'device',ids,prop)
-      elseif type(ids)=='userdata' and ids._PROP then
       end
       getTriggers(e[2],trs)
     end,
@@ -192,11 +213,12 @@ local function setupES()
   end
 
   local function makeEvent(typ,id,prop,vs)
-    if typ=='device' then return {type='device', id = tonumber(id), property=prop}
+    if typ=='device' then return {type='device', id = id, property=prop}
     elseif typ=='global-variable' then return {type='global-variable', name = id}
     else return vs end
   end
-
+  local function entryHook(opts,env) env.env  = env.args[1] end
+  
   local function createTriggers(trs)
     local events = {}
     for typ,r1 in pairs(trs) do
@@ -210,29 +232,32 @@ local function setupES()
   local nRules = 0
   local function rule(str,opts)
     opts = opts or {}
+    for k,v in pairs(EVENTSCRIPT.ruleOpts) do if opts[k]==nil then opts[k]=v end end
     local catch = math.maxinteger
     gLocals = { catch = {catch} }
     local p,isRule = parser(str)
     if opts.dumpstruct then print(json.encode(p)) end
     compiler.trace(opts.trace)
-
+    opts.locals  =  gLocals
+    opts.entryHook =  entryHook
+    
     if not isRule  then
-      local f,env = compiler.compile(p,{dump=opts.dumpcode,locals=gLocals})
-      local function rf(e) env.env = e return f(e) end
-      env.headerFun,env.bodyFun = opts.headerFun,opts.bodyFun
-      local res,res2 = {rf()},{}
+      p = {'%body',p}
+      local f = scheduler(compiler.compile(p,opts))
+      opts.doc,opts.nr = str,fibaro.utils.gensym()
+      if opts.createFun then opts.createFun(opts) end
+      local res,res2 = {f()},{}
       for i=1,#res  do res2[i]=tostring(res[i]) end
-      quickApp:tracef("%s, = %s",str,table.concat(res2,","))
+      if opts.logRes then quickApp:tracef("%s, = %s",str,table.concat(res2,",")) end
       return table.unpack(res)
 
     else
       nRules = nRules+1
       local h = p[2]
       local doc = fmt("Rule:%s %s",nRules,str:sub(1,40))
-      local f,env = compiler.compile(p,{dump=opts.dumpcode,locals=gLocals})
+      opts.doc,opts.nr = opts.doc or doc,nRules
+      local rf = compiler.compile(p,opts)
       local triggers = getTriggers(h,{daily={},interv={},trigger={},ev={}})
-      local function rf(e) env.env = e return f(e) end
-      env.headerFun,env.bodyFun = opts.headerFun,opts.bodyFun
       local daily,interv,events={},{}
       for d,_ in pairs(triggers.daily) do daily[#daily+1]=fstr(d) end
       for i,_ in pairs(triggers.interv) do interv[#interv+1]=fstr(i) end
@@ -258,22 +283,13 @@ local function setupES()
         error("No triggers in rule")  
       end
       local event = fibaro.event(events,rf,doc)
-      return createRule(nRules,str,event,doc)
+      if opts.createFun then opts.createFun(opts) end
+      local r = createRule(nRules,str,event,doc,opts)
+      if opts.logRes then quickApp:tracef("%s",r) end
+      return r
     end
   end
   EVENTSCRIPT.rule=rule
-
-  local S1 = {click = 16, double = 14, tripple = 15, hold = 12, release = 13}
-  local S2 = {click = 26, double = 24, tripple = 25, hold = 22, release = 23} 
-
-  defvar('S1',S1)
-  defvar('S2',S2)
-  defvar('catch',math.huge)
-  defvar("defvars",defvars)
-  defvar("mapvars",reverseMapDef)
-  defvar("print",function(...) quickApp:printTagAndColor(...) end)
-  defvar("QA",quickApp)
-  defvar("fopp",function() print("foo") end)
 end
 
 EVENTSCRIPT.setupES = setupES

@@ -1,6 +1,7 @@
 -- luacheck: globals ignore makeCompiler json
 
 dofile("lib/script/eval.lua")
+dofile("lib/json.lua")
 
 local fmt = string.format
 
@@ -22,7 +23,7 @@ local function parse(str)
   return json.decode(str)
 end
 
-local c = makeCompiler()
+local c = EVENTSCRIPT.makeCompiler()
 
 local function printf(f,...) print(fmt(f,...)) end
 
@@ -193,7 +194,7 @@ local ctests = {
   {2,"(fun(x y) (yield  $x $y))",{7,8},{7,8}},
 }
 
-singleTest(1.3,tests)
+singleTest(23,tests)
 
 --runTests(tests)
 --runCTests(ctests)

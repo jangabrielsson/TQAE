@@ -48,6 +48,7 @@ EVENTSCRIPT.builtins = EVENTSCRIPT.builtins or {}
 
 function EVENTSCRIPT.makeParser()
   local builtins = EVENTSCRIPT.builtins
+  builtins.wait=true
   local mTokens
   local format = string.format
   local function assert(t,str) if not t then error({err=str,token=mTokens.last()}) end end
@@ -295,9 +296,13 @@ function EVENTSCRIPT.makeParser()
       local et = inp.match('Name')
       if inp.peek().value=='{' then
         local tt = gram.tableConstructor(inp,ctx)
-        table.insert(tt,2,"__KEY_")
-        table.insert(tt,3,"type")
-        table.insert(tt,4,et)
+        if tt[1] == 'quote' then
+          tt[2].type=et
+        else
+          table.insert(tt,2,"__KEY_")
+          table.insert(tt,3,"type")
+          table.insert(tt,4,et)
+        end
         st.push(tt) t.type='}' 
       else
         st.push({'quote',{type=et}})
@@ -477,7 +482,7 @@ prefixexp ::= ( exp ) [ afterpref ]
     elseif t == 'repeat' then 
       local b = gram.block(inp,{l={},n=ctx});
       inp.match('until') 
-      return {'repeat',gram.expr(inp,ctx),b}
+      return {'repeat',b,gram.expr(inp,ctx)}
     elseif t == 'for' then
 --for Name ‘=’ exp ‘,’ exp [‘,’ exp] do block end | 
 --for namelist in explist do block end | 
@@ -502,6 +507,7 @@ prefixexp ::= ( exp ) [ afterpref ]
       local b = gram.block(inp,{l={},n=ctx})
       local eif,els={}
       while inp.test('elseif') do
+        eif={}
         local e = gram.expr(inp,ctx)
         inp.match('then')
         local b = gram.block(inp,{l={},n=ctx})
@@ -511,7 +517,12 @@ prefixexp ::= ( exp ) [ afterpref ]
         els = gram.block(inp,{l={},n=ctx})
       end
       inp.match('end')
-      return {'if',e,b,eif,els}
+      if #eif>0 then
+        for i=#eif,1,-1 do 
+          els = {'if',eif[i][1],eif[i][2],els}
+        end
+      end
+      return {'if',e,b,els}
     elseif t == 'setp' then
       local lvs=gram.lvList(inp,ctx)
       local exprs = gram.exprList(inp,ctx)

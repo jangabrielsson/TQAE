@@ -50,10 +50,10 @@ function class(name)    -- Version that tries to avoid __index & __newindex to m
     end
     if trapF then trapIndex(props,cmt,obj) end
     local str = "Object "..name..":"..tostring(obj):match("%s(.*)")
-    setmetatable(obj,cmt)
     if not cmt.__tostring then 
       function obj:__tostring() local _=self return str end
     end
+    setmetatable(obj,cmt)
     return obj
   end
   function mt:__tostring() local _=self return "class "..name end

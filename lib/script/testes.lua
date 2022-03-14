@@ -130,13 +130,14 @@ function QuickApp:main()
     local dumpcode,trace,dumpstruct = la.c or g_dump, la.t or g_trace, la.s or g_struct
     local event = e[6]
     local t = os.clock()
-    local function checkRes(...)
+    local function checkRes(_,...)
       local r = {...}
       if equal(r,res) then
         pres(tag,true,r,res,os.clock()-t)
       else
         pres(tag,false,r,res,os.clock()-t)
       end
+      return ...
     end
     if expr:match("=>") then
       rule(expr,{trace=trace,dumpstruct=dumpstruct,dumpcode=dumpcode,bodyFun=checkRes})

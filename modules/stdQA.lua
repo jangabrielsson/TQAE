@@ -91,7 +91,7 @@ local devices = {
 local create = {}
 for t,d in pairs(devices) do
   create[t] = function(id,name)
-    EM.installQA{id=id,code=d,name=name} 
+    return id,EM.installQA{id=id,code=d,name=name}
   end
 end
 

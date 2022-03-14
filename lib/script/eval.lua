@@ -471,7 +471,7 @@ end
     code.emit('setglobal',name,c)
   end
   comp['assert']  = function(code,_,typ,msg) code.emit('assert',typ,msg) end
-
+  comp['wait']  = function(code,_,time) local c = compConst(time,code) code.emit('wait',c) end
   --[[
       fun (x,y,...) . body {'fun',{'x','y','...'},body}
       local x,y,... = ...
@@ -520,19 +520,20 @@ end
     code.code=hooks.optimizeCode(code.code)
     if type(f)=='function' then
       local c = f('_INSPECT_')
-      if opts.dump then dump(c) end
+      if opts.dumpcode then dump(c) end
       return f
     end
-    if opts.dump then dump(code.code) end
+    if opts.dumpcode then dump(code.code) end
     code.resolveLabels()
-    local c,p,st,env = code.code,1,makeStack(),makeEnv(opts.locals)
+    local c = code.code
     return function(e,...)
-      if e == '_INSPECT_' then return c,st,env end
-      local args =  {e,...}
-      env.args = args
+      local p,st,env = 1,makeStack(),makeEnv(opts.locals)
+      if e == '_INSPECT_' then return c,st,env,opts end
+      env.args,env.opts =  {e,...},opts
+      if opts.entryHook then opts.entryHook(opts,env) end
       local stat,err,_,vals =runCode(c,p,st,env)
       if stat then return table.unpack(vals) else error(err) end
-    end,env
+    end
   end
 
   local _coroutine,running = {}
@@ -543,6 +544,7 @@ end
     if co.inited then
       co.inited = false
       co.env.args = {...}      -- setup parameters. first entry (fun parameters)
+      if co.env.opts.entryHook then co.env.opts.entryHook(co.env.opts,co.env) end
     else
       co.st.pushValues({...})  -- Return from yield
     end
@@ -565,8 +567,10 @@ end
   function _coroutine.running() return running end
 
   function _coroutine.create(fun)
-    local  code,_,_ = fun('_INSPECT_') -- hack...
-    return { p = 1, st = makeStack(), inited=true, env  = makeEnv(), code = code, state='suspended' } 
+    local  code,_,_,opts = fun('_INSPECT_') -- hack...
+    local env =  makeEnv()
+    env.opts = opts
+    return { p = 1, st = makeStack(), inited=true, env = env, code = code, state='suspended' } 
   end
 
   ---------------- Optimize --------------
@@ -759,6 +763,14 @@ end
     fibaro.setGlobalVariable(name,tostring(hooks.marshallTo(value)))
     st.push(value)
   end
+
+  instr['wait']=function(i,st)
+    local value = getArg(i[2],st)
+    st.push(value)
+    error({'_RET_','_yield_',1})
+    st.push(true)
+  end
+
   local function isReturn(r) return type(r)=='table'  and r[1]=='_RET_' end
 
   local function cArg(v) if type(v)=='table' then return v[1] else return "" end end

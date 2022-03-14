@@ -260,7 +260,7 @@ function EM.create.globalVariable(args)
       created = EM.osTime(),
       data={variableName=args.name, value=v}
     })
-  return v
+  return v,v.name
 end
 
 function EM.create.room(args)
