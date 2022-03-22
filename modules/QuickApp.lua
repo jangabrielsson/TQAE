@@ -85,7 +85,7 @@ function QuickAppBase:setVariable(name,value)
   local vars = self.properties.quickAppVariables or {}
   for _,v in ipairs(vars) do if v.name==name then v.value=value return end end
   self.properties.quickAppVariables = vars
-  vars[#vars+1]={name=name,value==value}
+  vars[#vars+1]={name=name,value=value}
 end
 
 function QuickAppBase:updateProperty(prop,val)
