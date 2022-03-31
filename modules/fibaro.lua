@@ -1,5 +1,6 @@
 -- Local module, loaded into each QA's environment
 fibaro = {}
+hub = fibaro
 
 function string.split(str, sep)
   local fields,s = {},sep or "%s"

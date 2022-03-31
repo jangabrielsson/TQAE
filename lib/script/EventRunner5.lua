@@ -66,7 +66,6 @@ function QuickApp:main()
     resHack = fmt([[fibaro.get(%s,"%s")]],id,prop)
     return fibaro.get(id,prop)
   end
-  EVENTSCRIPT.fibaro.getValue = EVENTSCRIPT.fib.get
   function EVENTSCRIPT.fibaro.call(id,method,...)
     if DTypes[id] then
       assert(DTypes[id].actions[method]~=nil,fmt("Missing action '%s' for device:%s",method,id))
@@ -88,9 +87,6 @@ function QuickApp:main()
   EVENTSCRIPT.ruleOpts.logRes = false
 
   defTriggerVar("T0")
-  D0,vD0 = EVENTSCRIPT.vDev('test')
-  function vD0:getProp(prop) return self.props[prop] end
-  function vD0:setProp(prop,val) self:updateProp(prop,val) end
 
 --  rule("a = true & false",{res={false}})
 --  rule("a = true or false",{res={true}})

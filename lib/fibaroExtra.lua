@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.936"
+fibaro.FIBARO_EXTRA = "v0.937"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
@@ -922,7 +922,7 @@ do
                 fibaro._postRefreshState(e)
               end
             end
-            if states.changes and #states.changes>0 then
+            if debugFlags.logTrigger and states.changes and #states.changes>0 then
               for _,e in ipairs(states.changes) do
                 if e.log then
                   fibaro._postRefreshState({type='DevicePropertyUpdatedEvent', data={id=e.id,property='log',newValue=e.log}})
@@ -1993,6 +1993,7 @@ do
     fromHash['deviceEvent'] = function(e) return {"deviceEvent"..e.id..e.value,"deviceEvent"..e.id,"deviceEvent"..e.value,"deviceEvent"} end
     fromHash['sceneEvent'] = function(e) return {"sceneEvent"..e.id..e.value,"sceneEvent"..e.id,"sceneEvent"..e.value,"sceneEvent"} end
     toHash['device'] = function(e) return "device"..(e.id or "")..(e.property or "") end   
+    
     toHash['global-variable'] = function(e) return 'global-variable'..(e.name or "") end
     toHash['quickvar'] = function(e) return 'quickvar'..(e.id or "")..(e.name or "") end
     toHash['profile'] = function(e) return 'profile'..(e.property or "") end

@@ -15,27 +15,37 @@ function EVENTSCRIPT.setupFuns()
   function EVENTSCRIPT.fibaro.setup()
     fibaroCall = EVENTSCRIPT.fibaro.call or fibaro.call
     fibaroGet = EVENTSCRIPT.fibaro.get or fibaro.get
-    fibaroGetValue = EVENTSCRIPT.fibaro.getValue or fibaro.getValue
   end
   EVENTSCRIPT.fibaro.setup()
 
-  local virtualDevices,virtualDeviceNumber={},100000
-  function EVENTSCRIPT.vDev(name,id)
-    if id == nil then id = virtualDeviceNumber; virtualDeviceNumber=virtualDeviceNumber+1 end
-    local self = {id = id, props={}, name = fmt("<vdev:%s",id) }
-    virtualDevices[id]=self
-    function self:__tostring() return self.name end
-    function self:updateProp(prop,val)
-      if self.props[prop]~=val then
-        self.props[prop]=val
-        fibaro.post({type='device',id=self.id,property='value',value=val}) 
-      end
-    end
-    function self:getProp(prop) return nil end
-    function self:setProp(prop,value) end    
-    return self.id,self
+  --------------- Support for virtual device, gets deviceIDs from 10000> -----------------
+  local virtualDevices,virtualDevicesId={},10000
+  local oldGet,oldCall = fibaro.get, fibaro.call
+  function fibaro.get(id,prop)
+    if virtualDevices[i] then return virtualDevices[i]:get(id,prop) else return oldGet(id,prop) end
+  end
+  function fibaro.call(id,method,...)
+    if virtualDevices[i] then return virtualDevices[i]:call(id,method,...) else return oldGet(id,method,...) end
   end
 
+  class 'VirtualDevice'
+  function VirtualDevice:__init(name)
+    self.id = virtualDevicesId; virtualDevicesId=virtualDevicesId+1
+    self.name=name
+    self.props = {}
+  end
+  function VirtualDevice:get(prop) return self.props[prop] end
+  function VirtualDevice:call(method,...)
+    if self[method] then return self[method](self,...) else error("Method "..method.." not defined for device:"..self.id) end
+  end
+  function VirtualDevice:setValue(val) return self:updateProperty('value',val) end
+  function VirtualDevice:updateProperty(prop,val)
+    local oldVal = self.props[prop]
+    self.props[prop]=val
+    if val~=oldVal then fibaro.post({type='device', id=self.id, property=prop, value=val, oldValue=oldValue}) end
+  end
+
+  --------------- Caching type info for devices (properties and actions) -----------------
   local resolvedDevices,cachedTypes,skips={},{},{lastBreached=true,typeTemplateInitialized=true,apiVersion=true,useEmbededView=true}
   local function resolveDevice(id)
     if not resolvedDevices[id] then
@@ -50,7 +60,8 @@ function EVENTSCRIPT.setupFuns()
     end
     return id
   end
-  
+
+  --------------- Table reduction functions -----------------
   local function mapAnd(l,prop,e)
     if #l==0 then return true else for _,id in ipairs(l) do if not getProp(id,prop,e) then return false end end end
     return true
@@ -64,6 +75,7 @@ function EVENTSCRIPT.setupFuns()
   local function mapC(l,prop,e) local r = {} for _,id in ipairs(l) do r[#r+1]=getProp(id,prop,e) end return r end 
   local function mapF(l,prop,e) for _,id in ipairs(l) do getProp(id,prop,e) end return true end 
 
+  --------------- User log function -----------------
   local function userLogFunction(fm,...)
     local args,t1,t0,str,c1 = {...},__TAG,__TAG
     str = #args==0 and fm or fmt(fm,...)
@@ -74,6 +86,7 @@ function EVENTSCRIPT.setupFuns()
     return str
   end
 
+  --------------- Alarm functions -----------------
   local alarmCache = {}
   for _,p in ipairs(api.get("/alarms/v1/partitions") or {}) do -- prime alarm cache
     alarmCache[p.id] = { 
@@ -187,7 +200,6 @@ function EVENTSCRIPT.setupFuns()
   local function pushMsg(id,cmd,val) fibaro.alert(cmd,{id},val,false); return val end
   local function set2(id,cmd,val) fibaroCall(id,cmd,table.unpack(val)); return val end
   local function dim2(id,_,val) Util.dimLight(id,table.unpack(val)) end --sec,dir,step,curve,start,stop)
-  local function child(id,_) for _,c in pairs(quickApp.childDevices) do if c.eid==id then return c end end return nil end
 
   local getFuns={}
   getFuns.value={method=get,prop='value',red=false,trigger=true}
@@ -210,7 +222,6 @@ function EVENTSCRIPT.setupFuns()
   getFuns.anyAlarmSafe={method=function(id) return not gp(id).breached end,prop='breached',red=mapOr,trigger=true}
   getFuns.willArm={method=function(id) return armedPs[id] end,prop='willArm',red=mapOr,trigger=true}
   getFuns.allWillArm={method=function(id) return armedPs[id] end,prop='willArm',red=mapAnd,trigger=true}
-  getFuns.child={method=child,prop="",red=false,trigger=false}
   getFuns.profile={method=profile,prop='profile',red=false,trigger=false}
   getFuns.scene={method=sae,prop='sceneActivationEvent',red=false,trigger=true}
   getFuns.access={method=ace,prop='accessControlEvent',red=false,trigger=true}
@@ -325,26 +336,23 @@ function EVENTSCRIPT.setupFuns()
     local gf = getFuns[prop]
     if type(id)=='table' then
       if gf.red then return gf.red(id,prop,e) else return mapC(id,prop,e) end
-    elseif virtualDevices[id] then 
-      return virtualDevices[id]:getProp(prop,e)
     else
       if gf then return gf.method(id,gf.prop,e)
-      else return fibaroGetValue(id,prop) end
+      else return (fibaroGet(id,prop)) end
     end
   end
 
-  function setProp(ids,prop,value)
-    local sf = setFuns[prop]
-    if type(ids)=='table' then
+  function setProp(id,prop,value)
+    if type(id)=='table' then
       local r = {}
-      for _,id in ipairs(ids) do
-        r[#r+1]=setProp(id,prop,value)
+      for _,id2 in ipairs(id) do
+        r[#r+1]=setProp(id2,prop,value)
       end
       return r
-    elseif virtualDevices[ids] then virtualDevices[ids]:setProp(prop,value) return value
     else
-      if sf then value = sf.method(ids,sf.cmd,value)
-      else fibaroCall(ids,'updateProperty',prop,value) end
+      local sf = setFuns[prop]
+      if sf then value = sf.method(id,sf.cmd,value)
+      else fibaroCall(id,'updateProperty',prop,value) end
       return value
     end
   end
