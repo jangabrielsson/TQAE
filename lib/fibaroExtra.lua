@@ -303,6 +303,7 @@ do
   debugFlags.json=true
   debugFlags.html=true
   debugFlags.reuseNotifies=true
+  debugFlags.logTrigger=true
 
 -- Add notification to notification center
   local cachedNots = {}
