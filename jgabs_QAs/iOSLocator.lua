@@ -2,7 +2,7 @@
 -- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
 -- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
 
-_=loadfile and loadfile("TQAE.lua"){
+local _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { 
     onAction=true, http=false, UIEevent=true 
@@ -53,7 +53,7 @@ quickAppVariables:
 if hc3_emulator then -- for debugging
   USERS={
     {name='Jan', id = 2, device='iPhone', home=true, icloud=hc3_emulator.EM.cfg.icloud.jan},
-    {name='Daniela', device='iPhone', home=false, icloud=hc3_emulator.EM.cfg.icloud.daniela},
+    {name='Daniela', id=3, device='iPhone', home=false, icloud=hc3_emulator.EM.cfg.icloud.daniela},
     {name='Max', device='iPhone', home=false, icloud=hc3_emulator.EM.cfg.icloud.max},
     {name='Tim', device='iPhone',home=true,  icloud=hc3_emulator.EM.cfg.icloud.tim},
   }
@@ -385,7 +385,7 @@ function QuickApp:onInit()
   self:debugf("%s deviceId:%s, v%s",self.name,self.id,VERSION)
   self:setVersion("iOSLOcator",SERIAL,VERSION)
   quickApp:tracef("iOSLocator, deviceId:%s",self.id)
-  self:setView("version","text","iOSLocator, %s (Users:%d)",version,#USERS)
+  self:setView("version","text","iOSLocator, %s (Users:%d)",tostring(VERSION),#USERS)
   self:setView("home","text","Home status: Unknown")
   self:setView("users","text","")
   post({type='start'})

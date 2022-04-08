@@ -18,6 +18,7 @@ local _=loadfile and loadfile("TQAE.lua"){
 --%%u7={label='MinMem', text=''}
 --%%u8={label='MaxCPU', text=''}
 --%%u9={label='MinCPU', text=''}
+--%%u10={{label='MinCPU', text='YYYY'},{button='MinCPU', text='Hupp',onReleased='foo'}}
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 

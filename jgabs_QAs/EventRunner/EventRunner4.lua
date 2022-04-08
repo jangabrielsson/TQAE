@@ -3,13 +3,14 @@
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { 
-    onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true, -- timersSched=true
+    onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true, qa=true-- timersSched=true
   },
   --startTime="10:00:00 5/12/2020",
-  speed = 48,
+  --speed = 48,
   --deploy=true,
-  --offline=true,
+  ---offline=true,
 }
+
 
 --%%name="EventRunner4"
 --%%type="com.fibaro.genericDevice"
@@ -25,7 +26,7 @@ _=loadfile and loadfile("TQAE.lua"){
 ----------- Code -----------------------------------------------------------
 _debugFlags.trigger = true -- log incoming triggers
 _debugFlags.trigger2 = true -- log incoming triggers
---_debugFlags.sourceTrigger = true
+_debugFlags.sourceTrigger = true
 _debugFlags.fcall=true     -- log fibaro.call
 _debugFlags.post = true    -- log internal posts
 _debugFlags.rule=true      -- log rules being invoked (true or false)
@@ -37,7 +38,7 @@ _debugFlags.pubsub=true    -- log only rules that are true
 function QuickApp:main()    -- EventScript version
   local rule = function(...) return self:evalScript(...) end          -- old rule function
   self:enableTriggerType({"device","global-variable","custom-event","profile","alarm","location","quickvar"}) -- types of events we want
-
+  fibaro.debugFlags.sourceTrigger=true 
   local HT = { 
     keyfob = 26, 
     motion= 21,
@@ -47,7 +48,8 @@ function QuickApp:main()    -- EventScript version
 
   Util.defvars(HT)
   Util.reverseMapDef(HT)
-
+  --rule("46:central =>  post(#keyFob{value=46:central.keyAttribute++46:central.keyId})")
+  rule("#keyFob{value='Pressed4'}  => log('OKOK %s',tjson(env.event))")
 --[[
   rule("@sunset => lamp:value=40; sched=40")
   rule("@00:00 => lamp:value=20; sched=20")

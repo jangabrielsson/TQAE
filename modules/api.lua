@@ -294,7 +294,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   ["PUT/customEvents/#name"] = function(_,path,data,name) return modifyItem('customEvents',name,data) end,
   ["DELETE/customEvents/#name"] = function(_,path,data,name) return deleteItem('customEvents',name) end,
 
-  ["GET/scenes"] = function(_,path,_,_)
+  ["GET/scenes"] = function(m,path,h,j)
     return HC3Request("GET",path)
   end,
   ["GET/scenes/#id"] = function(_,path,_,_)
