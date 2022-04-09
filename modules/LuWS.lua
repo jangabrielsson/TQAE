@@ -21,7 +21,7 @@ debug_mode = false
 local math = require "math"
 local string = require "string"
 local socket = require "socket"
-local bit = require "bit32"
+--local bit = require "bit32"
 -- local ltn12 = require "ltn12"
 
 -- local WSGUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
