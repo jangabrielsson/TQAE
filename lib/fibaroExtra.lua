@@ -107,7 +107,7 @@ do
     local self,buff = {},{}
     function self:printf(fmt,...) buff[#buff+1]=format(fmt,...) end
     function self:add(str) buff[#buff+1]=tostring(str) end
-    function self:trim(n) for i=1,#buff-n do table.remove(buff,#buff) end
+    function self:trim(n) for i=1,#buff-n do table.remove(buff,#buff) end end
     function self:tostring(space) return table.concat(buff,space) end
     return self
   end
