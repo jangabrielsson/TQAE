@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.937"
+fibaro.FIBARO_EXTRA = "v0.938"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
@@ -101,6 +101,15 @@ do
     local res = {}
     for i=1,math.max(#a,#b) do res[#res+1] = fun(a[i],b[i],c and c[i],d and d[i]) end
     return res
+  end
+
+  function utils.printBuffer()
+    local self,buff = {},{}
+    function self:printf(fmt,...) buff[#buff+1]=format(fmt,...) end
+    function self:add(str) buff[#buff+1]=tostring(str) end
+    function self:trim(n) for i=1,#buff-n do table.remove(buff,#buff) end
+    function self:tostring(space) return table.concat(buff,space) end
+    return self
   end
 
   function utils.basicAuthorization(user,password) return "Basic "..utils.base64encode(user..":"..password) end
@@ -236,7 +245,7 @@ do
   fibaro.midnight = midnight
   function fibaro.getWeekNumber(tm) return tonumber(os.date("%V",tm)) end
   function fibaro.now() return os.time()-midnight() end  
-  
+
   function fibaro.between(start,stop,optTime)
     __assert_type(start,"string" )
     __assert_type(stop,"string" )
@@ -1994,7 +2003,7 @@ do
     fromHash['deviceEvent'] = function(e) return {"deviceEvent"..e.id..e.value,"deviceEvent"..e.id,"deviceEvent"..e.value,"deviceEvent"} end
     fromHash['sceneEvent'] = function(e) return {"sceneEvent"..e.id..e.value,"sceneEvent"..e.id,"sceneEvent"..e.value,"sceneEvent"} end
     toHash['device'] = function(e) return "device"..(e.id or "")..(e.property or "") end   
-    
+
     toHash['global-variable'] = function(e) return 'global-variable'..(e.name or "") end
     toHash['quickvar'] = function(e) return 'quickvar'..(e.id or "")..(e.name or "") end
     toHash['profile'] = function(e) return 'profile'..(e.property or "") end
@@ -2013,7 +2022,7 @@ do
       return table.concat(res,"\n")
     end
     local function rule2str(rule) return rule.doc end
-    
+
     local function map(f,l,s) s = s or 1; local r={} for i=s,table.maxn(l) do r[#r+1] = f(l[i]) end return r end
     local function mapF(f,l,s) s = s or 1; local e=true for i=s,table.maxn(l) do e = f(l[i]) end return e end
 

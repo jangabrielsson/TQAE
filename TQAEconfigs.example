@@ -3,7 +3,7 @@ return {
  configFile="TQAEconfigs.lua", 
  host="192.168.1.57", 
  pwd="admin",
- user="admin"
+ user="admin",
  
  fibColors = { ["DEBUG"] = 'red', ["TRACE"] = 'blue', ["WARNING"] = 'orange', ["ERROR"] = 'red' },
  logColors = { ["SYS"] = 'yellow', ["ERROR"]='red', ["WARN"] = 'orange', ["TRACE"] = 'blue' },
