@@ -2,6 +2,8 @@
 fibaro = {}
 hub = fibaro
 
+local fmt = string.format 
+
 function string.split(str, sep)
   local fields,s = {},sep or "%s"
   str:gsub("([^"..s.."]+)", function(c) fields[#fields + 1] = c end)
@@ -234,4 +236,11 @@ end
 
 function fibaro.getPartitions()
   return api.get("/alarms/v1/partitions") or {}
+end
+
+function fibaro.callUI(id, action, element, value)
+  __assert_type(id,"number") __assert_type(action,"string") __assert_type(element,"string")
+  value = value==nil and "null" or value 
+  local _, code = api.get(fmt("/plugins/callUIEvent?deviceID=%s&eventType=%s&elementName=%s&value=%s",id,action,element,value))
+  if code == 404 then error(fmt("Device %s does not exists.",id), 3) end
 end

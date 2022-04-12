@@ -224,6 +224,14 @@ do
     end
   end
 
+  if not fibaro.callUI then
+    fibaro.callUI = function(id, action, element, value)
+      __assert_type(id,"number") __assert_type(action,"string") __assert_type(element,"string")
+      value = value==nil and "null" or value 
+      local _, code = api.get(fmt("/plugins/callUIEvent?deviceID=%s&eventType=%s&elementName=%s&value=%s",id,action,element,value))
+      if code == 404 then error(fmt("Device %s does not exists",id), 3) end
+    end
+  end
 
 end -- Fibaro functions
 
