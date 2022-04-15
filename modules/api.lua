@@ -160,7 +160,12 @@ local function getItem(rname,id)
 end
 
 local function createItem(rname,id,data)
-  id = id or "nil"
+  if id == nil then
+    for rid,r in pairs(EM.rsrc[rname]) do
+      if r.name == data.name then id = rid break end
+    end
+    id = id or "nil"
+  end
   local cfun = rname:sub(1,-2)
   if cfg.offline or cfg.shadow or EM.rsrc[rname][id] then
     if EM.rsrc[rname][id] then return nil,404 
@@ -246,7 +251,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
 
   ["GET/globalVariables"] = function(_,_,_,_) return getAllItems('globalVariables') end,
   ["GET/globalVariables/#name"] = function(_,_,_,_,name) return getItem('globalVariables',name) end,
-  ["POST/globalVariables"] = function(_,_,data,_) return createItem('globalVariables',nil,data) end,
+  ["POST/globalVariables"] = function(_,_,data,_) return createItem('globalVariables',data.name,data) end,
   ["PUT/globalVariables/#name"] = function(_,_,data,_,name)
     local oldVar  = EM.rsrc.globalVariables[name] or {}
     local oldValue  = oldVar.value
@@ -282,7 +287,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
 
   ["GET/customEvents"] = function(_,path,_,_) return getAllItems('customEvents') end,
   ["GET/customEvents/#name"] = function(_,path,_,name) return getItem('customEvents',name) end,
-  ["POST/customEvents"] = function(_,path,data,_) return createItem('customEvents',nil,data) end,
+  ["POST/customEvents"] = function(_,path,data,_) return createItem('customEvents',data.name,data) end,
   ["POST/customEvents/#name"] = function(_,path,data,_,name)
     if EM.rsrc.customEvents[name] then
       EM.addRefreshEvent({
