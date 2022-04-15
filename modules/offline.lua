@@ -239,7 +239,7 @@ for _,name in  ipairs({'globalVariables','rooms','sections','customEvents'}) do
   EM.shadow[name]=function(id)
     if EM.cfg.offline or EM.cfg.shadow and EM.rsrc[name][id] then return end
     if EM.cfg.shadow then
-      EM.rsrc[name][id] = HC3Request("/"..name.."/"..gid)
+      EM.rsrc[name][id] = HC3Request("/"..name.."/"..id)
     end
   end
 end

@@ -29,12 +29,14 @@ function fibaro.__houseAlarm(action)
   else error("Wrong parameter: '" .. action .. "'. Available parameters: arm, disarm", 3) end
 end
 
-function fibaro.alert(alertType, ids, notification)
+
+function fibaro.alert( alertType , ids , notification , isCritical , subject )
   __assert_type(alertType, "string") __assert_type(ids, "table") __assert_type(notification, "string")
   local isDefined = "false"
   local actions = { 
     email = "sendGlobalEmailNotifications",
-    push = "sendGlobalPushNotifications" 
+    push = "sendGlobalPushNotifications",
+    sms = "sendGlobalSMSNotifications",
   }
   if actions[alertType] == nil then
     error("Wrong parameter: '" .. alertType .. "'. Available parameters: email, push", 2) 
@@ -44,6 +46,22 @@ function fibaro.alert(alertType, ids, notification)
     fibaro.call(id, actions[alertType], notification, isDefined)
   end
 end
+
+--function fibaro.alert(alertType, ids, notification)
+--  __assert_type(alertType, "string") __assert_type(ids, "table") __assert_type(notification, "string")
+--  local isDefined = "false"
+--  local actions = { 
+--    email = "sendGlobalEmailNotifications",
+--    push = "sendGlobalPushNotifications" 
+--  }
+--  if actions[alertType] == nil then
+--    error("Wrong parameter: '" .. alertType .. "'. Available parameters: email, push", 2) 
+--  end
+--  for _, id in ipairs(ids) do __assert_type(id, "number") end      
+--  for _, id in ipairs(ids) do 
+--    fibaro.call(id, actions[alertType], notification, isDefined)
+--  end
+--end
 
 function fibaro.emitCustomEvent(name)
   __assert_type(name, "string")
@@ -222,7 +240,7 @@ function fibaro.isHomeBreached()
 end
 
 function fibaro.isPartitionBreached(id)
-  __assert_type(value, "number")
+  __assert_type(id, "number")
   local p = api.get("/alarms/v1/partitions/"..id)
   return p and p.breached
 end

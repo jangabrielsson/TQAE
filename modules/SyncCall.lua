@@ -16,7 +16,7 @@ do
     if event.actionName == 'SYNC_CALL' then
       local name,from,tag = event.args[1],event.args[2],event.args[3]
       local vals = {pcall(self.callAction,self,name,select(4,table.unpack(event.args)))}
-      orgCall(from,"SYNC_RETURN",tag,vals)
+      oldCall(from,"SYNC_RETURN",tag,vals)
     else
       self:callAction(event.actionName,table.unpack(event.args))
     end
