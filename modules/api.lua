@@ -245,7 +245,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       end
       return data,202
       -- Should check other device values too - usually needs restart of QA
-    elseif not cfg.offline then return HC3Request("GET",path, data)
+    elseif not cfg.offline then return HC3Request("PUT",path, data)
     else return nil,404 end
   end,
 

@@ -192,6 +192,14 @@ local function profileSet(method,client,data,opts,id)
 end
 ------------------------------
 
+local function notificationCenter(method,client,data,opts,id)
+  if method=='POST' then
+    data = data.data
+    print(string.format("Notification: ID:%s, %s - %s",data.deviceId, data.title,data.text))
+  end
+end
+
+--------------------------------
 local  primaryController  = {
   id= 1,
   name = "zwave",

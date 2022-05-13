@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.938"
+fibaro.FIBARO_EXTRA = "v0.939"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
@@ -228,8 +228,8 @@ do
     fibaro.callUI = function(id, action, element, value)
       __assert_type(id,"number") __assert_type(action,"string") __assert_type(element,"string")
       value = value==nil and "null" or value 
-      local _, code = api.get(fmt("/plugins/callUIEvent?deviceID=%s&eventType=%s&elementName=%s&value=%s",id,action,element,value))
-      if code == 404 then error(fmt("Device %s does not exists",id), 3) end
+      local _, code = api.get(format("/plugins/callUIEvent?deviceID=%s&eventType=%s&elementName=%s&value=%s",id,action,element,value))
+      if code == 404 then error(format("Device %s does not exists",id), 3) end
     end
   end
 
@@ -529,23 +529,23 @@ do
 
   function fibaro.deleteGlobalVariable(name) 
     __assert_type(name,"string")
-    return api.delete("/globalVariable/"..name) 
+    return api.delete("/globalVariables/"..name) 
   end
 
   function fibaro.existGlobalVariable(name)
     __assert_type(name,"string")
-    return api.get("/globalVariable/"..name) and true 
+    return api.get("/globalVariables/"..name) and true 
   end
 
   function fibaro.getGlobalVariableType(name)
     __assert_type(name,"string")
-    local v = api.get("/globalVariable/"..name) or {}
+    local v = api.get("/globalVariables/"..name) or {}
     return v.isEnum,v.readOnly
   end
 
   function fibaro.getGlobalVariableLastModified(name)
     __assert_type(name,"string")
-    return (api.get("/globalVariable/"..name) or {}).modified 
+    return (api.get("/globalVariables/"..name) or {}).modified 
   end
 
 
