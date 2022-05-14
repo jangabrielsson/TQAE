@@ -8,7 +8,7 @@ _=loadfile and loadfile("TQAE.lua"){
   --startTime="10:00:00 5/12/2020",
   --speed = 48,
   --deploy=true,
-  ---offline=true,
+  offline=true,
 }
 
 
@@ -22,6 +22,7 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 --FILE:jgabs_QAs/EventRunner/EventRunner4Engine.lua,EventRunner;
+--FILE:jgabs_QAs/EventRunner/EventRunnerDoc.lua,Doc;
 
 ----------- Code -----------------------------------------------------------
 _debugFlags.trigger = true -- log incoming triggers
@@ -48,8 +49,7 @@ function QuickApp:main()    -- EventScript version
 
   Util.defvars(HT)
   Util.reverseMapDef(HT)
-  --rule("46:central =>  post(#keyFob{value=46:central.keyAttribute++46:central.keyId})")
-  rule("#keyFob{value='Pressed4'}  => log('OKOK %s',tjson(env.event))")
+
 --[[
   rule("@sunset => lamp:value=40; sched=40")
   rule("@00:00 => lamp:value=20; sched=20")
@@ -72,7 +72,7 @@ function QuickApp:main()    -- EventScript version
 --  rule("2:armed => log('2 armed')")
 --  rule("2:disarmed => log('2 disarmed')")
 --  rule("2:willArm => log('2 will arm')")
-
+    rule("#se-start => log('START')")
 --  Phone = {2,107}
 --  lights={267,252,65,67,78,111,129,158,292,127,216,210,205,286,297,302,305,410,384,389,392,272,329,276} -- eller hämta värden från HomeTable
 --  rule("earthDates={2021/3/27/20:30,2022/3/26/20:30,2023/3/25/20:30}")

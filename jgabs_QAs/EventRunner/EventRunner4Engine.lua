@@ -4,11 +4,11 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.77,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.78,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
-Util,Rule = nil,nil
+Util,Rule = nil,Rule or {}
 local isError, throwError, Debug
 local _assert, _assertf, tojson, _traceInstrs
 local _RULELOGLENGTH, _MIDNIGHTADJUST = nil,nil
@@ -1787,11 +1787,11 @@ function Module.eventScript.init()
 
     function self.listInstructions()
       local t={}
-      local doc = Toolbox_Module.doc.doc
+      local doc = QuickApp.ERDoc or {}
       quickApp:debugf("User functions:")
       for f,_ in pairs(instr) do if f=="%" or f:sub(1,1)~='%' then t[#t+1]=f end end
       table.sort(t); for _,f in ipairs(t) do 
-        if doc[f] and doc[f] ~= "" then quickApp:debugf(doc[f]) else quickApp:debugf(f)  end
+        if doc[f] and doc[f] ~= "" then quickApp:debugf("%s%s",f,doc[f]) else __print("['"..f.."'] = \"\"") end --quickApp:debugf(f)  end
       end
       --table.sort(t); for _,f in ipairs(t) do _print("['"..f.."'] = [[]]") end
       quickApp:debugf("Property functions:")
@@ -1799,7 +1799,7 @@ function Module.eventScript.init()
       for f,_ in pairs(getFuns) do t[#t+1]="<ID>:"..f end 
       for f,_ in pairs(setFuns) do t[#t+1]="<ID>:"..f.."=.." end 
       table.sort(t); for _,f in ipairs(t) do 
-        if doc[f] and doc[f] ~= ""  then quickApp:debugf(doc[f]) else quickApp:debugf(f)  end
+        if doc[f] and doc[f] ~= ""  then quickApp:debugf("%s%s",f,doc[f]) else __print("['"..f.."'] = \"\"") end --quickApp:debugf(f)  end
       end
       --table.sort(t); for _,f in ipairs(t) do _print("['"..f.."'] = [[]]") end
     end
@@ -2225,6 +2225,8 @@ function QuickApp:onInit()
   self.main = function(self)
     Util.notify("info","Started "..os.date("%c"),true)
     self:tracef("Sunrise:%s,  Sunset:%s",(fibaro.get(1,"sunriseHour")),(fibaro.get(1,"sunsetHour")))
+    local uptime = api.get("/settings/info").serverStatus or os.time()
+    self:tracef("HC3 running since %s",os.date("%c",uptime))
     Util.printBanner("Setting up rules (main)")
     local stat,res = pcall(function()
         main(quickApp) -- call main
@@ -2238,7 +2240,6 @@ function QuickApp:onInit()
     Util.printBanner("Running")
     self:setView("ERname","text","EventRunner4 %s",_version)
     quickApp:post({type='%startup%',_sh=true})
-    local uptime = api.get("/settings/info").serverStatus or 0
     if os.time()-uptime < 30 then quickApp:post({type='se-start',_sh=true}) end
   end
   self:main()
