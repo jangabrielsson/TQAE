@@ -52,12 +52,12 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.78,
+      { version = 0.79,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.78"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.79"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "docs added and smaller bugfixes",
+        descr = "Fix for mapf and friends",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",

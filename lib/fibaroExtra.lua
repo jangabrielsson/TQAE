@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.939"
+fibaro.FIBARO_EXTRA = "v0.940"
 
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
@@ -74,14 +74,14 @@ do
   utils.shallowCopy = table.shallowCopy
   function utils.member(e,l) return member(l,e) end  
   function utils.remove(k,tab) return remove(tab,k) end
-  function utils.map(f,l) return l:map(f) end
-  function utils.mapf(f,l) return l:mapf(f) end
-  function utils.mapAnd(f,l) return l:mapAnd(f) end
-  function utils.mapOr(f,l) return l:mapOr(f) end
-  function utils.reduce(f,l) return l:reduce(f) end
-  function utils.mapk(f,l) return l:mapk(f) end
-  function utils.mapkv(f,l) return l:mapkv(f) end
-  function utils.size(l) return l:size() end
+  function utils.map(f,l) return table.map(l,f) end
+  function utils.mapf(f,l) return table.mapf(l,f) end
+  function utils.mapAnd(f,l) return table.mapAnd(l,f) end
+  function utils.mapOr(f,l) return table.mapOr(l,f) end
+  function utils.reduce(f,l) return table.reduce(l,f) end
+  function utils.mapk(f,l) return table.mapk(l,f) end
+  function utils.mapkv(f,l) return table.mapkv(l,f) end
+  function utils.size(l) return table.size(l) end
 
   function utils.gensym(s) return (s or "G")..fibaro._orgToString({}):match("%s(.*)") end
 
@@ -952,7 +952,7 @@ do
         end,
         error=function(res) 
           fibaro.errorf(__TAG,"refreshStates:%s",res)
-          refreshRef = setTimeout(pollRefresh,fibaro._REFRESHSTATERATE)
+          refreshRef = setTimeout(pollRefresh,fibaro.REFRESH_STATES_INTERVAL or 0)
         end,
       })
   end
