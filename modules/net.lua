@@ -51,19 +51,28 @@ function net.TCPSocket(opts2)
   function self2:connect(ip, port, opts) 
     for k,v in pairs(self.opts) do opts[k]=v end
     local _, err = self.sock:connect(ip,port)
-    if err==nil and opts.success then opts.success()
-    elseif opts.error then opts.error(err) end
+    if err==nil and opts and opts.success then opts.success()
+    elseif opts and opts.error then opts.error(err) end
   end
-  function self2:read(opts) 
-    local data,err = self.sock:receive() 
-    if data and opts.success then opts.success(data)
-    elseif data==nil and opts.error then opts.error(err) end
+  function self2:read(opts) -- I interpret this as reading as much as is available...?
+    local data,res = {}
+    local b,err = self.sock:receive(1)
+    if not err then
+      data[#data+1]=b
+      while EM.socket.select({self.sock.socket},nil,0.1)[1] do
+        b,err = self.sock:receive(1)
+        if b then data[#data+1]=b else break end
+      end
+      res = table.concat(data)
+    end
+    if res and opts and opts.success then opts.success(res)
+    elseif res==nil and opts and opts.error then opts.error(err) end
   end
   function self2.readUntil(_,delimiter, callbacks) end
-  function self2:write(data, _) 
+  function self2:write(data, opts) 
     local res,err = self.sock:send(data)
-    if res and self.opts.success then self.opts.success(res)
-    elseif res==nil and self.opts.error then self.opts.error(err) end
+    if res and opts and opts.success then opts.success(res)
+    elseif res==nil and opts and opts.error then opts.error(err) end
   end
   function self2:close() self.sock:close() end
   local pstr = "TCPSocket object: "..tostring(self2):match("%s(.*)")
