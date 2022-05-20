@@ -73,7 +73,7 @@ function net.TCPSocket(opts2)
     for i=1,#del do if data[#data-n+i]~=del:sub(i,i) then return false end end
     return true
   end
-  function self:readUntil(delimiter, opts) -- Read until the cows come home, or closed
+  function self2:readUntil(delimiter, opts) -- Read until the cows come home, or closed
     local data,ok,res = {},true,nil
     local b,err = self.sock:receive(sock,1)
     if not err then
