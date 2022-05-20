@@ -68,6 +68,34 @@ function net.TCPSocket(opts2)
     if res and opts and opts.success then opts.success(res)
     elseif res==nil and opts and opts.error then opts.error(err) end
   end
+  local function check(data,del)
+    local n = #del
+    for i=1,#del do if data[#data-n+i]~=del:sub(i,i) then return false end end
+    return true
+  end
+  function self:readUntil(delimiter, opts) -- Read until the cows come home, or closed
+    local data,ok,res = {},true,nil
+    local b,err = self.sock:receive(sock,1)
+    if not err then
+      data[#data+1]=b
+      if not check(data,delimiter) then
+        ok = false
+        while true do
+          b,err = self.sock:receive(sock,1)
+          if b then 
+            data[#data+1]=b 
+            if check(data,delimiter) then ok=true break end
+          else break end
+        end -- while
+      end
+      if ok then
+        for i=1,#delimiter do table.remove(data,#data) end
+        res = table.concat(data)
+      end
+    end
+    if res and opts and opts.success then opts.success(res)
+    elseif res==nil and opts and opts.error then opts.error(err) end
+  end
   function self2.readUntil(_,delimiter, callbacks) end
   function self2:write(data, opts) 
     local res,err = self.sock:send(data)
