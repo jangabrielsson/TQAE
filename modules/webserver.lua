@@ -371,6 +371,7 @@ EM.EMEvents('start',function(e)
       end
       addPagePath("GET/web/#rest",ARGS.web or (EM.cfg.root or "").."web/")
     end
+    EM.webPort=port
   end,true)
 
 local htmlTab= { [' '] = "&nbsp;", ['\r'] = "</br>" }

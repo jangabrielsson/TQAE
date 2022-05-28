@@ -538,7 +538,7 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
     hc3_emulator={
       getmetatable=getmetatable,setmetatable=setmetatable,io=io,installQA=EM.installQA,EM=EM,IPaddress=EM.IPAddress,
       os={setTimer=setTimeout, exit=os.exit},trigger=EM.trigger,create=EM.create,rawset=rawset,rawget=rawget,
-      registerURL = EM.registerURL,
+      registerURL = EM.registerURL, webPort=EM.webPort,
     },
     coroutine=EM.userCoroutines,
     table=table,select=select,pcall=pcall,xpcall=xpcall,print=print,string=string,error=error,

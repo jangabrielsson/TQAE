@@ -25,7 +25,7 @@ local GUI_HANDLERS = {
     end
     local stat,err=pcall(FB.__fibaro_call,id,action,"",{args=args})
     if not stat then LOG.error("Bad callAction:%s",err) end
-    client:send("HTTP/1.1 302 Found\nLocation: "..ref.."\n\n")
+    client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
     return true
   end,
   --[[

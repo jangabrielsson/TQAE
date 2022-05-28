@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.79,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.80,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -2157,7 +2157,7 @@ function Module.nodered.init(self)
       event._transID = tag
       event._from = fibaro.ID
       event._async = true
-      event._IP = Util.getIPaddress()
+      event._IP = fibaro.getIPaddress()
       if hc3_emulator then event._IP=event._IP..":"..hc3_emulator.webPort end
       local params =  {options = {
           headers = {['Accept']='application/json',['Content-Type']='application/json'},
@@ -2176,6 +2176,7 @@ function Module.nodered.init(self)
   end
 
   function self:fromNodeRed(ev)
+    ev = type(ev)=='string' and json.decode(ev) or ev
     local tag = ev._transID
     ev._IP,ev._async,ev._from,ev._transID=nil,nil,nil,nil
     if tag then return receiveAsync(tag,ev)
