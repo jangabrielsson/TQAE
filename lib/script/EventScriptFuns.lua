@@ -9,30 +9,35 @@ function EVENTSCRIPT.setupFuns()
   local util = fibaro.utils
   local midnight,toTime = fibaro.midnight,util.toTime
   local function _assert(t,f,...) if not t then error(fmt(f,...)) end end
-  local fibaroCall,fibaroGet,fibaroGetValue,getProp,setProp
-
-  EVENTSCRIPT.fibaro = EVENTSCRIPT.fibaro or {}
-  function EVENTSCRIPT.fibaro.setup()
-    fibaroCall = EVENTSCRIPT.fibaro.call or fibaro.call
-    fibaroGet = EVENTSCRIPT.fibaro.get or fibaro.get
-  end
-  EVENTSCRIPT.fibaro.setup()
+  local getProp,setProp
 
   --------------- Support for virtual device, gets deviceIDs from 10000> -----------------
-  local virtualDevices,virtualDevicesId={},10000
-  local oldGet,oldCall = fibaro.get, fibaro.call
-  function fibaro.get(id,prop)
-    if virtualDevices[i] then return virtualDevices[i]:get(id,prop) else return oldGet(id,prop) end
-  end
-  function fibaro.call(id,method,...)
-    if virtualDevices[i] then return virtualDevices[i]:call(id,method,...) else return oldGet(id,method,...) end
+
+  local interceptedIDS = nil
+  function EVENTSCRIPT.interceptCalls(id,get,call)
+    if interceptedIDS==nil then
+      interceptedIDS={}
+      local ctx = {get=fibaro.get, call=fibaro.call}
+      function fibaro.get(id,prop)
+        if interceptedIDS[id] then return interceptedIDS[id].get(ctx,id,prop)
+        else return ctx.get(id,prop) end
+      end
+      function fibaro.call(id,method,...)
+        if interceptedIDS[id] then return interceptedIDS[id].call(ctx,id,method,...)
+        else return ctx.call(id,method,...) end
+      end
+    end
+    interceptedIDS[id]={get=get,call=call}
+    return id
   end
 
+  local virtualDevicesId=100500
   class 'VirtualDevice'
   function VirtualDevice:__init(name)
     self.id = virtualDevicesId; virtualDevicesId=virtualDevicesId+1
     self.name=name
     self.props = {}
+    EVENTSCRIPT.interceptCalls(self.id,function(ctx,id,prop) return self:get(prop) end, function(ctx,id,m,...) self:call(m,...) end)
   end
   function VirtualDevice:get(prop) return self.props[prop] end
   function VirtualDevice:call(method,...)
@@ -45,6 +50,7 @@ function EVENTSCRIPT.setupFuns()
     if val~=oldVal then fibaro.post({type='device', id=self.id, property=prop, value=val, oldValue=oldValue}) end
   end
 
+
   --------------- Caching type info for devices (properties and actions) -----------------
   local resolvedDevices,cachedTypes,skips={},{},{lastBreached=true,typeTemplateInitialized=true,apiVersion=true,useEmbededView=true}
   local function resolveDevice(id)
@@ -54,7 +60,7 @@ function EVENTSCRIPT.setupFuns()
       resolvedDevices[id]=d.type
       if not cachedTypes[d.type] then
         local p = d.properties; 
-        for k,v in pairs(p) do if skips[k] or type(v)=='table' then p[k]=nil else p[k]=type(v) end end end
+        for k,v in pairs(p) do if skips[k] or type(v)=='table' then p[k]=nil else p[k]=type(v) end end
         cachedTypes[d.type] = {props=p,actions=d.actions,isQA=qa}
       end
     end
@@ -183,22 +189,22 @@ function EVENTSCRIPT.setupFuns()
   end
 
   local function BN(x) if type(x)=='boolean' then return x and 1 or 0 else return x end end
-  local get = fibaroGet
-  local function on(id,prop) return BN(fibaroGet(id,prop)) > 0 end
-  local function off(id,prop) return BN(fibaroGet(id,prop)) == 0 end
-  local function last(id,prop) local _,t=fibaroGet(id,prop); return t and os.time()-t or 0 end
+  local function get(id,prop) return fibaro.get(id,prop) end
+  local function on(id,prop) return BN(fibaro.get(id,prop)) > 0 end
+  local function off(id,prop) return BN(fibaro.get(id,prop)) == 0 end
+  local function last(id,prop) local _,t=fibaro.get(id,prop); return t and os.time()-t or 0 end
   local function cce(id,_,e) e=e.event; return e.type=='device' and e.property=='centralSceneEvent'and e.id==id and e.value or {} end
   local function ace(id,_,e) e=e.event; return e.type=='device' and e.property=='accessControlEvent' and e.id==id and e.value or {} end
   local function sae(id,_,e) e=e.event; return e.type=='device' and e.property=='sceneActivationEvent' and e.id==id and e.value.sceneId end
   local function profile(id,_) return api.get("/profiles/"..id.."?showHidden=true") end
 
   local function setProfile(id,_,val) if val then fibaro.profile("activateProfile",id) end return val end
-  local function setState(id,cmd,val) fibaroCall(id,"updateProperty","state",val); return val end
-  local function setProps(id,cmd,val) fibaroCall(id,"updateProperty",cmd,val); return val end
-  local function call(id,cmd) fibaroCall(id,cmd); return true end
-  local function set(id,cmd,val) fibaroCall(id,cmd,val); return val end
+  local function setState(id,cmd,val) fibaro.call(id,"updateProperty","state",val); return val end
+  local function setProps(id,cmd,val) fibaro.call(id,"updateProperty",cmd,val); return val end
+  local function call(id,cmd) fibaro.call(id,cmd); return true end
+  local function set(id,cmd,val) fibaro.call(id,cmd,val); return val end
   local function pushMsg(id,cmd,val) fibaro.alert(cmd,{id},val,false); return val end
-  local function set2(id,cmd,val) fibaroCall(id,cmd,table.unpack(val)); return val end
+  local function set2(id,cmd,val) fibaro.call(id,cmd,table.unpack(val)); return val end
   local function dim2(id,_,val) Util.dimLight(id,table.unpack(val)) end --sec,dir,step,curve,start,stop)
 
   local getFuns={}
@@ -260,15 +266,15 @@ function EVENTSCRIPT.setupFuns()
   getFuns.isSecure={method=on,prop='secured',red=mapAnd,trigger=true}
   getFuns.isUnsecure={method=off,prop='secured',red=mapOr,trigger=true}
   getFuns.name={method=function(id) return fibaro.getName(id) end,prop=false,red=false,trigger=false}
-  getFuns.HTname={method=function(id) return Util.reverseVar(id) end,prop=false,red=false,trigger=false}
+  getFuns.HTname={method=function(id) return EVENTSCRIPT.reverseVar(id) end,prop=false,red=false,trigger=false}
   getFuns.roomName={method=function(id) return fibaro.getRoomNameByDeviceID(id) end,prop=false,red=false,trigger=false}
-  getFuns.trigger={method=function() return true end,prop='value',red=false,trigger=true}
+  getFuns.trigger={method=get,prop='value',red=false,trigger=true}
   getFuns.time={method=get,prop='time',red=false,trigger=true}
-  getFuns.manual={method=function(id) return quickApp:lastManual(id) end,prop='value',red=false,trigger=true}
+  getFuns.manual={method=function(id) return EVENTSCRIPT.lastManual(id) end,prop='value',red=false,trigger=true}
   getFuns.start={method=function(id) return fibaro.scene("execute",{id}) end,prop="",red=mapF,trigger=false}
   getFuns.kill={method=function(id) return fibaro.scene("kill",{id}) end,prop="",red=mapF,trigger=false}
   getFuns.toggle={method=call,prop='toggle',red=mapF,trigger=true}
-  getFuns.wake={method=call,prop='wakeUpDeadDevice',red=mapF,trigger=true}
+  getFuns.wake={method=function(id) return fibaro.wakeUpDeadDevice(id) end,prop="",red=mapF,trigger=false}
   getFuns.removeSchedule={method=call,prop='removeSchedule',red=mapF,trigger=true}
   getFuns.retryScheduleSynchronization={method=call,prop='retryScheduleSynchronization',red=mapF,trigger=true}
   getFuns.setAllSchedules={method=call,prop='setAllSchedules',red=mapF,trigger=true}
@@ -337,8 +343,8 @@ function EVENTSCRIPT.setupFuns()
     if type(id)=='table' then
       if gf.red then return gf.red(id,prop,e) else return mapC(id,prop,e) end
     else
-      if gf then return gf.method(id,gf.prop,e)
-      else return (fibaroGet(id,prop)) end
+      if gf then return (gf.method(id,gf.prop,e))
+      else return (fibaro.get(id,prop)) end
     end
   end
 
@@ -352,7 +358,7 @@ function EVENTSCRIPT.setupFuns()
     else
       local sf = setFuns[prop]
       if sf then value = sf.method(id,sf.cmd,value)
-      else fibaroCall(id,'updateProperty',prop,value) end
+      else fibaro.call(id,'updateProperty',prop,value) end
       return value
     end
   end
@@ -636,4 +642,54 @@ function EVENTSCRIPT.setupFuns()
     HC3version = fibaro.HC3version, --(version)    -- Returns or tests firmware version of HC3
     getIPaddress = fibaro.getIPaddress, --(name)     -- Returns IP address of HC3
   }
+
+  -- Patch fibaro.call to track manual switches
+  local lastID,switchMap = {},{}
+  local oldFibaroCall = fibaro.call
+  function fibaro.call(id,action,...)
+    if ({turnOff=true,turnOn=true,on=true,toggle=true,off=true,setValue=true})[action] then lastID[id]={script=true,time=os.time()} end
+    if action=='setValue' and switchMap[id]==nil then
+      local actions = (__fibaro_get_device(id) or {}).actions or {}
+      switchMap[id] = actions.turnOff and not actions.setValue
+    end
+    if switchMap[id] then action=({...})[1] and 'turnOn' or 'turnOff' end
+    return oldFibaroCall(id,action,...)
+  end
+
+  local function lastHandler(ev)
+    if ev.type=='device' and ev.property=='value' then
+      local last = lastID[ev.id]
+      local _,t = fibaro.get(ev.id,'value')
+      --if last and last.script then print("T:"..(t-last.time)) end
+      if not(last and last.script and t-last.time <= 2) then
+        lastID[ev.id]={script=false, time=t}
+      end
+    end
+  end
+
+  fibaro.registerSourceTriggerCallback(lastHandler)
+  function EVENTSCRIPT.lastManual(id)
+    local last = lastID[id]
+    if not last then return -1 end
+    return last.script and -1 or os.time()-last.time
+  end
+
+  local NOFTRACE = {}
+  local function patchF(name)
+    local oldF,flag = fibaro[name],"f"..name
+    fibaro[name] = function(...)
+      local args = {...}
+      local res = {oldF(...)}
+      if _debugFlags[flag] then
+        if not NOFTRACE[args[2] or ""] then
+          args = #args==0 and "" or json.encode(args):sub(2,-2)
+          EVENTSCRIPT.lastTrace = fibaro.fformat("fibaro.%s(%s) => %s",name,args,#res==0 and "nil" or #res==1 and res[1] or res)
+          if not EVENTSCRIPT.inhibitTrace then quickApp:debugf(EVENTSCRIPT.lastTrace) end
+        end
+      end
+      return table.unpack(res)
+    end
+  end
+
+  for _,n in ipairs({'call','get','scene'}) do patchF(n) end
 end

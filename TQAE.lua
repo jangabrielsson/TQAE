@@ -103,7 +103,7 @@ QuickApp options: (set with --%% directive in file)
 --]]
 
 local embedded=...              -- get parameters if emulator included from QA code...
-local version = "0.56"
+local version = "0.57"
 local EM = { cfg = embedded or {} }
 local cfg,pfvs = EM.cfg
 local function DEF(x,y) if x==nil then return y else return x end end
@@ -537,13 +537,13 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
     },
     hc3_emulator={
       getmetatable=getmetatable,setmetatable=setmetatable,io=io,installQA=EM.installQA,EM=EM,IPaddress=EM.IPAddress,
-      os={setTimer=setTimeout, exit=os.exit},trigger=EM.trigger,create=EM.create,rawset=rawset,rawget=rawget,
+      os={setTimer=setTimeout, exit=os.exit,getenv=os.getenv,remove=os.remove},trigger=EM.trigger,create=EM.create,rawset=rawset,rawget=rawget,
       registerURL = EM.registerURL, webPort=EM.webPort,
     },
     coroutine=EM.userCoroutines,
     table=table,select=select,pcall=pcall,xpcall=xpcall,print=print,string=string,error=error,
     collectgarbage=collectgarbage,unpack=table.unpack,
-    next=next,pairs=pairs,ipairs=ipairs,tostring=tostring,tonumber=tonumber,math=math,assert=assert
+    next=next,pairs=pairs,ipairs=ipairs,tostring=tostring,tonumber=tonumber,math=math,assert=assert,
   }
   if info.fullLUA then
     EM._createQA = createQA

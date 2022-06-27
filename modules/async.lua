@@ -81,6 +81,7 @@ local function timerCall(_,args)
 end
 
 local function setTimeout(fun,ms,tag,ctx)
+  assert(type(fun)=='function',"setTimeout need funcrion (arg1)")
   ctx = ctx or procs[coroutine.running()]
   local params = {fun,ctx,nil}
   local t = EM.copas.timer.new({delay = ms/1000,recurring = false,callback = timerCall,params = params })

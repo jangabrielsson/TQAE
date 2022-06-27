@@ -8,7 +8,7 @@ _=loadfile and loadfile("TQAE.lua"){
   --startTime="10:00:00 5/12/2020",
   --speed = 48,
   --deploy=true,
-  offline=true,
+  --offline=true,
 }
 
 
@@ -72,7 +72,7 @@ function QuickApp:main()    -- EventScript version
 --  rule("2:armed => log('2 armed')")
 --  rule("2:disarmed => log('2 disarmed')")
 --  rule("2:willArm => log('2 will arm')")
-    rule("#se-start => log('START')")
+  rule("#se-start => log('START')")
 --  Phone = {2,107}
 --  lights={267,252,65,67,78,111,129,158,292,127,216,210,205,286,297,302,305,410,384,389,392,272,329,276} -- eller hämta värden från HomeTable
 --  rule("earthDates={2021/3/27/20:30,2022/3/26/20:30,2023/3/25/20:30}")
@@ -101,10 +101,11 @@ function QuickApp:main()    -- EventScript version
 
 --  rule("wait(3); log('Res:%s',http.get('https://jsonplaceholder.typicode.com/todos/1').data)")
 
---   Nodered.connect("http://192.168.1.49:1880/ER_HC3")
---   rule("Nodered.post({type='echo1',value='Hello'},true).value")
---  rule("Nodered.post({type='echo1',value=42})")
---  rule("#echo1 => log('ECHO:%s',env.event.value)")
+--   Nodered.connect("http://192.168.1.50:1880/ER_HC3")
+   Nodered.connect("http://192.168.1.88:30011/ER_HC3")
+   rule("Nodered.post({type='echo1',value='Hello'},true).value")
+  rule("Nodered.post({type='echo1',value=42})")
+  rule("#echo1 => log('ECHO:%s',env.event.value)")
 
 --    rule("log('Synchronous call:%s',Nodered.post({type='echo1',value=42},true).value)")
 

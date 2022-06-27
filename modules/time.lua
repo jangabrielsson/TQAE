@@ -109,7 +109,7 @@ local function timerQueue() -- A sorted timer queue...
   end
 
   function tq.dequeue(v) -- remove a timer
-    if v.dead then LOG.warn("Dead ptr: "..tostring(v)) return end
+    if v==nil or v.dead then LOG.warn("Dead ptr: "..tostring(v)) return end
     local n = v.next
     pcounter[v.tag]=pcounter[v.tag]-1
     if v==ptr then 
@@ -194,6 +194,7 @@ EM.EMEvents('start',function(_) -- Intercept emulator started and check if start
       end
 
       function FB.setTimeout(fun,ms,tag,ctx)
+        assert(type(fun)=='function',"setTimeout need function (arg1)")
         ctx = ctx or procs[coroutine.running()]
         local co = coroutine.create(fun)
         local v = EM.makeTimer(ms/1000+EM.clock(),co,ctx,tag,timerCall,{co,ctx}) 

@@ -41,6 +41,7 @@ local function timerCall(t,args)
 end
 
 local function setTimeout(fun,ms,tag,ctx)
+  assert(type(fun)=='function',"setTimeout need funcrion (arg1)")
   ctx = ctx or procs[coroutine.running()]
   local co = coroutine.create(fun)
   local v = EM.makeTimer(ms/1000+EM.clock(),co,ctx,tag,timerCall,{co,ctx}) 

@@ -179,9 +179,9 @@ function net.WebSocketClientTls()
     end
   end
   function self2:addEventListener(h,f) handlers[h]=f end
-  function self2:connect(url)
+  function self2:connect(url,headers)
     if conn then return false end
-    conn, err = websocket.wsopen( url, message_handler, nil ) --options )
+    conn, err = websocket.wsopen( url, message_handler, {upgrade_headers=headers} ) --options )
     if not err then connected(); return true
     else return false,err end
   end

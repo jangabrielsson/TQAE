@@ -16,13 +16,15 @@ local wsopen, wslastping, wsreset, wsreceive, wshandleincoming, wsclose, wssend,
 
 local _VERSION = 20358
 
-debug_mode = false
+debug_mode = true
 
 local math = require "math"
 local string = require "string"
 local socket = require "socket"
 --local bit = require "bit32"
 -- local ltn12 = require "ltn12"
+local bit = {}
+function bit.band(x,y) return x & y end
 
 -- local WSGUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 local STATE_START = "start"
@@ -59,7 +61,7 @@ function dump(t, seen)
 			if #v > 255 then val = string.format("%q", v:sub(1,252).."...")
 			else val = string.format("%q", v) end
 		elseif type(v) == "number" and (math.abs(v-os.time()) <= 86400) then
-			val = tostring(v) .. "(" .. os.date("%x.%X", v) .. ")"
+			val = tostring(v) .. "(" .. os.date("%x.%X", math.floor(v)) .. ")"
 		else
 			val = tostring(v)
 		end
@@ -71,7 +73,7 @@ function dump(t, seen)
 end
 
 local function L(msg, ...) -- luacheck: ignore 212
-	local str
+	local arg,str={...}
 	local level = 50
 	if type(msg) == "table" then
 		str = "luws: " .. tostring(msg.msg or msg[1])
@@ -109,6 +111,13 @@ local function split( str, sep )
 	return arr, #arr
 end
 
+local function addHeaders(headers)
+  local h = {}
+  for k,v in pairs(headers) do h[#h+1]=k..": "..v end
+  h = table.concat(h,"\r\n")
+  return h~="" and h.."\r\n" or h
+end
+
 -- Upgrade an HTTP socket to websocket
 local function wsupgrade( wsconn )
 	D("wsupgrade(%1)", wsconn)
@@ -127,7 +136,7 @@ local function wsupgrade( wsconn )
 	key = mime.b64( table.concat( key, "" ) )
 	-- Ref: https://stackoverflow.com/questions/18265128/what-is-sec-websocket-key-for
 	local req = string.format("GET %s HTTP/1.1\r\nHost: %s\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: %s\r\nSec-WebSocket-Version: 13\r\n%s\r\n",
-		wsconn.path, wsconn.ip, key, uhead)
+		wsconn.path, wsconn.ip, key, uhead and uhead.."\r\n" or "")
 
 	-- Send request.
 	D("wsupgrade() sending %1", req)

@@ -4,8 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.940"
-
+fibaro.FIBARO_EXTRA = "v0.942"
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
 local function assertf(test,fmt,...) if not test then error(format(fmt,...),2) end end
@@ -410,13 +409,14 @@ do
     for i,v in ipairs(args) do if type(v)=='table' then args[i]=tostring(v) end end
     return (debugFlags.html and not hc3_emulator) and htmlTransform(format(fmt,table.unpack(args))) or format(fmt,table.unpack(args))
   end
+  fibaro.fformat = fformat
 
-  local function arr2str(...)
+  local function arr2str(del,...)
     local args,res = {...},{}
     for i=1,#args do if args[i]~=nil then res[#res+1]=tostring(args[i]) end end 
-    return (debugFlags.html and not hc3_emulator) and htmlTransform(table.concat(res," ")) or table.concat(res," ")
+    return (debugFlags.html and not hc3_emulator) and htmlTransform(table.concat(res,del)) or table.concat(res,del)
   end 
-
+  fibaro.arr2str = arr2str
   local function print_debug(typ,tag,str)
     --__fibaro_add_debug_message(tag or __TAG,str or "",typ or "debug")
     api.post("/debugMessages",{message=str,messageType=typ or "debug",tag=tag or __TAG})
@@ -430,21 +430,21 @@ do
 
   function fibaro.debug(tag,...) 
     if not(type(tag)=='number' and tag > (debugFlags.debugLevel or 0)) then 
-      return print_debug('debug',tag,arr2str(...)) 
+      return print_debug('debug',tag,arr2str(" ",...)) 
     else return "" end 
   end
   function fibaro.trace(tag,...) 
     if not(type(tag)=='number' and tag > (debugFlags.traceLevel or 0)) then 
-      return print_debug('trace',tag,arr2str(...)) 
+      return print_debug('trace',tag,arr2str(" ",...)) 
     else return "" end 
   end
   function fibaro.error(tag,...)
-    local str = print_debug('error',tag,arr2str(...))
+    local str = print_debug('error',tag,arr2str(" ",...))
     if debugFlags.notifyError then notify("alert",str) end
     return str
   end
   function fibaro.warning(tag,...) 
-    local str = print_debug('warning',tag,arr2str(...))
+    local str = print_debug('warning',tag,arr2str(" ",...))
     if debugFlags.notifyWarning then notify("warning",str) end
     return str
   end
@@ -559,7 +559,7 @@ do
 
   function fibaro.createCustomEvent(name,userDescription) 
     __assert_type(name,"string" )
-    return api.post("/customEvent",{name=name,uderDescription=userDescription or ""})
+    return api.post("/customEvent",{name=name,userDescription=userDescription or ""})
   end
 
   function fibaro.deleteCustomEvent(name) 
@@ -1592,6 +1592,39 @@ do
 --      self:rpc(801,"foo",{3,i},3) -- call QA 972, function foo, arguments 3,i and a timeout of 3s
 --    end
 --end
+
+  do
+    local refs = {}
+    function QuickApp:INTERACTIVE_OK_BUTTON(ref)
+      ref,refs[ref]=refs[ref],nil
+      if ref then ref(true) end
+    end
+
+    function QuickApp:pushYesNo(mobileId,title,message,callback,timeout)
+      local ref = fibaro._orgToString({}):match("%s(.*)")
+      api.post("/mobile/push", 
+        {
+          category = "YES_NO", 
+          title = title, 
+          message = message, 
+          service = "Device", 
+          data = {
+            actionName = "INTERACTIVE_OK_BUTTON", 
+            deviceId = self.id, 
+            args = {ref}
+          }, 
+          action = "RunAction", 
+          mobileDevices = { mobileId }, 
+        })
+      local timer = setTimeout(function(r)
+          r,refs[ref] = refs[ref],nil
+          if r then r(false) end 
+        end, 
+        timeout*1000)
+      timeout = timeout or 20*60
+      refs[ref]=function(val) clearTimeout(timer) callback(val) end
+    end
+  end
 end -- QA
 
 --------------------- Misc -----------------------------------------------------
@@ -1611,12 +1644,12 @@ do
   local setinterval,encode,decode =  -- gives us a better error messages
   setInterval, json.encode, json.decode
   local oldClearTimout,oldSetTimout
-
+  
   if not hc3_emulator then -- Patch short-sighthed setTimeout...
     local function timer2str(t)
       return format("[Timer:%d%s %s]",t.n,t.log or "",os.date('%T %D',t.expires or 0))
     end
-    local N = 0
+    local N,NC = 0,0
     local function isTimer(timer) return type(timer)=='table' and timer['%TIMER%'] end
     local function makeTimer(ref,log,exp) N=N+1 return {['%TIMER%']=(ref or 0),n=N,log=log and " ("..log..")",expires=exp or 0,__tostring=timer2str} end
     local function updateTimer(timer,ref) timer['%TIMER%']=ref end
@@ -1627,7 +1660,6 @@ do
         oldClearTimout(ref)
       end
     end,clearTimeout
-
     setTimeout,oldSetTimout=function(f,ms,log)
       local ref,maxt=makeTimer(nil,log,math.floor(os.time()+ms/1000+0.5)),2147483648-1
       local fun = function() -- wrap function to get error messages
@@ -1635,11 +1667,13 @@ do
           local d = os.time() - ref.expires
           if d > debugFlags.lateTimer then fibaro.warningf(nil,"Late timer (%ds):%s",d,ref) end
         end
+        NC = NC-1
         local stat,res = pcall(f)
         if not stat then 
           fibaro.error(nil,res)
         end
       end
+      NC = NC+1
       if ms > maxt then
         updateTimer(ref,oldSetTimout(function() updateTimer(ref,getTimer(setTimeout(fun,ms-maxt))) end,maxt))
       else updateTimer(ref,oldSetTimout(fun,math.floor(ms+0.5))) end
@@ -1654,6 +1688,7 @@ do
           end
         end,math.floor(ms+0.5))
     end
+    fibaro.setTimeout = function(ms,fun) return setTimeout(fun,ms) end
 
     function json.decode(...)
       local stat,res = pcall(decode,...)
@@ -1664,6 +1699,11 @@ do
       if not stat then error(res,2) else return res end
     end
   end
+
+  fibaro.setTimeout = function(ms,fun) return setTimeout(fun,ms) end
+  fibaro.clearTimeout = function(ref) return clearTimeout(ref) end
+  fibaro.setInterval = function(ms,fun) return setInterval(fun,ms) end
+  fibaro.clearInterval = function(ref) return clearInterval(ref) end
 
   local httpClient = net.HTTPClient -- protect success/error with pcall and print error
   function net.HTTPClient(args)
@@ -1875,7 +1915,7 @@ do
   local inited,initEvents,_RECIEVE_EVENT
 
   function fibaro.postRemote(id,ev) if not inited then initEvents() end; return fibaro.postRemote(id,ev) end
-  function fibaro.post(ev,t) if not inited then initEvents() end; return fibaro.post(ev,t) end
+  function fibaro.post(ev,t,l) if not inited then initEvents() end; return fibaro.post(ev,t,l) end
   function fibaro.cancel(ref) if not inited then initEvents() end; return fibaro.cancel(ref) end
   function fibaro.event(ev,fun,doc) if not inited then initEvents() end; return fibaro.event(ev,fun,doc) end
   function fibaro.removeEvent(pattern,fun) if not inited then initEvents() end; return fibaro.removeEvent(pattern,fun) end
@@ -1909,15 +1949,15 @@ do
       fibaro.call(id,'RECIEVE_EVENT',{type='EVENT',ev=ev}) -- We need this as the system converts "99" to 99 and other "helpful" conversions
     end
 
-    function post(ev,t)
+    function post(ev,t,log)
       local now = os.time()
       t = type(t)=='string' and toTime(t) or t or 0
       if t < 0 then return elseif t < now then t = t+now end
-      if debugFlags.post and not ev._sh then fibaro.tracef(nil,"Posting %s at %s",ev,os.date("%c",t)) end
+      if debugFlags.post and not ev._sh then fibaro.tracef(nil,"Posting %s at %s%s",ev,os.date("%c",t),log and ("("..log..")") or "") end
       if type(ev) == 'function' then
-        return setTimeout(function() ev(ev) end,1000*(t-now))
+        return setTimeout(function() ev(ev) end,1000*(t-now),log)
       else
-        return setTimeout(function() handleEvent(ev) end,1000*(t-now))
+        return setTimeout(function() handleEvent(ev) end,1000*(t-now),log)
       end
     end
     fibaro.post = post 

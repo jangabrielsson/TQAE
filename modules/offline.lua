@@ -325,5 +325,8 @@ end
 EM.create.globalVariables = EM.create.globalVariable
 
 EM.EMEvents('start',function(_)
-    if EM.cfg.offline then setup() end
+    if EM.cfg.offline then setup() 
+    else
+      rsrc['panels/location'] = {}
+    end
   end)
