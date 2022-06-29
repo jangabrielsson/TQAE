@@ -285,7 +285,8 @@ do
     local test,timer,args = dateTest(str),nil,{...}
     local nxt = (os.time() // 60 + 1)*60
     local function loop()
-      local stat,res = pcall(fun,table.unpack(args))
+      local stat,res
+      if test() then stat,res = pcall(fun,table.unpack(args)) else stat=true end
       if stat then
         nxt = nxt + 60
         timer['%TIMER%']=setTimeout(loop,1000*(nxt-os.time()))
