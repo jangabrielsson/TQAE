@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.943"
+fibaro.FIBARO_EXTRA = "v0.944"
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
 local function assertf(test,fmt,...) if not test then error(format(fmt,...),2) end end
@@ -248,8 +248,8 @@ do
     local function parseDateStr(dateStr,last)
       local map = utils.map
       local seq = string.split(dateStr," ")   -- min,hour,day,month,wday
-      local lim = {{min=0,max=59},{min=0,max=23},{min=1,max=31},{min=1,max=12},{min=1,max=7}}
-      for i=1,5 do if seq[i]=='*' or seq[i]==nil then seq[i]=tostring(lim[i].min).."-"..lim[i].max end end
+      local lim = {{min=0,max=59},{min=0,max=23},{min=1,max=31},{min=1,max=12},{min=1,max=7},{min=2000,max=3000}}
+      for i=1,6 do if seq[i]=='*' or seq[i]==nil then seq[i]=tostring(lim[i].min).."-"..lim[i].max end end
       seq = map(function(w) return string.split(w,",") end, seq)   -- split sequences "3,4"
       local month0 = os.date("*t",os.time()).month
       seq = map(function(t) local m = table.remove(lim,1);
