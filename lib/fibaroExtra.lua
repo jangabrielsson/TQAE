@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.944"
+fibaro.FIBARO_EXTRA = "v0.945"
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
 local function assertf(test,fmt,...) if not test then error(format(fmt,...),2) end end
@@ -214,8 +214,8 @@ do
       return res
     end
 
-  function _assert(test,msg,...) if not test then error(string.format(msg,...),3) end end
-    
+    function _assert(test,msg,...) if not test then error(string.format(msg,...),3) end end
+
     local function expandDate(w1,md)
       local function resolve(id)
         local res
@@ -262,7 +262,7 @@ do
       sun = sun.."Hour"
       dateStr0=dateStr0:gsub("sun%a+ [%+%-]?%d+","0 0")
       sunPatch=function(dateSeq)
-        local h,m = (fibaro:getValue(1,sun)):match("(%d%d):(%d%d)")
+        local h,m = (fibaro.getValue(1,sun)):match("(%d%d):(%d%d)")
         dateSeq[1]={[(tonumber(h)*60+tonumber(m)+tonumber(offs))%60]=true}
         dateSeq[2]={[math.floor((tonumber(h)*60+tonumber(m)+tonumber(offs))/60)]=true}
       end
@@ -281,7 +281,39 @@ do
     end
   end
 
-  function fibaro.cron(str,fun,...)
+  do
+    -- Alternative, several timers share a cron loop instance.
+    local jobs,timer = {} -- {fun = {test=.., args={...}}}
+
+    local function cronLoop()
+      if timer==nil or timer.expired then
+        local nxt = (os.time() // 60 + 1)*60
+        local function loop()
+          local stat,res
+          for str,args in pairs(jobs) do
+--            setTimeout(function() -- what is better?
+                if args.test() then stat,res = pcall(args.fun,table.unpack(args.args)) else stat=true end
+                if not stat then fibaro.error(__TAG,res) end
+--              end,0)
+          end
+          nxt = nxt + 60
+          timer['%TIMER%']=setTimeout(loop,1000*(nxt-os.time()))
+        end
+        timer = setTimeout(loop,1000*(nxt-os.time()))
+      end
+      return timer
+    end
+
+    function fibaro.cron(str,fun,...)
+      jobs[str]={fun=fun,args={...},test=dateTest(str)}
+      return cronLoop()
+    end
+    function fibaro.removeCronJob(str)
+      jobs[str]=nil
+    end
+  end
+
+  function fibaro.cron2(str,fun,...) 
     local test,timer,args = dateTest(str),nil,{...}
     local nxt = (os.time() // 60 + 1)*60
     local function loop()
@@ -1764,6 +1796,7 @@ do
           if d > debugFlags.lateTimer then fibaro.warningf(nil,"Late timer (%ds):%s",d,ref) end
         end
         NC = NC-1
+        ref.expired = true
         local stat,res = pcall(f)
         if not stat then 
           fibaro.error(nil,res)

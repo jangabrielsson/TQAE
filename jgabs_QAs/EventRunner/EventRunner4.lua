@@ -50,6 +50,20 @@ function QuickApp:main()    -- EventScript version
   Util.defvars(HT)
   Util.reverseMapDef(HT)
 
+  HT.roller2windows = {
+    [88] = { 77, 78}, 
+    [89] =  { 99 },
+  }
+
+  rule([[once(66:value >= 26) => 
+     log('Hot weather 2');
+     for roller,windows in pairs(roller2windows) do
+       if roller:value > 50 & windows:safe then
+          roller:value=15;
+          log("roller:%d = %d",roller,15)
+       end
+     end
+     ]])
 --[[
   rule("@sunset => lamp:value=40; sched=40")
   rule("@00:00 => lamp:value=20; sched=20")
@@ -102,8 +116,8 @@ function QuickApp:main()    -- EventScript version
 --  rule("wait(3); log('Res:%s',http.get('https://jsonplaceholder.typicode.com/todos/1').data)")
 
 --   Nodered.connect("http://192.168.1.50:1880/ER_HC3")
-   Nodered.connect("http://192.168.1.88:30011/ER_HC3")
-   rule("Nodered.post({type='echo1',value='Hello'},true).value")
+  Nodered.connect("http://192.168.1.88:30011/ER_HC3")
+  rule("Nodered.post({type='echo1',value='Hello'},true).value")
   rule("Nodered.post({type='echo1',value=42})")
   rule("#echo1 => log('ECHO:%s',env.event.value)")
 
