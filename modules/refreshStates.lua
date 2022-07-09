@@ -128,6 +128,7 @@ local function pollOnce(cb)
   if not r then return cb() end
   if c>=200 and c<300 then
     local states = resp[1] and json.decode(table.concat(resp))
+    --print(json.encode(states))
     if states then
       lastRefresh=states.last
       if states.events and #states.events>0 then 

@@ -38,7 +38,7 @@ _debugFlags.pubsub=true    -- log only rules that are true
 
 function QuickApp:main()    -- EventScript version
   local rule = function(...) return self:evalScript(...) end          -- old rule function
-  self:enableTriggerType({"device","global-variable","custom-event","profile","alarm","location","quickvar"}) -- types of events we want
+  self:enableTriggerType({"device","global-variable","custom-event","profile","alarm","location","quickvar","user"}) -- types of events we want
   fibaro.debugFlags.sourceTrigger=true 
   local HT = { 
     keyfob = 26, 
@@ -49,21 +49,7 @@ function QuickApp:main()    -- EventScript version
 
   Util.defvars(HT)
   Util.reverseMapDef(HT)
-
-  HT.roller2windows = {
-    [88] = { 77, 78}, 
-    [89] =  { 99 },
-  }
-
-  rule([[once(66:value >= 26) => 
-     log('Hot weather 2');
-     for roller,windows in pairs(roller2windows) do
-       if roller:value > 50 & windows:safe then
-          roller:value=15;
-          log("roller:%d = %d",roller,15)
-       end
-     end
-     ]])
+  
 --[[
   rule("@sunset => lamp:value=40; sched=40")
   rule("@00:00 => lamp:value=20; sched=20")
@@ -79,8 +65,7 @@ function QuickApp:main()    -- EventScript version
 --  rule("alarms:willArm => log('Any will arm')")
 --  rule("{1,2}:allArmed => log('1,2 armed')")
 --  rule("{1,2}:disarmed => log('1,2 disarmed')")
---rule("wait(2); 0:alarm=true")
-
+--  rule("wait(2); 0:alarm=true")
 --  rule("0:armed => log('all armed')").print()
 --  rule("0:armed==false => log('all disarmed')").print()
 --  rule("2:armed => log('2 armed')")
@@ -116,10 +101,10 @@ function QuickApp:main()    -- EventScript version
 --  rule("wait(3); log('Res:%s',http.get('https://jsonplaceholder.typicode.com/todos/1').data)")
 
 --   Nodered.connect("http://192.168.1.50:1880/ER_HC3")
-  Nodered.connect("http://192.168.1.88:30011/ER_HC3")
-  rule("Nodered.post({type='echo1',value='Hello'},true).value")
-  rule("Nodered.post({type='echo1',value=42})")
-  rule("#echo1 => log('ECHO:%s',env.event.value)")
+--  Nodered.connect("http://192.168.1.88:30011/ER_HC3")
+--  rule("Nodered.post({type='echo1',value='Hello'},true).value")
+--  rule("Nodered.post({type='echo1',value=42})")
+--  rule("#echo1 => log('ECHO:%s',env.event.value)")
 
 --    rule("log('Synchronous call:%s',Nodered.post({type='echo1',value=42},true).value)")
 

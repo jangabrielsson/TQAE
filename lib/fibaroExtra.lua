@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.945"
+fibaro.FIBARO_EXTRA = "v0.946"
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
 local function assertf(test,fmt,...) if not test then error(format(fmt,...),2) end end
@@ -271,7 +271,7 @@ do
     return function() -- Pretty efficient way of testing dates...
       local t = os.date("*t",os.time())
       if month and month~=t.month then parseDateStr(dateStr0) end -- Recalculate 'last' every month
-      if sunPatch and (month and month~=t.month or day~=t.day) then sunPatch(dateSeq) day=t.day end -- Recalculate 'last' every month
+      if sunPatch and (month and month~=t.month or day~=t.day) then sunPatch(dateSeq) day=t.day end -- Recalculate sunset/sunrise
       return
       dateSeq[1][t.min] and    -- min     0-59
       dateSeq[2][t.hour] and   -- hour    0-23
@@ -292,8 +292,8 @@ do
           local stat,res
           for str,args in pairs(jobs) do
 --            setTimeout(function() -- what is better?
-                if args.test() then stat,res = pcall(args.fun,table.unpack(args.args)) else stat=true end
-                if not stat then fibaro.error(__TAG,res) end
+            if args.test() then stat,res = pcall(args.fun,table.unpack(args.args)) else stat=true end
+            if not stat then fibaro.error(__TAG,res) end
 --              end,0)
           end
           nxt = nxt + 60
@@ -978,7 +978,14 @@ do
     GeofenceEvent = function(d) 
       post({type='location',id=d.userId,property=d.locationId,value=d.geofenceAction,timestamp=d.timestamp})
     end,
+    DeviceActionRanEvent = function(d,e)
+      if e.sourceType=='user' then  
+        post({type='user',id=e.sourceId,value='action',data=d})
+      end
+    end,
   }
+
+--  {"date":"08:24 | 9.7.2022","changes":[],"events":[{"objects":[{"objectType":"device","objectId":756}],"type":"DeviceActionRanEvent","created":1657347877,"sourceId":2,"data":{"args":[],"actionName":"turnOn","id":756},"sourceType":"user"}],"last":341112,"status":"IDLE","timestamp":1657347877}
 
   function fibaro.registerSourceTriggerCallback(callback)
     __assert_type(callback,"function")
@@ -1010,7 +1017,7 @@ do
 
   function sourceTriggerTransformer(e)
     local handler = EventTypes[e.type]
-    if handler then handler(e.data)
+    if handler then handler(e.data,e)
     elseif handler==nil and fibaro._UNHANDLED_REFRESHSTATES then 
       fibaro.debugf(__TAG,"[Note] Unhandled refreshState/sourceTrigger:%s -- please report",e) 
     end
