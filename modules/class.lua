@@ -8,6 +8,7 @@ Class support, mimicking LuaBind's class implementation
 
 --]]
 local setmetatable = hc3_emulator.setmetatable
+local getmetatable = hc3_emulator.getmetatable
 local rawset = hc3_emulator.rawset
 local rawget = hc3_emulator.rawget
 
@@ -96,8 +97,9 @@ function property(get,set)
   return {['%CLASSPROP%']=true, get=get, set=set}
 end
 
-local function trapIndex(props,clss,obj)
-  function clss.__index(_,key)
+local function trapIndex(clss)
+  function clss.__index(obj,key)
+    local props = rawget(obj,'___props') or {}
     if props[key] then return props[key].get(obj) 
     else
       local v = rawget(obj,key)
@@ -109,7 +111,8 @@ local function trapIndex(props,clss,obj)
       end
     end
   end
-  function clss.__newindex(_,key,val)
+  function clss.__newindex(obj,key,val)
+    local props = rawget(obj,'___props') or {}
     if props[key] then return props[key].set(obj,val) else return rawset(obj,key,val) end
   end
 end
@@ -136,11 +139,14 @@ class2.new = function(name, parent)
     local self = class.__factory()
     assertf(self.__init,"Missing initializer for %s",name)
     self:__init(...)
-    local trapF,props = false,{}
+    local props = {}
     for k,v in pairs(self) do
-      if type(v)=='table' and v['%CLASSPROP%'] then self[k],props[k]=nil,v; trapF = true end
+      if type(v)=='table' and v['%CLASSPROP%'] then rawset(self,k,nil) props[k]=v end
     end
-    if trapF then trapIndex(props,class,self) end
+    if next(props)~=nil then
+      rawset(self,'___props',props)
+      if rawget(class,'__index')==class then trapIndex(class) end
+    end
     return self
   end
 

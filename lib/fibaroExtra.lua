@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.946"
+fibaro.FIBARO_EXTRA = "v0.948"
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
 local function assertf(test,fmt,...) if not test then error(format(fmt,...),2) end end
@@ -981,6 +981,8 @@ do
     DeviceActionRanEvent = function(d,e)
       if e.sourceType=='user' then  
         post({type='user',id=e.sourceId,value='action',data=d})
+      elseif e.sourceType=='system' then 
+        post({type='system',value='action',data=d})
       end
     end,
   }
