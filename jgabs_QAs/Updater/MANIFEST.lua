@@ -52,12 +52,12 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.81,
+      { version = 0.82,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.81"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.82"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "Added user action events",
+        descr = "Fixed bug in post()",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",

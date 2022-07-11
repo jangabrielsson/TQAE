@@ -33,7 +33,7 @@ _debugFlags.post = true    -- log internal posts
 _debugFlags.rule=true      -- log rules being invoked (true or false)
 _debugFlags.ruleTrue=true  -- log only rules that are true
 _debugFlags.pubsub=true    -- log only rules that are true
-
+_debugFlags.extendedErrors=true
 ------------- Put your rules inside QuickApp:main() -------------------
 
 function QuickApp:main()    -- EventScript version
@@ -46,10 +46,11 @@ function QuickApp:main()    -- EventScript version
     temp = 22,
     lux = 23,
   }
-
+  
   Util.defvars(HT)
   Util.reverseMapDef(HT)
   
+  rule("timer1 = post(#stekkersVertraagdOff,+/02:15)")
 --[[
   rule("@sunset => lamp:value=40; sched=40")
   rule("@00:00 => lamp:value=20; sched=20")

@@ -4,7 +4,7 @@
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.948"
+fibaro.FIBARO_EXTRA = "v0.949"
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
 local function assertf(test,fmt,...) if not test then error(format(fmt,...),2) end end
@@ -433,7 +433,8 @@ do
 end -- Time functions
 
 --------------------- Trace functions ------------------------------------------
-
+do
+end
 --------------------- Debug functions -----------------------------------------
 do
   local fformat
@@ -1788,7 +1789,7 @@ do
     end
     local N,NC = 0,0
     local function isTimer(timer) return type(timer)=='table' and timer['%TIMER%'] end
-    local function makeTimer(ref,log,exp) N=N+1 return {['%TIMER%']=(ref or 0),n=N,log=log and " ("..log..")",expires=exp or 0,__tostring=timer2str} end
+    local function makeTimer(ref,log,exp) N=N+1 return {['%TIMER%']=(ref or 0),n=N,log=type(log)=='string' and " ("..log..")" or nil,expires=exp or 0,__tostring=timer2str} end
     local function updateTimer(timer,ref) timer['%TIMER%']=ref end
     local function getTimer(timer) return timer['%TIMER%'] end
 
@@ -2091,7 +2092,7 @@ do
       local now = os.time()
       t = type(t)=='string' and toTime(t) or t or 0
       if t < 0 then return elseif t < now then t = t+now end
-      if debugFlags.post and not ev._sh then fibaro.tracef(nil,"Posting %s at %s%s",ev,os.date("%c",t),log and ("("..log..")") or "") end
+      if debugFlags.post and not ev._sh then fibaro.tracef(nil,"Posting %s at %s%s",ev,os.date("%c",t),type(log)=='string' and ("("..log..")") or "") end
       if type(ev) == 'function' then
         return setTimeout(function() ev(ev) end,1000*(t-now),log)
       else

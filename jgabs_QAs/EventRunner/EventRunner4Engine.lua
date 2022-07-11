@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.81,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.82,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -1702,7 +1702,9 @@ function Module.eventScript.init()
       if n == 0 then fibaro.EM.disable(e.rule) s.push(true) return end
       s.push(fibaro.EM.disable(s.pop())) 
     end
-    instr['post'] = function(s,n,ev) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end s.push(quickApp:post(e,t,ev.rule)) end
+    instr['post'] = function(s,n,ev) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end 
+    s.push(quickApp:post(e,t,ev.rule)) 
+    end
     instr['subscribe'] = function(s,_,_) quickApp:subscribe(s.pop()) s.push(true) end
     instr['publish'] = function(s,n,_) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end quickApp:publish(e,t) s.push(e) end
     instr['remote'] = function(s,n,_) _assert(n==2,"Wrong number of args to 'remote/2'"); 
