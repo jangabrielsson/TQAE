@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.82,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.83,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -640,11 +640,33 @@ Module.autopatch = { name="ER Autopatch", version="0.2"}
 function Module.autopatch.init(self)
   if Module.autopatch.inited then return Module.autopatch.inited end
   Module.autopatch.inited = true
-
+  local UpdaterID,UpdateVersion
   function Util.checkForUpdates()
+    local updater = api.get("/devices?name=QAUpdater")
+    if updater and updater[1] then
+      updater = updater[1]
+      UpdaterID = update.id
+      local updates = fibaro.getQAVariable(updater.id,"UPDATES")
+      if not(updates and type(updates) == 'table') then return end
+      for _,up in ipairs(updates) do
+        if "UPD"..up.serial == quickApp.E_SERIAL then
+          for _,v in ipairs(up.versions) do
+            if v.version > QuickApp.E_VERSION then
+              UpdateVersion=v.version
+              self:post({type='File_update',file=up.name,version=v.version,descr=v.descr})
+            end
+          end
+        end
+      end
+    else
+      self:warning("Please install QAUpdater and name it 'QAUpdater'")
+    end
   end
 
   function Util.updateFile(file)
+    if UpdaterID and UpdateVersion then
+        fibaro.call(UpdaterID,"updateMe",self.id,UpdateVersion)
+    end
   end
 
   function DOWNLOADSOURCE()
@@ -1704,361 +1726,361 @@ function Module.eventScript.init()
     end
     instr['post'] = function(s,n,ev) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end 
     s.push(quickApp:post(e,t,ev.rule)) 
+  end
+  instr['subscribe'] = function(s,_,_) quickApp:subscribe(s.pop()) s.push(true) end
+  instr['publish'] = function(s,n,_) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end quickApp:publish(e,t) s.push(e) end
+  instr['remote'] = function(s,n,_) _assert(n==2,"Wrong number of args to 'remote/2'"); 
+    local e,u=s.pop(),s.pop(); 
+    quickApp:postRemote(u,e) 
+    s.push(true) 
+  end
+  instr['cancel'] = function(s,_) quickApp:cancel(s.pop()) s.push(nil) end
+  instr['add'] = function(s,_) local v,t=s.pop(),s.pop() table.insert(t,v) s.push(t) end
+  instr['remove'] = function(s,_) local v,t=s.pop(),s.pop() table.remove(t,v) s.push(t) end
+  instr['%betw'] = function(s,_) local t2,t1,time=s.pop(),s.pop(),os.time()
+    _assert(tonumber(t1) and tonumber(t2),"Bad arguments to between '...', '%s' '%s'",t1 or "nil", t2 or "nil")
+    if t1  > 24*60*60 then
+      s.push(t1 <= time and t2 >= time)
+    else
+      local now = time-midnight()
+      if t1<=t2 then s.push(t1 <= now and now <= t2) else s.push(now >= t1 or now <= t2) end 
     end
-    instr['subscribe'] = function(s,_,_) quickApp:subscribe(s.pop()) s.push(true) end
-    instr['publish'] = function(s,n,_) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end quickApp:publish(e,t) s.push(e) end
-    instr['remote'] = function(s,n,_) _assert(n==2,"Wrong number of args to 'remote/2'"); 
-      local e,u=s.pop(),s.pop(); 
-      quickApp:postRemote(u,e) 
-      s.push(true) 
-    end
-    instr['cancel'] = function(s,_) quickApp:cancel(s.pop()) s.push(nil) end
-    instr['add'] = function(s,_) local v,t=s.pop(),s.pop() table.insert(t,v) s.push(t) end
-    instr['remove'] = function(s,_) local v,t=s.pop(),s.pop() table.remove(t,v) s.push(t) end
-    instr['%betw'] = function(s,_) local t2,t1,time=s.pop(),s.pop(),os.time()
-      _assert(tonumber(t1) and tonumber(t2),"Bad arguments to between '...', '%s' '%s'",t1 or "nil", t2 or "nil")
-      if t1  > 24*60*60 then
-        s.push(t1 <= time and t2 >= time)
-      else
-        local now = time-midnight()
-        if t1<=t2 then s.push(t1 <= now and now <= t2) else s.push(now >= t1 or now <= t2) end 
+  end
+  instr['%eventmatch'] = function(s,_,e,i) 
+    local ev,evp=i[4],i[3]; 
+    local vs = fibaro.EM.match(evp,e.event)
+    if vs then for k,v in pairs(vs) do e.locals[k]={v} end end -- Uneccesary? Alread done in head matching.
+    s.push(e.event and vs and ev or false) 
+  end
+  instr['again'] = function(s,n,e) 
+    local v = n>0 and s.pop() or math.huge
+    e.rule._again = (e.rule._again or 0)+1
+    if v > e.rule._again then setTimeout(function() e.rule.start(e.rule._event) end,0) else e.rule._again,e.rule._event = nil,nil end
+    s.push(e.rule._again or v)
+  end
+  instr['trueFor'] = function(s,_,e,i)
+    local val,time = s.pop(),s.pop()
+    e.rule._event = e.event
+    local flags = i[5] or {}; i[5]=flags
+    if val then
+      if flags.expired then 
+        s.push(val); 
+        flags.expired=nil;
+        return 
       end
-    end
-    instr['%eventmatch'] = function(s,_,e,i) 
-      local ev,evp=i[4],i[3]; 
-      local vs = fibaro.EM.match(evp,e.event)
-      if vs then for k,v in pairs(vs) do e.locals[k]={v} end end -- Uneccesary? Alread done in head matching.
-      s.push(e.event and vs and ev or false) 
-    end
-    instr['again'] = function(s,n,e) 
-      local v = n>0 and s.pop() or math.huge
-      e.rule._again = (e.rule._again or 0)+1
-      if v > e.rule._again then setTimeout(function() e.rule.start(e.rule._event) end,0) else e.rule._again,e.rule._event = nil,nil end
-      s.push(e.rule._again or v)
-    end
-    instr['trueFor'] = function(s,_,e,i)
-      local val,time = s.pop(),s.pop()
-      e.rule._event = e.event
-      local flags = i[5] or {}; i[5]=flags
-      if val then
-        if flags.expired then 
-          s.push(val); 
-          flags.expired=nil;
-          return 
-        end
-        if flags.timer then s.push(false); return end
-        flags.timer = setTimeout(function() 
-            --  Event._callTimerFun(function()
-            flags.expired,flags.timer=true,nil; 
-            quickApp:post({type='trueFor',stop=true,expired=true,rule=e.rule,_sh=true})
-            e.rule.start(e.rule._event) 
-            --      end)
-          end,1000*time);
-        quickApp:post({type='trueFor',start=true,rule=e.rule,_sh=true})
-        s.push(false); return
-      else
-        if flags.timer then 
-          flags.timer=clearTimeout(flags.timer)
-          quickApp:post({type='trueFor',stop=true,rule=e.rule,_sh=true})
-        end
-        s.push(false)
+      if flags.timer then s.push(false); return end
+      flags.timer = setTimeout(function() 
+          --  Event._callTimerFun(function()
+          flags.expired,flags.timer=true,nil; 
+          quickApp:post({type='trueFor',stop=true,expired=true,rule=e.rule,_sh=true})
+          e.rule.start(e.rule._event) 
+          --      end)
+        end,1000*time);
+      quickApp:post({type='trueFor',start=true,rule=e.rule,_sh=true})
+      s.push(false); return
+    else
+      if flags.timer then 
+        flags.timer=clearTimeout(flags.timer)
+        quickApp:post({type='trueFor',stop=true,rule=e.rule,_sh=true})
       end
+      s.push(false)
     end
-
-    function self.addInstr(name,fun) _assert(instr[name] == nil,"Instr already defined: %s",name) instr[name] = fun end
-
-    self.instr = instr
-    local function postTrace(i,args,stack,cp)
-      local f,_ = i[1],i[2]
-      if not ({jmp=true,push=true,pop=true,addr=true,fn=true,table=true,})[f] then
-        local p0,p1=3,1; while i[p0] do table.insert(args,p1,i[p0]) p1=p1+1 p0=p0+1 end
-        args = format("%s(%s)=%s",f,safeEncode(args):sub(2,-2),safeEncode(stack.peek()))
-        quickApp:debugf("pc:%-3d sp:%-3d %s",cp,stack.size(),args)
-      else
-        quickApp:debugf("pc:%-3d sp:%-3d [%s/%s%s]",cp,stack.size(),i[1],i[2],i[3] and ","..json.encode(i[3]) or "")
-      end
-    end
-
-    function self.dump(code)
-      code = code or {}
-      for p = 1,#code do
-        local i = code[p]
-        quickApp:debugf("%-3d:[%s/%s%s%s]",p,i[1],i[2] ,i[3] and ","..tojson(i[3]) or "",i[4] and ","..tojson(i[4]) or "")
-      end
-    end
-
-    function self.listInstructions()
-      local t={}
-      local doc = QuickApp.ERDoc or {}
-      quickApp:debugf("User functions:")
-      for f,_ in pairs(instr) do if f=="%" or f:sub(1,1)~='%' then t[#t+1]=f end end
-      table.sort(t); for _,f in ipairs(t) do 
-        if doc[f] and doc[f] ~= "" then quickApp:debugf("%s%s",f,doc[f]) else __print("['"..f.."'] = \"\"") end --quickApp:debugf(f)  end
-      end
-      --table.sort(t); for _,f in ipairs(t) do _print("['"..f.."'] = [[]]") end
-      quickApp:debugf("Property functions:")
-      t={}
-      for f,_ in pairs(getFuns) do t[#t+1]="<ID>:"..f end 
-      for f,_ in pairs(setFuns) do t[#t+1]="<ID>:"..f.."=.." end 
-      table.sort(t); for _,f in ipairs(t) do 
-        if doc[f] and doc[f] ~= ""  then quickApp:debugf("%s%s",f,doc[f]) else __print("['"..f.."'] = \"\"") end --quickApp:debugf(f)  end
-      end
-      --table.sort(t); for _,f in ipairs(t) do _print("['"..f.."'] = [[]]") end
-    end
-
-    function self.eval(env)
-      local stack,code=env.stack or mkStack(),env.code
-      local traceFlag = env.log and env.log.trace or _traceInstrs
-      env.cp,env.env,env.src = env.cp or 1, env.env or {},env.src or ""
-      local i,args
-      local status,stat,res = pcall(function() 
-          local stat,res
-          while env.cp <= #code and stat==nil do
-            i = code[env.cp]
-            if traceFlag or _traceInstrs then 
-              args = copy(stack.liftc(i[2]))
-              stat,res=(instr[i[1]] or instr['%call'])(stack,i[2],env,i)
-              postTrace(i,args,stack,env.cp) 
-            else stat,res=(instr[i[1]] or instr['%call'])(stack,i[2],env,i) end
-            env.cp = env.cp+1
-          end --until env.cp > #code or stat
-          return stat,res or {stack.pop()}
-        end)
-      if status then return stat,res
-      else
-        if isError(stat) then stat.src = stat.src or env.src; error(stat) end
-        throwError{msg=format("Error executing instruction:'%s'",tojson(i)),err=stat,src=env.src,ctx=res}
-      end
-    end
-
-    function self.eval2(env) env.cp=nil; env.locals = env.locals or {}; local _,res=self.eval(env) return res[1] end
-
-    local function makeDateInstr(f)
-      return function(s,_,_,i)
-        local ts = s.pop()
-        if ts ~= i[5] then i[6] = Util.dateTest(f(ts)); i[5] = ts end -- cache fun
-        s.push(i[6]())
-      end
-    end
-
-    self.addInstr("date",makeDateInstr(function(s) return s end))             -- min,hour,days,month,wday
-    self.addInstr("day",makeDateInstr(function(s) return "* * "..s end))      -- day('1-31'), day('1,3,5')
-    self.addInstr("month",makeDateInstr(function(s) return "* * * "..s end))  -- month('jan-feb'), month('jan,mar,jun')
-    self.addInstr("wday",makeDateInstr(function(s) return "* * * * "..s end)) -- wday('fri-sat'), wday('mon,tue,wed')
-
-    return self
   end
 
+  function self.addInstr(name,fun) _assert(instr[name] == nil,"Instr already defined: %s",name) instr[name] = fun end
+
+  self.instr = instr
+  local function postTrace(i,args,stack,cp)
+    local f,_ = i[1],i[2]
+    if not ({jmp=true,push=true,pop=true,addr=true,fn=true,table=true,})[f] then
+      local p0,p1=3,1; while i[p0] do table.insert(args,p1,i[p0]) p1=p1+1 p0=p0+1 end
+      args = format("%s(%s)=%s",f,safeEncode(args):sub(2,-2),safeEncode(stack.peek()))
+      quickApp:debugf("pc:%-3d sp:%-3d %s",cp,stack.size(),args)
+    else
+      quickApp:debugf("pc:%-3d sp:%-3d [%s/%s%s]",cp,stack.size(),i[1],i[2],i[3] and ","..json.encode(i[3]) or "")
+    end
+  end
+
+  function self.dump(code)
+    code = code or {}
+    for p = 1,#code do
+      local i = code[p]
+      quickApp:debugf("%-3d:[%s/%s%s%s]",p,i[1],i[2] ,i[3] and ","..tojson(i[3]) or "",i[4] and ","..tojson(i[4]) or "")
+    end
+  end
+
+  function self.listInstructions()
+    local t={}
+    local doc = QuickApp.ERDoc or {}
+    quickApp:debugf("User functions:")
+    for f,_ in pairs(instr) do if f=="%" or f:sub(1,1)~='%' then t[#t+1]=f end end
+    table.sort(t); for _,f in ipairs(t) do 
+      if doc[f] and doc[f] ~= "" then quickApp:debugf("%s%s",f,doc[f]) else __print("['"..f.."'] = \"\"") end --quickApp:debugf(f)  end
+    end
+    --table.sort(t); for _,f in ipairs(t) do _print("['"..f.."'] = [[]]") end
+    quickApp:debugf("Property functions:")
+    t={}
+    for f,_ in pairs(getFuns) do t[#t+1]="<ID>:"..f end 
+    for f,_ in pairs(setFuns) do t[#t+1]="<ID>:"..f.."=.." end 
+    table.sort(t); for _,f in ipairs(t) do 
+      if doc[f] and doc[f] ~= ""  then quickApp:debugf("%s%s",f,doc[f]) else __print("['"..f.."'] = \"\"") end --quickApp:debugf(f)  end
+    end
+    --table.sort(t); for _,f in ipairs(t) do _print("['"..f.."'] = [[]]") end
+  end
+
+  function self.eval(env)
+    local stack,code=env.stack or mkStack(),env.code
+    local traceFlag = env.log and env.log.trace or _traceInstrs
+    env.cp,env.env,env.src = env.cp or 1, env.env or {},env.src or ""
+    local i,args
+    local status,stat,res = pcall(function() 
+        local stat,res
+        while env.cp <= #code and stat==nil do
+          i = code[env.cp]
+          if traceFlag or _traceInstrs then 
+            args = copy(stack.liftc(i[2]))
+            stat,res=(instr[i[1]] or instr['%call'])(stack,i[2],env,i)
+            postTrace(i,args,stack,env.cp) 
+          else stat,res=(instr[i[1]] or instr['%call'])(stack,i[2],env,i) end
+          env.cp = env.cp+1
+        end --until env.cp > #code or stat
+        return stat,res or {stack.pop()}
+      end)
+    if status then return stat,res
+    else
+      if isError(stat) then stat.src = stat.src or env.src; error(stat) end
+      throwError{msg=format("Error executing instruction:'%s'",tojson(i)),err=stat,src=env.src,ctx=res}
+    end
+  end
+
+  function self.eval2(env) env.cp=nil; env.locals = env.locals or {}; local _,res=self.eval(env) return res[1] end
+
+  local function makeDateInstr(f)
+    return function(s,_,_,i)
+      local ts = s.pop()
+      if ts ~= i[5] then i[6] = Util.dateTest(f(ts)); i[5] = ts end -- cache fun
+      s.push(i[6]())
+    end
+  end
+
+  self.addInstr("date",makeDateInstr(function(s) return s end))             -- min,hour,days,month,wday
+  self.addInstr("day",makeDateInstr(function(s) return "* * "..s end))      -- day('1-31'), day('1,3,5')
+  self.addInstr("month",makeDateInstr(function(s) return "* * * "..s end))  -- month('jan-feb'), month('jan,mar,jun')
+  self.addInstr("wday",makeDateInstr(function(s) return "* * * * "..s end)) -- wday('fri-sat'), wday('mon,tue,wed')
+
+  return self
+end
+
 --------- Event script Rule compiler ------------------------------------------
-  local function makeEventScriptRuleCompiler()
-    local self = {}
-    local HOURS24,CATCHUP,RULEFORMAT = 24*60*60,math.huge,"Rule:%s[%s]"
-    local map,mapkl,getFuns,midnight,time2str=Util.map,Util.mapkl,ScriptEngine.getFuns,Util.midnight,Util.time2str
-    local transform,isGlob,isVar,triggerVar = Util.transform,Util.isGlob,Util.isVar,Util.triggerVar
-    local _macros,dailysTab,rCounter= {},{},0
+local function makeEventScriptRuleCompiler()
+  local self = {}
+  local HOURS24,CATCHUP,RULEFORMAT = 24*60*60,math.huge,"Rule:%s[%s]"
+  local map,mapkl,getFuns,midnight,time2str=Util.map,Util.mapkl,ScriptEngine.getFuns,Util.midnight,Util.time2str
+  local transform,isGlob,isVar,triggerVar = Util.transform,Util.isGlob,Util.isVar,Util.triggerVar
+  local _macros,dailysTab,rCounter= {},{},0
 --    local lblF=function(id,e) return {type='device', id=id, property=format("ui.%s.value",e[3])} end
-    local triggFuns={}
-    local function isTEvent(e) 
-      return type(e)=='table' and (e[1]=='%table' or e[1]=='%quote') and type(e[2])=='table' and e[2].type 
-    end
+  local triggFuns={}
+  local function isTEvent(e) 
+    return type(e)=='table' and (e[1]=='%table' or e[1]=='%quote') and type(e[2])=='table' and e[2].type 
+  end
 
-    local function ID(id,p) _assert(tonumber(id),"bad deviceID '%s' for '%s'",id,p or "") return id end
-    local ttypes = {
-      armed='alarm',alarm='alarm',disarmed='alarm',alarmSafe='alarm',alarmBreached='alarm', 
-      allArmed='alarm',anyDisarmed='alarm',anyAlarmSafe='alarm',allAlarmBreached='alarm', 
-      willArm='alarm',allWillArm='alarm',
-    }
-    local gtFuns = {
-      ['%daily'] = function(e,s) s.dailys[#s.dailys+1 ]=ScriptCompiler.compile2(e[2]); s.dailyFlag=true end,
-      ['%interv'] = function(e,s) s.scheds[#s.scheds+1 ] = ScriptCompiler.compile2(e[2]) end,
-      ['%betw'] = function(e,s)
-        s.dailys[#s.dailys+1 ]=ScriptCompiler.compile2(e[2])
-        s.dailys[#s.dailys+1 ]=ScriptCompiler.compile({'+',1,e[3]}) 
-      end,
-      ['%var'] = function(e,s) 
-        if e[3]=='glob' then s.triggs[e[2] ] = {type='global-variable', name=e[2]} 
-        elseif e[3]=='quick' then s.triggs[e[2] ] = {type='quickvar', name=e[2]} 
-        elseif triggerVar(e[2]) then s.triggs[e[2] ] = {type='variable', name=e[2]} end 
-      end,
-      ['%set'] = function(e,_) if isVar(e[2]) and triggerVar(e[2][2]) or isGlob(e[2]) then error("Can't assign variable in rule header") end end,
-      ['%prop'] = function(e,s)
-        local pn
-        if not getFuns[e[3]] then pn = e[3] elseif not getFuns[e[3]][4] then return else pn = getFuns[e[3]][2] end
-        local cv = ScriptCompiler.compile2(e[2])
-        local v = ScriptEngine.eval2({code=cv})
-        local typ = ttypes[e[3]] or 'device'
-        local tval = getFuns[e[3]][5] 
-        map(function(id) s.triggs[ID(id,e[3])..(pn or '')]={type=typ, id=id, property=pn, value=tval} end,type(v)=='table' and v or {v})
-      end,
-    }
+  local function ID(id,p) _assert(tonumber(id),"bad deviceID '%s' for '%s'",id,p or "") return id end
+  local ttypes = {
+    armed='alarm',alarm='alarm',disarmed='alarm',alarmSafe='alarm',alarmBreached='alarm', 
+    allArmed='alarm',anyDisarmed='alarm',anyAlarmSafe='alarm',allAlarmBreached='alarm', 
+    willArm='alarm',allWillArm='alarm',
+  }
+  local gtFuns = {
+    ['%daily'] = function(e,s) s.dailys[#s.dailys+1 ]=ScriptCompiler.compile2(e[2]); s.dailyFlag=true end,
+    ['%interv'] = function(e,s) s.scheds[#s.scheds+1 ] = ScriptCompiler.compile2(e[2]) end,
+    ['%betw'] = function(e,s)
+      s.dailys[#s.dailys+1 ]=ScriptCompiler.compile2(e[2])
+      s.dailys[#s.dailys+1 ]=ScriptCompiler.compile({'+',1,e[3]}) 
+    end,
+    ['%var'] = function(e,s) 
+      if e[3]=='glob' then s.triggs[e[2] ] = {type='global-variable', name=e[2]} 
+      elseif e[3]=='quick' then s.triggs[e[2] ] = {type='quickvar', name=e[2]} 
+      elseif triggerVar(e[2]) then s.triggs[e[2] ] = {type='variable', name=e[2]} end 
+    end,
+    ['%set'] = function(e,_) if isVar(e[2]) and triggerVar(e[2][2]) or isGlob(e[2]) then error("Can't assign variable in rule header") end end,
+    ['%prop'] = function(e,s)
+      local pn
+      if not getFuns[e[3]] then pn = e[3] elseif not getFuns[e[3]][4] then return else pn = getFuns[e[3]][2] end
+      local cv = ScriptCompiler.compile2(e[2])
+      local v = ScriptEngine.eval2({code=cv})
+      local typ = ttypes[e[3]] or 'device'
+      local tval = getFuns[e[3]][5] 
+      map(function(id) s.triggs[ID(id,e[3])..(pn or '')]={type=typ, id=id, property=pn, value=tval} end,type(v)=='table' and v or {v})
+    end,
+  }
 
-    local function getTriggers(e0)
-      local s={triggs={},dailys={},scheds={},dailyFlag=false}
-      local function traverse(e)
-        if type(e) ~= 'table' then return e end
-        if e[1]== '%eventmatch' then -- {'eventmatch',{'quote', ep,ce}}
-          local ce = e[3]
-          s.triggs[tojson(ce)] = ce  
-        else
-          Util.mapkk(traverse,e)
-          if gtFuns[e[1]] then gtFuns[e[1]](e,s)
-          elseif triggFuns[e[1]] then
-            local cv = ScriptCompiler.compile2(e[2])
-            local v = ScriptEngine.eval2({code=cv})
-            map(function(id) s.triggs[id]=triggFuns[e[1]](id,e) end,type(v)=='table' and v or {v})
-          end
-        end
-      end
-      traverse(e0); return mapkl(function(_,v) return v end,s.triggs),s.dailys,s.scheds,s.dailyFlag
-    end
-
-    function self.test(s) return {getTriggers(ScriptCompiler.parse(s))} end
-    function self.define(name,fun) ScriptEngine.define(name,fun) end
-    function self.addTrigger(name,instr,gt) ScriptEngine.addInstr(name,instr) triggFuns[name]=gt end
-
-    local function compTimes(cs)
-      local t1,t2=map(function(c) return ScriptEngine.eval2({code=c}) end,cs),{}
-      if #t1>0 then transform(t1,function(t) t2[t]=true end) end
-      return mapkl(function(k,_) return k end,t2)
-    end
-
-    local function remapEvents(obj)
-      if isTEvent(obj) then 
-        local ce = ScriptEngine.eval2({code=ScriptCompiler.compile(obj)})
-        local ep = fibaro.EM.compilePattern(ce)
-        obj[1],obj[2],obj[3]='%eventmatch',ep,ce; 
---    elseif type(obj)=='table' and (obj[1]=='%and' or obj[1]=='%or' or obj[1]=='trueFor') then remapEvents(obj[2]); remapEvents(obj[3])  end
-      elseif type(obj)=='table' then map(function(e) remapEvents(e) end,obj,2) end
-    end
-
-    local function trimRule(str)
-      local str2 = str:sub(1,(str:find("\n") or math.min(#str,_RULELOGLENGTH or 80)+1)-1)
-      if #str2 < #str then str2=str2.."..." end
-      return str2
-    end
-
-    local coroutine = Util.coroutine
-    local function compileAction(a,src,log)
-      if type(a)=='string' or type(a)=='table' then        -- EventScript
-        src = src or a
-        local code = type(a)=='string' and ScriptCompiler.compile(src,log) or a
-        local function run(env)
-          env=env or {}; env.log = env.log or {}; env.log.cont=env.log.cont or function(...) return ... end
-          env.locals = env.locals or {}
-          for k,v in pairs(env.p or {}) do env.locals[k]={v} end
-          local co = coroutine.create(code,src,env); env.co = co
-          local res={coroutine.resume(co)}
-          if res[1]==true then
-            if coroutine.status(co)=='dead' then 
-              return env.log.cont(select(2,table.unpack(res))) 
-            end
-          elseif isError(res[1]) then error(res[1].err)
-          else error(res[2]) end
-        end
-        return run
-      else return nil end
-    end
-
-    function self.compRule(e,env)
-      local head,body,log,res,events,src,triggers2,sdaily = e[2],e[3],e[4],{},{},env.src or "<no src>",{}
-      src=format(RULEFORMAT,rCounter+1,trimRule(src))
-      remapEvents(head)  -- #event -> eventmatch
-      local triggers,dailys,reps,dailyFlag = getTriggers(head)
-      _assert(#triggers>0 or #dailys>0 or #reps>0, "no triggers found in header")
-      --_assert(not(#dailys>0 and #reps>0), "can't have @daily and @@interval rules together in header")
-      local code = ScriptCompiler.compile({'%and',(_debugFlags.rule or _debugFlags.ruleTrue) and {'%logRule',head,src} or head,body},env.log)
-      local action = compileAction(code,src,env.log)
-      if #reps>0 then -- @@interval rules
-        local event,env={type=Util.gensym("INTERV")},{code=reps[1]}
-        events[#events+1] = quickApp:event(event,action,src)
-        event._sh=true
-        local timeVal,skip = nil,ScriptEngine.eval2(env)
-        local function interval()
-          timeVal = timeVal or os.time()
-          quickApp:post(event)
-          timeVal = timeVal+math.abs(ScriptEngine.eval2(env))
-          setTimeout(interval,1000*(timeVal-os.time()))
-        end
-        setTimeout(interval,1000*(skip < 0 and -skip or 0))
+  local function getTriggers(e0)
+    local s={triggs={},dailys={},scheds={},dailyFlag=false}
+    local function traverse(e)
+      if type(e) ~= 'table' then return e end
+      if e[1]== '%eventmatch' then -- {'eventmatch',{'quote', ep,ce}}
+        local ce = e[3]
+        s.triggs[tojson(ce)] = ce  
       else
-        if #dailys > 0 then -- daily rules
-          local event,timers={type=Util.gensym("DAILY"),_sh=true},{}
-          sdaily={dailys=dailys,event=event,timers=timers}
-          dailysTab[#dailysTab+1] = sdaily
-          events[#events+1]=quickApp:event(event,action,src)
-          self.recalcDailys({dailys=sdaily,src=src},true)
-          local reaction = function() self.recalcDailys(res) end
-          for _,tr in ipairs(triggers) do -- Add triggers to reschedule dailys when variables change...
-            if tr.type=='global-variable' or tr.type=='quickvar' then quickApp:event(tr,reaction,{doc=src})  end
-          end
-        end
-        if not dailyFlag and #triggers > 0 then -- id/glob trigger or events
-          for _,tr in ipairs(triggers) do 
-            if tr.property~='<nop>' then events[#events+1]=quickApp:event(tr,action,src) triggers2[#triggers2+1]=tr end
-          end
+        Util.mapkk(traverse,e)
+        if gtFuns[e[1]] then gtFuns[e[1]](e,s)
+        elseif triggFuns[e[1]] then
+          local cv = ScriptCompiler.compile2(e[2])
+          local v = ScriptEngine.eval2({code=cv})
+          map(function(id) s.triggs[id]=triggFuns[e[1]](id,e) end,type(v)=='table' and v or {v})
         end
       end
-      res=#events>1 and fibaro.EM.comboEvent(src,action,events,src) or events[1]
-      res.dailys = sdaily
-      if sdaily then sdaily.rule=res end
-      res.print = function()
-        Util.map(function(r) quickApp:debugf("Interval(%s) =>...",time2str(r)) end,compTimes(reps)) 
-        Util.map(function(d) quickApp:debugf("Daily(%s) =>...",d==CATCHUP and "catchup" or time2str(d)) end,compTimes(dailys)) 
-        Util.map(function(tr) quickApp:debugf("Trigger(%s) =>...",tojson(tr)) end,triggers2)
-      end
-      rCounter=rCounter+1
-      return res
     end
+    traverse(e0); return mapkl(function(_,v) return v end,s.triggs),s.dailys,s.scheds,s.dailyFlag
+  end
+
+  function self.test(s) return {getTriggers(ScriptCompiler.parse(s))} end
+  function self.define(name,fun) ScriptEngine.define(name,fun) end
+  function self.addTrigger(name,instr,gt) ScriptEngine.addInstr(name,instr) triggFuns[name]=gt end
+
+  local function compTimes(cs)
+    local t1,t2=map(function(c) return ScriptEngine.eval2({code=c}) end,cs),{}
+    if #t1>0 then transform(t1,function(t) t2[t]=true end) end
+    return mapkl(function(k,_) return k end,t2)
+  end
+
+  local function remapEvents(obj)
+    if isTEvent(obj) then 
+      local ce = ScriptEngine.eval2({code=ScriptCompiler.compile(obj)})
+      local ep = fibaro.EM.compilePattern(ce)
+      obj[1],obj[2],obj[3]='%eventmatch',ep,ce; 
+--    elseif type(obj)=='table' and (obj[1]=='%and' or obj[1]=='%or' or obj[1]=='trueFor') then remapEvents(obj[2]); remapEvents(obj[3])  end
+    elseif type(obj)=='table' then map(function(e) remapEvents(e) end,obj,2) end
+  end
+
+  local function trimRule(str)
+    local str2 = str:sub(1,(str:find("\n") or math.min(#str,_RULELOGLENGTH or 80)+1)-1)
+    if #str2 < #str then str2=str2.."..." end
+    return str2
+  end
+
+  local coroutine = Util.coroutine
+  local function compileAction(a,src,log)
+    if type(a)=='string' or type(a)=='table' then        -- EventScript
+      src = src or a
+      local code = type(a)=='string' and ScriptCompiler.compile(src,log) or a
+      local function run(env)
+        env=env or {}; env.log = env.log or {}; env.log.cont=env.log.cont or function(...) return ... end
+        env.locals = env.locals or {}
+        for k,v in pairs(env.p or {}) do env.locals[k]={v} end
+        local co = coroutine.create(code,src,env); env.co = co
+        local res={coroutine.resume(co)}
+        if res[1]==true then
+          if coroutine.status(co)=='dead' then 
+            return env.log.cont(select(2,table.unpack(res))) 
+          end
+        elseif isError(res[1]) then error(res[1].err)
+        else error(res[2]) end
+      end
+      return run
+    else return nil end
+  end
+
+  function self.compRule(e,env)
+    local head,body,log,res,events,src,triggers2,sdaily = e[2],e[3],e[4],{},{},env.src or "<no src>",{}
+    src=format(RULEFORMAT,rCounter+1,trimRule(src))
+    remapEvents(head)  -- #event -> eventmatch
+    local triggers,dailys,reps,dailyFlag = getTriggers(head)
+    _assert(#triggers>0 or #dailys>0 or #reps>0, "no triggers found in header")
+    --_assert(not(#dailys>0 and #reps>0), "can't have @daily and @@interval rules together in header")
+    local code = ScriptCompiler.compile({'%and',(_debugFlags.rule or _debugFlags.ruleTrue) and {'%logRule',head,src} or head,body},env.log)
+    local action = compileAction(code,src,env.log)
+    if #reps>0 then -- @@interval rules
+      local event,env={type=Util.gensym("INTERV")},{code=reps[1]}
+      events[#events+1] = quickApp:event(event,action,src)
+      event._sh=true
+      local timeVal,skip = nil,ScriptEngine.eval2(env)
+      local function interval()
+        timeVal = timeVal or os.time()
+        quickApp:post(event)
+        timeVal = timeVal+math.abs(ScriptEngine.eval2(env))
+        setTimeout(interval,1000*(timeVal-os.time()))
+      end
+      setTimeout(interval,1000*(skip < 0 and -skip or 0))
+    else
+      if #dailys > 0 then -- daily rules
+        local event,timers={type=Util.gensym("DAILY"),_sh=true},{}
+        sdaily={dailys=dailys,event=event,timers=timers}
+        dailysTab[#dailysTab+1] = sdaily
+        events[#events+1]=quickApp:event(event,action,src)
+        self.recalcDailys({dailys=sdaily,src=src},true)
+        local reaction = function() self.recalcDailys(res) end
+        for _,tr in ipairs(triggers) do -- Add triggers to reschedule dailys when variables change...
+          if tr.type=='global-variable' or tr.type=='quickvar' then quickApp:event(tr,reaction,{doc=src})  end
+        end
+      end
+      if not dailyFlag and #triggers > 0 then -- id/glob trigger or events
+        for _,tr in ipairs(triggers) do 
+          if tr.property~='<nop>' then events[#events+1]=quickApp:event(tr,action,src) triggers2[#triggers2+1]=tr end
+        end
+      end
+    end
+    res=#events>1 and fibaro.EM.comboEvent(src,action,events,src) or events[1]
+    res.dailys = sdaily
+    if sdaily then sdaily.rule=res end
+    res.print = function()
+      Util.map(function(r) quickApp:debugf("Interval(%s) =>...",time2str(r)) end,compTimes(reps)) 
+      Util.map(function(d) quickApp:debugf("Daily(%s) =>...",d==CATCHUP and "catchup" or time2str(d)) end,compTimes(dailys)) 
+      Util.map(function(tr) quickApp:debugf("Trigger(%s) =>...",tojson(tr)) end,triggers2)
+    end
+    rCounter=rCounter+1
+    return res
+  end
 
 -- context = {log=<bool>, level=<int>, line=<int>, doc=<str>, trigg=<bool>, enable=<bool>}
-    function self.eval(escript,log)
-      assert(type(escript)=='string',"rule must be of type ästring' to eval(rule)")
-      if log == nil then log = {} elseif log==true then log={print=true} end
-      if log.print==nil then log.print=true end
-      local status,res,ctx
-      status, res = pcall(function() 
-          local expr = self.macroSubs(escript)
-          if not log.cont then 
-            log.cont=function(res0)
-              log.cont=nil
-              local name,r
-              if not log.print then return res0 end
-              if fibaro.EM.isRule(res0) then name,r=res0.doc,"OK" else name,r=escript,res0 end
-              quickApp:debugf("%s = %s",name,tostring(r)) 
-              return res0
-            end
+  function self.eval(escript,log)
+    assert(type(escript)=='string',"rule must be of type ästring' to eval(rule)")
+    if log == nil then log = {} elseif log==true then log={print=true} end
+    if log.print==nil then log.print=true end
+    local status,res,ctx
+    status, res = pcall(function() 
+        local expr = self.macroSubs(escript)
+        if not log.cont then 
+          log.cont=function(res0)
+            log.cont=nil
+            local name,r
+            if not log.print then return res0 end
+            if fibaro.EM.isRule(res0) then name,r=res0.doc,"OK" else name,r=escript,res0 end
+            quickApp:debugf("%s = %s",name,tostring(r)) 
+            return res0
           end
-          local f = compileAction(expr,nil,log)
-          return f({log=log,rule={cache={}}})
+        end
+        local f = compileAction(expr,nil,log)
+        return f({log=log,rule={cache={}}})
+      end)
+    if not status then 
+      if not isError(res) then res={ERR=true,ctx=ctx,src=escript,err=res} end
+      quickApp:errorf("Error in '%s': %s",res and res.src or "rule",trimError(res.err))
+      if res.ctx then quickApp:errorf("\n%s",res.ctx) end
+      error(res.err or "error eval")
+    else return res end
+  end
+
+  function self.load(rules,log)
+    local function splitRules(rules)
+      local lines,cl,pb,cline = {},math.huge,false,""
+      if not rules:match("([^%c]*)\r?\n") then return {rules} end
+      rules:gsub("([^%c]*)\r?\n?",function(p) 
+          if p:match("^%s*---") then return end
+          local s,l = p:match("^(%s*)(.*)")
+          if l=="" then cl = math.huge return end
+          if #s > cl then cline=cline.." "..l cl = #s pb = true
+          elseif #s == cl and pb then cline=cline.." "..l
+          else if cline~="" then lines[#lines+1]=cline end cline=l cl=#s pb = false end
         end)
-      if not status then 
-        if not isError(res) then res={ERR=true,ctx=ctx,src=escript,err=res} end
-        quickApp:errorf("Error in '%s': %s",res and res.src or "rule",trimError(res.err))
-        if res.ctx then quickApp:errorf("\n%s",res.ctx) end
-        error(res.err or "error eval")
-      else return res end
+      lines[#lines+1]=cline
+      return lines
     end
+    map(function(r) self.eval(r,log) end,splitRules(rules))
+  end
 
-    function self.load(rules,log)
-      local function splitRules(rules)
-        local lines,cl,pb,cline = {},math.huge,false,""
-        if not rules:match("([^%c]*)\r?\n") then return {rules} end
-        rules:gsub("([^%c]*)\r?\n?",function(p) 
-            if p:match("^%s*---") then return end
-            local s,l = p:match("^(%s*)(.*)")
-            if l=="" then cl = math.huge return end
-            if #s > cl then cline=cline.." "..l cl = #s pb = true
-            elseif #s == cl and pb then cline=cline.." "..l
-            else if cline~="" then lines[#lines+1]=cline end cline=l cl=#s pb = false end
-          end)
-        lines[#lines+1]=cline
-        return lines
-      end
-      map(function(r) self.eval(r,log) end,splitRules(rules))
-    end
-
-    function self.macro(name,str) _macros['%$'..name..'%$'] = str end
-    function self.macroSubs(str)
+  function self.macro(name,str) _macros['%$'..name..'%$'] = str end
+  function self.macroSubs(str)
 --        local  str0 = str
 --        str = str:gsub("||"," if ",1)
 --        if str0 ~= str and not str:find(";;") then str = str.." ;;" end
@@ -2066,81 +2088,81 @@ function Module.eventScript.init()
 --        str = str:gsub("||"," elseif ")
 --        str = str:gsub(";;"," end; ")
 
-      for m,s in pairs(_macros) do 
-        str = str:gsub(m,s) 
-      end 
-      return str 
-    end
-
-    function self.recalcDailys(r,catch)
-      if r==nil and catch==nil then
-        for _,d in ipairs(dailysTab) do self.recalcDailys(d.rule) end
-        return
-      end
-      if not r.dailys then return end
-      local dailys,newTimers,oldTimers,max = r.dailys,{},r.dailys.timers,math.max
-      for _,t in ipairs(oldTimers) do quickApp:cancel(t[2]) end
-      dailys.timers = newTimers
-      local times,m,ot,catchup1,catchup2 = compTimes(dailys.dailys),midnight(),os.time()
-      for i,t in ipairs(times) do _assert(tonumber(t),"@time not a number:%s",t)
-        t = math.floor(t+0.5)
-        if t <= 3600*24 or t == math.huge then 
-          local oldT = oldTimers[i] and oldTimers[i][1]
-          if t ~= CATCHUP then
-            if _MIDNIGHTADJUST and t==HOURS24 then t=t-1 end
-            if t+m >= ot then 
-              Debug(oldT ~= t and _debugFlags.dailys,"Rescheduling daily %s for %s",r.src or "",os.date("%c",t+m)); 
-              newTimers[#newTimers+1]={t,quickApp:post(dailys.event,max(os.time(),t+m),r.src)}
-            else catchup1=true end
-          else catchup2 = true end
-        end
-      end
-      if catch and catchup2 and catchup1 then quickApp:tracef("Catching up:%s",r.src); quickApp:post(dailys.event) end
-      return r
-    end
-
-    -- Scheduler that every night posts 'daily' rules
-    Util.defvar('dayname',os.date("%a"))
-    quickApp:event({type='%MIDNIGHT'},function(env) 
-        Util.defvar('dayname',os.date("*t").wday)
-        for _,d in ipairs(dailysTab) do self.recalcDailys(d.rule) end 
-        quickApp:post(env.event,"n/00:00")
-      end)
-    quickApp:post({type='%MIDNIGHT',_sh=true},"n/00:00")
-    return self
-  end -- makeEventScriptRuleCompiler
-
-  function quickApp:printTagAndColor(tag,color,fmt,...)
-    assert(fmt,"print needs tag, color, and args")
-    fmt = string.format(fmt,...)
-    local t = __TAG
-    __TAG = tag or __TAG
-    if hc3_emulator or not color then self:tracef(fmt,...) 
-    else
-      self:trace("<font color="..color..">"..fmt.."</font>") 
-    end
-    __TAG = t
+    for m,s in pairs(_macros) do 
+      str = str:gsub(m,s) 
+    end 
+    return str 
   end
 
---- SceneActivation constants
-  Util.defvar('S1',Util.S1)
-  Util.defvar('S2',Util.S2)
-  Util.defvar('catch',math.huge)
-  Util.defvar("defvars",Util.defvars)
-  Util.defvar("mapvars",Util.reverseMapDef)
-  Util.defvar("print",function(...) quickApp:printTagAndColor(...) end)
-  Util.defvar("QA",quickApp)
+  function self.recalcDailys(r,catch)
+    if r==nil and catch==nil then
+      for _,d in ipairs(dailysTab) do self.recalcDailys(d.rule) end
+      return
+    end
+    if not r.dailys then return end
+    local dailys,newTimers,oldTimers,max = r.dailys,{},r.dailys.timers,math.max
+    for _,t in ipairs(oldTimers) do quickApp:cancel(t[2]) end
+    dailys.timers = newTimers
+    local times,m,ot,catchup1,catchup2 = compTimes(dailys.dailys),midnight(),os.time()
+    for i,t in ipairs(times) do _assert(tonumber(t),"@time not a number:%s",t)
+      t = math.floor(t+0.5)
+      if t <= 3600*24 or t == math.huge then 
+        local oldT = oldTimers[i] and oldTimers[i][1]
+        if t ~= CATCHUP then
+          if _MIDNIGHTADJUST and t==HOURS24 then t=t-1 end
+          if t+m >= ot then 
+            Debug(oldT ~= t and _debugFlags.dailys,"Rescheduling daily %s for %s",r.src or "",os.date("%c",t+m)); 
+            newTimers[#newTimers+1]={t,quickApp:post(dailys.event,max(os.time(),t+m),r.src)}
+          else catchup1=true end
+        else catchup2 = true end
+      end
+    end
+    if catch and catchup2 and catchup1 then quickApp:tracef("Catching up:%s",r.src); quickApp:post(dailys.event) end
+    return r
+  end
 
-  ScriptParser   = makeEventScriptParser()
-  ScriptCompiler = makeEventScriptCompiler(ScriptParser)
-  ScriptEngine   = makeEventScriptRuntime()
-  Rule           = makeEventScriptRuleCompiler() 
-  Rule.ScriptParser   = ScriptParser
-  Rule.ScriptCompiler = ScriptCompiler
-  Rule.ScriptEngine   = ScriptEngine
-  function quickApp:evalScript(...) return Rule.eval(...) end
-  Module.eventScript.inited = Rule
-  return Rule
+  -- Scheduler that every night posts 'daily' rules
+  Util.defvar('dayname',os.date("%a"))
+  quickApp:event({type='%MIDNIGHT'},function(env) 
+      Util.defvar('dayname',os.date("*t").wday)
+      for _,d in ipairs(dailysTab) do self.recalcDailys(d.rule) end 
+      quickApp:post(env.event,"n/00:00")
+    end)
+  quickApp:post({type='%MIDNIGHT',_sh=true},"n/00:00")
+  return self
+end -- makeEventScriptRuleCompiler
+
+function quickApp:printTagAndColor(tag,color,fmt,...)
+  assert(fmt,"print needs tag, color, and args")
+  fmt = string.format(fmt,...)
+  local t = __TAG
+  __TAG = tag or __TAG
+  if hc3_emulator or not color then self:tracef(fmt,...) 
+  else
+    self:trace("<font color="..color..">"..fmt.."</font>") 
+  end
+  __TAG = t
+end
+
+--- SceneActivation constants
+Util.defvar('S1',Util.S1)
+Util.defvar('S2',Util.S2)
+Util.defvar('catch',math.huge)
+Util.defvar("defvars",Util.defvars)
+Util.defvar("mapvars",Util.reverseMapDef)
+Util.defvar("print",function(...) quickApp:printTagAndColor(...) end)
+Util.defvar("QA",quickApp)
+
+ScriptParser   = makeEventScriptParser()
+ScriptCompiler = makeEventScriptCompiler(ScriptParser)
+ScriptEngine   = makeEventScriptRuntime()
+Rule           = makeEventScriptRuleCompiler() 
+Rule.ScriptParser   = ScriptParser
+Rule.ScriptCompiler = ScriptCompiler
+Rule.ScriptEngine   = ScriptEngine
+function quickApp:evalScript(...) return Rule.eval(...) end
+Module.eventScript.inited = Rule
+return Rule
 end
 ----------------- Node-red support ----------------------------
 Module.nodered={ name = "ER Nodered", version="0.5" }

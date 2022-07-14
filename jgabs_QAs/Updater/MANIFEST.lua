@@ -64,6 +64,18 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
+      { version = 0.83,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.83"
+        },
+        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
+        descr = "Integrated with QAUpdater",
+        files = "generate",
+        keep= { "main" },
+        viewLayout = "generate",
+        interfaces= {"quickApp"},
+        quickAppVariables = {},
+      },
 --      { version = 0.x,
 --        vars = {
 --          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.XX"
@@ -148,6 +160,18 @@ return {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.65"
         },
         descr = "bug fix (New QA)",
+        mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+      { version= 0.66,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.66"
+        },
+        descr = "support for remote update by other QAs",
         mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
         files = "generate",
         keep = {

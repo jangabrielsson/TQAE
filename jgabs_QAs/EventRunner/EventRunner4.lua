@@ -50,14 +50,6 @@ function QuickApp:main()    -- EventScript version
   Util.defvars(HT)
   Util.reverseMapDef(HT)
   
-  rule("timer1 = post(#stekkersVertraagdOff,+/02:15)")
---[[
-  rule("@sunset => lamp:value=40; sched=40")
-  rule("@00:00 => lamp:value=20; sched=20")
-  rule("@sunrise => lamp:off")
-  rule("pir:breached & lamp:isOn => lamp:value=80")
-  rule("pir:safe & lamp:value == 80 => lamp:dim={00:02,'down',nil,'linear',sched,80}")
---]]
 --  alarms = 1
 --  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")
@@ -90,8 +82,9 @@ function QuickApp:main()    -- EventScript version
 -- rule("wait(5); publish(#foo)")
 -- rule("motion:value => log('Motion:%s',motion:last)")
 
---     rule("@{catch,05:00} => Util.checkForUpdates()")
---     rule("#File_update{} => log('New file version:%s - %s',env.event.file,env.event.version)")
+     rule("@{catch,05:00} => Util.checkForUpdates()")
+     rule("#File_update{} => log('New file version:%s - %s',env.event.file,env.event.version)")
+     fibaro.call(675,"updateMe",self.id,0.82)
 --     rule("#File_update{} => Util.updateFile(env.event.file)")
 
 --  rule("keyfob:central => log('Key:%s',env.event.value.keyId)")
