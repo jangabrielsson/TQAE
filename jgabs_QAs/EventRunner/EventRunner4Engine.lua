@@ -645,7 +645,7 @@ function Module.autopatch.init(self)
     local updater = api.get("/devices?name=QAUpdater")
     if updater and updater[1] then
       updater = updater[1]
-      UpdaterID = update.id
+      UpdaterID = updater.id
       local updates = fibaro.getQAVariable(updater.id,"UPDATES")
       if not(updates and type(updates) == 'table') then return end
       for _,up in ipairs(updates) do
