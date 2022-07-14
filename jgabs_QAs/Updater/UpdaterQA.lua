@@ -463,6 +463,6 @@ function QuickApp:onInit()
 
       Refresh()
       setInterval(Refresh,1000*(3600*24))
-      setTimeout(function() self:updateMe(53,0.82) end,3000)
+      --setTimeout(function() self:updateMe(53,0.82) end,3000)
     end,0)
 end
