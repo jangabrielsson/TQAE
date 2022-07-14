@@ -3,7 +3,7 @@
 -- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
 
 ---------------------- Setup users -----------------------------
-local VERSION = 0.43
+local VERSION = 0.45
 local SERIAL = "UPD896661234567896"
 
 ------------------------------------------------------------------
@@ -19,7 +19,7 @@ local function preInit()
       {
         icloud = hc3_emulator.EM.cfg.icloud.daniela,
         devices = {
-          {name = 'Daniela', deviceName='iPhone', id=3, home=true}
+          {name = 'Daniela', deviceName='iPhone', id=3, home=false}
         }
       },
       {
@@ -31,12 +31,12 @@ local function preInit()
       {
         icloud = hc3_emulator.EM.cfg.icloud.max,
         devices = {{
-            name = 'Max', deviceName='Apple Watch', deviceType='Apple Watch Series 6 %(GPS%)', id=44, home=true
+            name = 'Max', deviceName='Apple Watch', deviceType='Apple Watch Series 6 %(GPS%)', id=44, home=false
           }}
       },
     }
     HC3USERS = {
-      {deviceName='OtherPhone', name='Lisa', id=5, home=true}
+      {deviceName='OtherPhone', name='Lisa', id=5, home=false}
     }
     return true
   end
@@ -242,7 +242,7 @@ local function setupEvents()
 
   local function checkAllAtHome()
     local away,home=0,0
-    for user,u in pairs(whereIsUser) do 
+    for user,u in pairs(Users) do 
       if Users[user].home then
         if u.place~=MYHOME then away=away+1 else home=home+1 end 
       end
@@ -358,8 +358,8 @@ local function setupEvents()
           d.deviceFullName = d.deviceFullName or (d.deviceName..(d.deviceType and ("("..d.deviceType..")") or ""))
           d.deviceType = d.deviceType or ".*"
           if d.id == nil then
-            QA:debug("Assigning id:%s to user %s",d.id,d.name)
             d.id = NXTID; NXTID=NXTID+1 
+            QA:debugf("Assigning id:%s to user %s",d.id,d.name)
           end
           Users[d.name]={
             iOS = true,
@@ -398,11 +398,12 @@ local function setupEvents()
       function UserObject:__init(dev)
         local args = {
           name = dev.QAname or dev.name,
-          uid  = dev.name,
+          uid  = dev.uid or dev.name,
           type = 'com.fibaro.binarySensor',
           interfaces = {"battery"},
         }
-        Users[dev.name].child = self
+        print(args.uid)
+        Users[args.uid or dev.name].child = self
         self:debug("UserObject",dev.name)
         QuickerAppChild.__init(self,args)
       end
@@ -449,6 +450,11 @@ local function setupEvents()
         fibaro.createGlobalVariable(v,"unknown")
       end
 
+      if HomeVar then fibaro.setGlobalVariable(HomeVar,"unknown") end
+      for id,c in pairs(quickApp.childDevices) do
+        c:updateProperty('value',false)
+        c:setVariable('place',"unknown")
+      end
       post({type='setupLocations'})
       post({type='poll',index=1,_sh=true})
     end)
