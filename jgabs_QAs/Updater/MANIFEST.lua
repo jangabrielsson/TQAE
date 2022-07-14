@@ -28,30 +28,6 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.79,
-        vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.79"
-        },
-        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "Fix for mapf and friends",
-        files = "generate",
-        keep= { "main" },
-        viewLayout = "generate",
-        interfaces= {"quickApp"},
-        quickAppVariables = {},
-      },
-      { version = 0.80,
-        vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.80"
-        },
-        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "Fix for nodered",
-        files = "generate",
-        keep= { "main" },
-        viewLayout = "generate",
-        interfaces= {"quickApp"},
-        quickAppVariables = {},
-      },
       { version = 0.82,
         vars= {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.82"
@@ -143,35 +119,23 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
-      { version= 0.64,
-        vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.64"
-        },
-        descr = "bug fix (refs)",
-        mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
-        files = "generate",
-        keep = {
-        },
-        interfaces = {"quickApp"},
-        viewLayout = "generate",
-      },
-      { version= 0.65,
-        vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.65"
-        },
-        descr = "bug fix (New QA)",
-        mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
-        files = "generate",
-        keep = {
-        },
-        interfaces = {"quickApp"},
-        viewLayout = "generate",
-      },
       { version= 0.66,
         vars= {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.66"
         },
         descr = "support for remote update by other QAs",
+        mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+      { version= 0.67,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.67"
+        },
+        descr = "support user keep files u_...",
         mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
         files = "generate",
         keep = {

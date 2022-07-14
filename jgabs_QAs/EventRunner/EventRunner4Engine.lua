@@ -653,7 +653,7 @@ function Module.autopatch.init(self)
           for _,v in ipairs(up.versions) do
             if (v.version - QuickApp.E_VERSION) > 0.0001
               UpdateVersion=v.version
-              self:post({type='File_update',file=up.name,version=v.version,descr=v.descr})
+              self:post({type='File_update',file=up.name,version=v.version,descr=v.descr,updaterID=UpdaterID})
             end
           end
         end

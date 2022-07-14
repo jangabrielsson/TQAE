@@ -41,7 +41,7 @@ if hc3_emulator then
 end
 
 local SERIAL = "UPD896661234567894"
-local VERSION = 0.66
+local VERSION = 0.67
 local QAs={}
 local manifest = {}
 local updates,updP = {},0
@@ -276,7 +276,7 @@ local function Update(ev,updP0,veP0,qaP0)
       local stat,_ = pcall(function()
           for _,f in ipairs(deviceFiles) do -- delete files not in new QA
             existMap[f.name]=f
-            if not files[f.name] and not keeps[f.name] then
+            if not files[f.name] and not keeps[f.name] and not f.name:match("^[uU]_") then
               filesAltered[#filesAltered+1]={'deleted',f}
               local _,code = api.delete("/quickApp/"..qa.id.."/files/"..f.name)
               if code > 204 then 

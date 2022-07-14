@@ -3,7 +3,7 @@
 -- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
 
 ---------------------- Setup users -----------------------------
-local VERSION = 0.45
+local VERSION = 0.46
 local SERIAL = "UPD896661234567896"
 
 ------------------------------------------------------------------
@@ -400,6 +400,7 @@ local function setupEvents()
           name = dev.QAname or dev.name,
           uid  = dev.uid or dev.name,
           type = 'com.fibaro.binarySensor',
+          properties = {},
           interfaces = {"battery"},
         }
         print(args.uid)
