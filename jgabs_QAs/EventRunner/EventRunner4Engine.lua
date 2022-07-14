@@ -651,7 +651,7 @@ function Module.autopatch.init(self)
       for _,up in ipairs(updates) do
         if "UPD"..up.serial == quickApp.E_SERIAL then
           for _,v in ipairs(up.versions) do
-            if v.version > QuickApp.E_VERSION then
+            if (v.version - QuickApp.E_VERSION) > 0.0001
               UpdateVersion=v.version
               self:post({type='File_update',file=up.name,version=v.version,descr=v.descr})
             end
