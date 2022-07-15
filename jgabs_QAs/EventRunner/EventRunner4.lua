@@ -82,9 +82,8 @@ function QuickApp:main()    -- EventScript version
 -- rule("wait(5); publish(#foo)")
 -- rule("motion:value => log('Motion:%s',motion:last)")
 
-     rule("@{catch,05:00} => Util.checkForUpdates()")
-     rule("#File_update{} => log('New file version:%s - %s',env.event.file,env.event.version)")
-     fibaro.call(675,"updateMe",self.id,0.82)
+--     rule("@{catch,05:00} => Util.checkForUpdates()")
+--     rule("#File_update{} => log('New file version:%s - %s',env.event.file,env.event.version)")
 --     rule("#File_update{} => Util.updateFile(env.event.file)")
 
 --  rule("keyfob:central => log('Key:%s',env.event.value.keyId)")

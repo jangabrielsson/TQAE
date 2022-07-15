@@ -40,12 +40,12 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.83,
+      { version = 0.84,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.83"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.84"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "Integrated with QAUpdater",
+        descr = "Bug fix",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",
@@ -145,8 +145,8 @@ return {
       },
     }
   },
-  
-    ["896661234567895"] = {
+
+  ["896661234567895"] = {
     name = "TriggerQA",
     type = "com.fibaro.deviceController",
     versions = {

@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.83,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.84,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -651,7 +651,7 @@ function Module.autopatch.init(self)
       for _,up in ipairs(updates) do
         if "UPD"..up.serial == quickApp.E_SERIAL then
           for _,v in ipairs(up.versions) do
-            if (v.version - QuickApp.E_VERSION) > 0.0001
+            if (v.version - QuickApp.E_VERSION) > 0.0001 then
               UpdateVersion=v.version
               self:post({type='File_update',file=up.name,version=v.version,descr=v.descr,updaterID=UpdaterID})
             end
