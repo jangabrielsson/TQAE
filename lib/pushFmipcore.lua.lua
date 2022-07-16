@@ -28,6 +28,8 @@ local QAname = "testLoc" -- name or id. Should have function QuickApp:FMIPCORE(d
 local items = {
   "5D02CA4A-8223-4E66-BBE4-C1CEB6B0AE33", -- Jan's handbag
   "3703DA14-09C6-403E-8E2D-E8704DE17EEA", -- Jan's Apple Watch
+  "E3A320F9-A490-49A8-8010-ED1CE0EB59A2",
+  "EC4D064C-70C5-462A-8E34-D9729C5E1A4D",
 }
 
 _,_ = pcall(require,"lib.json")
@@ -99,7 +101,7 @@ local function HC3Request(method,path,data,extra)
 end
 
 -------- main ---------------------------------------------
-debug=true
+debug=false
 version = 0.2
 
 local tracking = 0
@@ -118,7 +120,9 @@ local function deviceFun(d)
   return {type='device',id=d.baUUID or d.UUID or d.id,name=d.name,address=d.address,batteryLevel=d.batteryLevel,batteryStatus=d.batteryStatus,location=type(d.location)=='table' and d.location or nil}
 end
 
+local oldData = ""
 local function getData()
+  print(fmipPath)
   local file,err = io.open(fmipPath.."/Items.data","r")
   assert(err==nil,"Opening "..fmipPath.."/Items.data".." "..(err or ""))
   local itemData = file:read("*all")
@@ -126,6 +130,8 @@ local function getData()
   file,err = io.open(fmipPath.."/Devices.data","r")
   assert(err==nil,"Opening "..fmipPath.."/Devices.data".." "..(err or ""))
   local deviceData = file:read("*all")
+  print(oldData == deviceData and "OLD" or "NEW")
+  oldData = deviceData
   file:close()
   return json.decode(itemData),json.decode(deviceData)
 end
@@ -167,6 +173,11 @@ local function changed(a,b)
   return a.location.longitude ~= b.location.longitude or b.location.latitude ~= a.location.latitude or bat
 end
 
+local function getLoc(it)
+  local l = it.location or {}
+  return {l.latitude,l.longitude}
+end
+
 while true do
   local itemData,deviceData = getData()
   local changes = 0
@@ -185,6 +196,7 @@ while true do
     item = deviceFun(item)
     if items[item.id] and item.location then
       local it = items[item.id]
+      print(it.name,json.encode(getLoc(it)),json.encode(getLoc(item)))
       if it.location==nil or changed(it,item) then
         items[item.id] = item
         item.new = true
