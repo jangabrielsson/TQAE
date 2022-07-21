@@ -49,7 +49,7 @@ function QuickApp:main()    -- EventScript version
   
   Util.defvars(HT)
   Util.reverseMapDef(HT)
-  
+    
 --  alarms = 1
 --  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")

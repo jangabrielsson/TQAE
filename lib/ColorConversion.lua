@@ -69,6 +69,8 @@ local function ColorHelper(gamut)
     return (p1.x * p2.y - p1.y * p2.x)
   end
 
+  local function isNan(x) return x==math.huge or x~=x end
+  
   local function check_point_in_lamps_reach(p)
 -- Check if the provided XYPoint can be recreated by a Hue lamp.
     local v1 = XYPoint(self.Lime.x - self.Red.x, self.Lime.y - self.Red.y)
@@ -136,7 +138,7 @@ local function ColorHelper(gamut)
     return math.sqrt(dx * dx + dy * dy)
   end
 
-  local function get_xy_point_from_rgb(red_i, green_i, blue_i)
+  local function get_xy_point_from_rgb(red_i, green_i, blue_i) -- 0-255,0-255,0-255
 -- Returns an XYPoint object containing the closest available CIE 1931 x, y coordinates based on the RGB input values
 
     local red = red_i / 255.0
@@ -147,13 +149,18 @@ local function ColorHelper(gamut)
     local g = (green > 0.04045) and ((green + 0.055) / (1.0 + 0.055))^2.4 or (green / 12.92)
     local b = (blue > 0.04045) and ((blue + 0.055) / (1.0 + 0.055))^2.4 or (blue / 12.92)
 
-    local X = r * 0.664511 + g * 0.154324 + b * 0.162028
-    local Y = r * 0.283881 + g * 0.668433 + b * 0.047685
-    local Z = r * 0.000088 + g * 0.072310 + b * 0.986039
+--    local X = r * 0.664511 + g * 0.154324 + b * 0.162028
+--    local Y = r * 0.283881 + g * 0.668433 + b * 0.047685
+--    local Z = r * 0.000088 + g * 0.072310 + b * 0.986039
+    local X = r * 0.4360747 + g * 0.3850649 + b * 0.0930804;
+    local Y = r * 0.2225045 + g * 0.7168786 + b * 0.0406169;
+    local Z = r * 0.0139322 + g * 0.0971045 + b * 0.7141733;
 
     local cx = X / (X + Y + Z)
     local cy = Y / (X + Y + Z)
-
+    cx = isNan(cx) and 0.0 or cx
+    cy = isNan(cy) and 0.0 or cy
+    
     -- Check if the given XY value is within the colourreach of our lamps.
     local xy_point = XYPoint(cx, cy)
     local in_reach = check_point_in_lamps_reach(xy_point)
@@ -192,6 +199,10 @@ local function ColorHelper(gamut)
     local g = -X * 0.707196 + Y * 1.655397 + Z * 0.036152
     local b = X * 0.051713 - Y * 0.121364 + Z * 1.011530
 
+    local max_component = math.max(r, g, b)
+    if max_component > 1 then
+      r, g, b = r / max_component, g / max_component, b / max_component
+    end
     -- Apply reverse gamma correction
 --  r, g, b = map(
 --    lambda x: (12.92 * x) if (x <= 0.0031308) else ((1.0 + 0.055) * pow(x, (1.0 / 2.4)) - 0.055),
@@ -205,12 +216,12 @@ local function ColorHelper(gamut)
     r, g, b = r < 0 and 0 or r, g < 0 and 0 or g, b < 0 and 0 or b
 
     -- If one component is greater than 1, weight components by that value.
-    local max_component = math.max(r, g, b)
+    max_component = math.max(r, g, b)
     if max_component > 1 then
       r, g, b = r / max_component, g / max_component, b / max_component
     end
 
-    r, g, b = math.floor(r*255),math.floor(g*255),math.floor(b*255) 
+    r, g, b = math.floor(r*255+0.5),math.floor(g*255+0.5),math.floor(b*255+0.5) 
 
     -- Convert the RGB values to your color object The rgb values from the above formulas are between 0.0 and 1.0.
     return r, g, b
@@ -226,7 +237,7 @@ local function round(x) return math.floor(x+0.5) end
 
 local function hsb2rgb(hue,saturation,brightness) --0-65535,0-255,0-255
   if saturation == 0 then return {r=brightness, g=brightness, b=brightness} end
-  hue        = 360*hue/65535
+  hue        = 360*hue/65535.0
   saturation = saturation/254
   brightness = brightness/254
 
@@ -252,22 +263,22 @@ local function hsb2rgb(hue,saturation,brightness) --0-65535,0-255,0-255
 end
 
 local function rgb2hsb(r,g,b) -- 0-255,0-255,0-255
-  local dRed   = r / 255;
-  local dGreen = g / 255;
-  local dBlue  = b / 255;
+  local dRed   = r / 255.0;
+  local dGreen = g / 255.0;
+  local dBlue  = b / 255.0;
 
   local max = math.max(dRed, math.max(dGreen, dBlue));
   local min = math.min(dRed, math.min(dGreen, dBlue));
 
-  local h = 0;
+  local h = 0.0;
   if (max == dRed and dGreen >= dBlue) then
-    h = 60 * (dGreen - dBlue) / (max - min);
+    h = 60.0 * (dGreen - dBlue) / (max - min);
   elseif (max == dRed and dGreen < dBlue) then
-    h = 60 * (dGreen - dBlue) / (max - min) + 360;
+    h = 60.0 * (dGreen - dBlue) / (max - min) + 360;
   elseif (max == dGreen) then
-    h = 60 * (dBlue - dRed) / (max - min) + 120;
+    h = 60.0 * (dBlue - dRed) / (max - min) + 120;
   elseif (max == dBlue) then
-    h = 60 * (dRed - dGreen) / (max - min) + 240;
+    h = 60.0 * (dRed - dGreen) / (max - min) + 240;
   end
 
   local s = (max == 0) and 0.0 or (1.0 - (min / max))

@@ -3,15 +3,15 @@
 -- luacheck: ignore 212/self
 
 local version = 0.2
-local v2 = "1948086000"
-local debug = { info = true, resource_mgmt=true, call=true, event=true, v2api=true, logger=false }
-local OPTIMISTIC = false
-local err_retry = 3
-local resourceFilter, hueAnnotator
-local _initEngine
 
-HUEv2Engine = HUEv2Engine or {}
-HUEv2Engine.debug=debug
+local HUEv2Engine = { version = version }
+local DEBUG,WARNING,ERROR,TRACE
+fibaro.hue = fibaro.hue or {}
+fibaro.hue.Engine = HUEv2Engine
+local function setup()
+  DEBUG,WARNING,ERROR,TRACE=fibaro.hue.DEBUG,fibaro.hue.WARNING,fibaro.hue.ERROR,fibaro.hue.TRACE
+end
+
 
 --[[
 debug.info          -- greetings etc
@@ -37,19 +37,19 @@ Zone-------------+
                  +----- Service - Grouped Light
 --]]
 
+local _initEngine
 local function main()
+  local v2 = "1948086000"
+  local OPTIMISTIC = false
+  local err_retry = 3
   local utils,post = fibaro.utils,fibaro.post
   local resources = {}
   local props,meths={},{}
   local hueGET,huePUT
   local app_key,url,callBack
   local fmt = string.format
-
-  fibaro.debugFlags.extendedErrors=true
-  local function DEBUG(tag,str,...) if debug[tag] then quickApp:debugf(str,...) end end
-  local function ERROR(str,...) quickApp:errorf(str,...) end
-  local function WARNING(str,...) quickApp:warningf(str,...) end
-
+  local utils = fibaro.utils
+  local merge = utils.keyMerge
   local function createResourceTable()
     local self = { resources={}, id2resource={} }
     local resources,id2resource = self.resources,self.id2resource
@@ -89,17 +89,6 @@ local function main()
   class 'hueResource'
   function hueResource:__init(rsrc) self:setup(rsrc) end
 
-  local function addFuns(self,id,typ)
-    if meths[typ] then
-      for _,m in ipairs(meths[typ] or {}) do
-        if not self[m] then
-          self._inheritedFuns[m]=true
-          self[m] = function(_,...) local o = resources.get(id) return o[m](o,...) end
-        end
-      end
-    end
-  end
-
   function hueResource:setup(rsrc)
     local id = rsrc.id
     self.id = id
@@ -118,11 +107,6 @@ local function main()
     self.path = "/clip/v2/resource/"..self.type.."/"..self.id
     self._inited = true
     self.listernes = {}
-    if id == "9222ea53-37a6-4ac0-b57d-74bca1cfa23f" then
-      a=0
-    end
-    for _,s in ipairs(self.services or {}) do addFuns(self,s.rid,s.rtype) end 
-    if self.owner then addFuns(self,self.owner.rid,self.owner.rtype) end
     DEBUG("class","Setup %s '%s' %s",self.id,self.type,self.name or "rsrc")
   end
   function hueResource:getName(dflt)
@@ -134,20 +118,34 @@ local function main()
   function hueResource:added() DEBUG('resource_mgmt',"Created %s",tostring(self)) end
   function hueResource:deleted() DEBUG('resource_mgmt',"Deleted %s",tostring(self)) end
   function hueResource:modified(rsrc) self:setup(rsrc) DEBUG('resource_mgmt',"Modified %s",tostring(self)) end
-  function hueResource:props()
+  function hueResource:findServiceByType(typ)
     local r = {}
-    for k,_ in pairs(props[self.type] or {}) do r[#r+1]=k end
+    for _,s in ipairs(self.services or {}) do local x=resolve(s) if x.type==typ then r[#r+1]=x end end
+    return r
+  end
+
+  function hueResource:getProps()
+    local r = {}
+    for _,s in ipairs(self.services or {}) do merge(r,resolve(s):getProps()) end
+    merge(r,props[self.type] or {})
+    return r
+  end
+  function hueResource:getMethods()
+    local r = {}
+    for _,s in ipairs(self.services or {}) do merge(r,resolve(s):getMethods()) end
+    merge(r,meths[self.type] or {})
     return r
   end
   function hueResource:event(data)
+    DEBUG('event',"Event %s",data)
     if self.update then self:updata(data) return end
-    local p = props[self.type]
+    local p = props[self.type] -- { power_state = { get, set changed }, ...
     if p then
       local r = self.rsrc
       for k,f in pairs(p) do
-        if data[k] then
-          local v = f.get(data)
-          if f.get(r)~=v then
+        if data[k] and f.changed then
+          local c,v = f.changed(r,data)
+          if c then
             f.set(r,v)
             self:publish(k,v)
           end
@@ -159,16 +157,21 @@ local function main()
     local ll = self.listernes[key] or {}
     if next(ll) then
       for l,_ in pairs(ll) do
-        l(key,value)
+        l(key,value,self)
       end
     end
   end
   function hueResource:subscribe(key,fun)
-    self.listernes[key] = self.listernes[key] or {}
-    self.listernes[key][fun]=true
+    if self.services then
+      for _,s in ipairs(self.services or {}) do resolve(s):subscribe(key,fun) end
+    elseif props[self.type] and props[self.type][key] then 
+      self.listernes[key] = self.listernes[key] or {}
+      self.listernes[key][fun]=true
+    end
   end
   function hueResource:unsubscribe(key,fun)
-    if self.listerners[key] then self.listerners[key][key]=nil end
+    for _,s in ipairs(self.services or {}) do resolve(s):unsubscribe(key,fun) end
+    if self.listerners[key] then self.listerners[key][fun]=nil end
   end
   function hueResource:sendCmd(cmd) return huePUT(self.path,cmd) end
   function hueResource:__tostring() return self._str or fmt("[rsrc:%s]",self.id) end
@@ -198,18 +201,37 @@ local function main()
   function light:turnOn() self:sendCmd({on={on=true}}) end
   function light:turnOff() self:sendCmd({on={on=false}}) end
   function light:setDim(val) self:sendCmd({dimming={brightness=val}}) end
-  function light:setColor(xy) self:sendCmd({color={xy=xy}}) end
-  function light:setTemperature(t) self:sendCmd({color_temperature={mirek=math.floor(t)}}) end
-  meths.light = { "turnOn", "turnOff", "setDim","setColor", "setTemperature" }
+  function light:setColor(x,y) self:sendCmd({color={xy={x=x,y=y}}}) end
+  function light:setTemperature(t) self:sendCmd({color_temperature={mirek=math.floor(t+0.5)}}) end
+  meths.light = { turnOn=true, turnOff=true, setDim=true,setColor=true, setTemperature=true }
   props.light = {
-    on={get=function(r) return r.on.on end,set=function(r,v) r.on.on=v end},
-    dimming={get=function(r) return r.dimming.brightness end,set=function(r,v) r.dimming.brightness=v end},
-    color_temperature={get=function(r) return r.color_temperature.mirek end,set=function(r,v) r.color_temperature.mirek=v end},
-    color={get=function(r) return r.color.xy end,set=function(r,v) r.color.xy=v end},
+    on={get=function(r) return r.on.on end,set=function(r,v) r.on.on=v end, changed=function(o,n) return o.on.on ~= n.on.on, n.on.on end },
+    dimming={
+      get=function(r) return r.dimming.brightness end,
+      set=function(r,v) r.dimming.brightness=v end,
+      changed=function(o,n) return o.dimming.brightness~=n.dimming.brightness,n.dimming.brightness end,
+    },
+    color_temperature={
+      get=function(r) return r.color_temperature.mirek end,
+      set=function(r,v) r.color_temperature.mirek=v end,
+      changed=function(o,n) return o.color_temperature.mirek~=n.color_temperature.mirek,n.color_temperature.mirek end,
+    },
+    color={
+      get=function(r) return r.color.xy end,
+      set=function(r,v) r.color.xy=v end,
+      changed=function(o,n) 
+        local oxy,nxy = o.color.xy,n.color.xy
+        return oxy.x~=nxy.x or oxy.y~=nxy.y,nxy
+      end,
+    },
   }
 
   props.zigbee_connectivity = {
-    status={get=function(r) return r.status end,set=function(r,v) r.status=v end},
+    status={
+      get=function(r) return r.status end,
+      set=function(r,v) r.status=v end,
+      changed=function(o,n) return o.status~=n.status,n.status end,
+    },
   }
   meths.zigbee_connectivity = { "connected" }
   class 'zigbee_connectivity'(hueResource)
@@ -219,6 +241,28 @@ local function main()
   end
   function zigbee_connectivity:connected()
     return self.rsrc.status=="connected"
+  end
+
+  props.device_power = {
+    power_state={
+      get=function(r) return r.power_state.battery_state end,
+      set=function(r,v) r.power_state.battery_state=v end,
+      changed=function(o,n) local s0,s1 = o.power_state,n.power_state return s0.battery_state~=s1.battery_state or s0.battery_level~=s1.battery_level,s1  end
+    },
+  }
+  meths.device_power = { "connected" }
+  class 'device_power'(hueResource)
+  function device_power:__init(id)
+    hueResource.__init(self,id)
+  end
+  function device_power:power()
+    return self.rsrc.power_state.battery_level,self.rsrc.power_state.battery_state
+  end
+  function device_power:__tostring()
+    return fmt("[device_power:%s,%s,value:%s]",self.id,self:getName(),self:power())
+  end
+  function device_power:event(data)
+    hueResource.event(self,data)
   end
 
   props.zgp_connectivity = {
@@ -251,19 +295,18 @@ local function main()
     hueResource.__init(self,id)
     self._str = fmt("[room:%s,%s,%s]",self.id,self.name,self.resourceType)
   end
+  function room:setup(rsrc) hueResource.setup(self,rsrc) self.resourceName="Room" end
+
 
   class 'zone'(hueResource)
   function zone:__init(id)
     hueResource.__init(self,id)
     self._str = fmt("[zone:%s,%s,%s]",self.id,self.name,self.resourceType)
   end
+  function zone:setup(rsrc) hueResource.setup(self,rsrc) self.resourceName="Zone" end
 
-  props.grouped_light = {
-    on={get=function(r) return r.on.on end,set=function(r,v) r.on.on=v end},
-    dimming={get=function(r) return r.dimming.brightness end,set=function(r,v) r.dimming.brightness=v end},
-    color_temperature={get=function(r) return r.color_temperature.mirek end,set=function(r,v) r.color_temperature.mirek=v end},
-    color={get=function(r) return r.color.xy end,set=function(r,v) r.color.xy=v end},
-  }
+  props.grouped_light = props.light
+  meths.grouped_light = meths.light
   class 'grouped_light'(hueResource)
   function grouped_light:__init(id)
     hueResource.__init(self,id)
@@ -272,9 +315,8 @@ local function main()
   function grouped_light:turnOn() self:sendCmd({on={on=true}}) end
   function grouped_light:turnOff() self:sendCmd({on={on=false}}) end
   function grouped_light:setDim(val) self:sendCmd({dimming={brightness=val}}) end
-  function grouped_light:setColor(xy) self:sendCmd({color={xy=xy}}) end
-  function grouped_light:setTemperature(t) self:sendCmd({color_temperature={mirek=math.floor(t)}}) end
-  meths.grouped_light = { "turnOn", "turnOff", "setDim","setColor", "setTemperature" }
+  function grouped_light:setColor(x,y) self:sendCmd({color={xy={x=x,y=y}}}) end
+  function grouped_light:setTemperature(t) self:sendCmd({color_temperature={mirek=math.floor(t+0.5)}}) end
 
   class 'scene'(hueResource)
   function scene:__init(id)
@@ -285,7 +327,11 @@ local function main()
   props.button = {
     button = {
       get=function(r) return r.button and r.button.last_event end,
-      set=function(r,v) if not r.button then r.button = { last_event = v } else r.button.last_event=v end end
+      set=function(r,v) if not r.button then r.button = { last_event = v } else r.button.last_event=v end end,
+      changed=function(o,n)
+        local ob,nb = o.button or {},n.button or {}
+        return ob.last_event~=nb.last_event,nb.last_event 
+      end
     }
   }
   class 'button'(hueResource)
@@ -299,15 +345,58 @@ local function main()
     return fmt("[button:%s,%s,value:%s]",self.id,self:getName("BTN"),self:button_state())
   end
 
-  class 'device_power'(hueResource)
-  function device_power:__init(id)
+  props.temperature = {
+    temperature={
+      get=function(r) return r.temperature.temperature end,
+      set=function(r,v) r.temperature.temperature=v end,
+      changed=function(o,n) return o.temperature.temperature~=n.temperature.temperature,n.temperature.temperature end,
+    },
+  }
+  class 'temperature'(hueResource)
+  function temperature:__init(id)
     hueResource.__init(self,id)
   end
-  function device_power:power_state()
-    return self.rsrc.power_state.battery_level,self.rsrc.power_state.battery_state
+  function temperature:temperature()
+    return self.rsrc.temperature.temperature
   end
-  function device_power:__tostring()
-    return fmt("[device_power:%s,%s,value:%s]",self.id,self:getName(),self:power_state())
+  function temperature:__tostring()
+    return fmt("[temperature:%s,%s,value:%s]",self.id,self:getName(),self:temperature())
+  end
+
+  props.motion = {
+    motion={
+      get=function(r) return r.motion.motion end,
+      set=function(r,v) r.motion.motion=v end,
+      changed=function(o,n) return o.motion.motion~=n.motion.motion,n.motion.motion end
+    },
+  }
+  class 'motion'(hueResource)
+  function motion:__init(id)
+    hueResource.__init(self,id)
+  end
+  function motion:motion()
+    return self.rsrc.motion.motion
+  end
+  function motion:__tostring()
+    return fmt("[motion:%s,%s,value:%s]",self.id,self:getName(),self:motion())
+  end
+
+  props.light_level = {
+    light={
+      get=function(r) return r.light.light_level end,
+      set=function(r,v) r.light.light_level=v end,
+      changed=function(o,n) return o.light.light_level~=n.light.light_level,n.light.light_level end,
+    },
+  }
+  class 'light_level'(hueResource)
+  function light_level:__init(id)
+    hueResource.__init(self,id)
+  end
+  function light_level:light_level()
+    return self.rsrc.light.light_level
+  end
+  function light_level:__tostring()
+    return fmt("[light_level:%s,%s,value:%s]",self.id,self:getName(),self:light_level())
   end
 
   class 'bridge'(hueResource)
@@ -334,48 +423,6 @@ local function main()
     self._str = fmt("[behavior_instance:%s,%s,%s]",self.id,self.rsrc.metadata.name,self.rsrc.metadata.category)
   end
 
-  props.temperature = {
-    temperature={get=function(r) return r.temperature.temperature end,set=function(r,v) r.temperature.temperature=v end},
-  }
-  class 'temperature'(hueResource)
-  function temperature:__init(id)
-    hueResource.__init(self,id)
-  end
-  function temperature:temperature()
-    return self.rsrc.temperature.temperature
-  end
-  function temperature:__tostring()
-    return fmt("[temperature:%s,%s,value:%s]",self.id,self:getName(),self:temperature())
-  end
-
-  props.motion = {
-    motion={get=function(r) return r.motion.motion end,set=function(r,v) r.motion.motion=v end},
-  }
-  class 'motion'(hueResource)
-  function motion:__init(id)
-    hueResource.__init(self,id)
-  end
-  function motion:motion()
-    return self.rsrc.motion.motion
-  end
-  function motion:__tostring()
-    return fmt("[motion:%s,%s,value:%s]",self.id,self:getName(),self:motion())
-  end
-
-  props.light_level = {
-    light={get=function(r) return r.light.light_level end,set=function(r,v) r.light.light_level=v end},
-  }
-  class 'light_level'(hueResource)
-  function light_level:__init(id)
-    hueResource.__init(self,id)
-  end
-  function light_level:light_level()
-    return self.rsrc.light.light_level
-  end
-  function light_level:__tostring()
-    return fmt("[light_level:%s,%s,value:%s]",self.id,self:getName(),self:light_level())
-  end
-
   class 'geolocation'(hueResource)
   function geolocation:__init(id)
     hueResource.__init(self,id)
@@ -399,7 +446,7 @@ local function main()
           for _,r in ipairs(e1.data) do
             local d = resources.get(r.id)
             if d and d.event then 
-              DEBUG('event',"Event id:%s type:%s",d.id,d.type)--,json.encode(e2))
+              DEBUG('all_event',"Event id:%s type:%s",d.id,d.type)--,json.encode(e2))
               d:event(r)
             else
               local _ = 0
@@ -557,9 +604,9 @@ local function main()
   function HUEv2Engine:getResource(id) return resources.id2resource[id] end
   function HUEv2Engine:getResourceType(typ) return resources.resources[typ] end
 
-  filter1 = { device=1, scene=10, room=2, zone=3 }
+  local filter1 = { device=1, scene=10, room=2, zone=3 }
 
-  filter2 = { device=1, light=4, button=5, scene=10, room=2, zone=3, temperature=6, light_level=7, motion=8, grouped_light=9, zigbee_connectivity=10, device_power=11 }
+  local filter2 = { device=1, light=4, button=5, scene=10, room=2, zone=3, temperature=6, light_level=7, motion=8, grouped_light=9, zigbee_connectivity=10, device_power=11 }
 
   function HUEv2Engine:dumpDeviceTable(groups,filter)
     filter =filter and filter2 or filter1
@@ -572,7 +619,7 @@ local function main()
       end
     end
     table.sort(rs,function(a,b) return a.order < b.order or a.order==b.order and a.str < b.str end) 
-    for _,r in ipairs(rs) do pb:printf("  ['%s']={name='%s',model='%s',used=true}\n",r.r.id,r.r.name,r.r.resourceType) end
+    for _,r in ipairs(rs) do pb:printf("  ['%s']={name='%s',model='%s'},\n",r.r.id,r.r.name,r.r.resourceType) end
     pb:add("}\n")
     print(pb:tostring())
   end
@@ -620,7 +667,6 @@ local function main()
   end
 
   function _initEngine(ip,key,cb)
-    resourceFilter = HUEv2Engine.resourceFilter or {}
     app_key = key
     url =  fmt("https://%s:443",ip)
     DEBUG('info',"HUEv2Engine v%s",version)
@@ -631,4 +677,4 @@ local function main()
 
 end -- main()
 
-function HUEv2Engine:initEngine(ip,key,cb) main() _initEngine(ip,key,cb) end
+function HUEv2Engine:init(ip,key,cb) setup() main() _initEngine(ip,key,cb) end
