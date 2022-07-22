@@ -1,14 +1,13 @@
 local _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true, },
---offline = true,
   copas=true,
 }
 
 --%%name="Huev2"
 --%%type="com.fibaro.deviceController"
 --%%quickVars = {["Hue_IP"]=EM.cfg.Hue_IP,["Hue_User"]=EM.cfg.Hue_user }
--- %%proxy=true
+--%%proxy=true
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 --FILE:jgabs_QAs/CoH2/HueMain.lua,Classes;

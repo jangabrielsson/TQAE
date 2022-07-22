@@ -120,8 +120,16 @@ local function classes()
   local function setupLightMethods(self,tag)
     if self.props.on then 
       self.d:subscribe("on",function(_,v,s) self:updateProperty('state',true) DEBUG("class","%s.on '%s':%s = %s",tag,self.name,self.id,v) end) 
-      function self:turnOn() self.service:turnOn() end
-      function self:turnOff() self.service:turnOff() end
+      function self:turnOn() 
+        self.service:turnOn()
+        self:updateProperty('state',false) 
+        self:updateProperty('value',0) 
+      end
+      function self:turnOff() 
+        self.service:turnOff()
+        self:updateProperty('state',false) 
+        self:updateProperty('value',self.bri or 100) 
+      end
     end
     if self.props.dimming and self.service.rsrc.dimming then 
       local min_dim = self.service.rsrc.dimming.min_dim_level or 1

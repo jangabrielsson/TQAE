@@ -72,7 +72,7 @@ function QuickAppBase:getVariable(name)
   if hc3_emulator then
     local d = hc3_emulator.EM.Devices[self.id]
     if d.proxy or d.childProxy then
-      local qvs = api.get("/devices/"..self.id.."/properties/quickAppVariables","remote")
+      local qvs = api.get("/devices/"..self.id,"remote").properties.quickAppVariables
       if qvs then self.properties.quickAppVariables = qvs end
     end
   end
