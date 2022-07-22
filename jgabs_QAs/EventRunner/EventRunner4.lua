@@ -75,7 +75,9 @@ function QuickApp:main()    -- EventScript version
 ---- Testar Earth hour --------
 --  rule("#earthHour2 => states = lights:value; lights:off; wait(00:00:06); lights:value = states")
 --  rule("@now+00:00:05 => post(#earthHour2)")
-
+    Util.defTriggerVar("A")
+    rule("trueFor(00:00:05,A) => log('%s',tjson(env.event))")
+    rule("A=true")
 -- rule("@@00:01 & date('0/5 12-15 *') => log('ping')")
 -- rule("@@00:00:05 => log(now % 2 == 1 & 'Tick' | 'Tock')")
 -- rule("remote(1356,#foo)")
