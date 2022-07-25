@@ -17,10 +17,20 @@ Email: jan@gabrielsson.com
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.949"
+fibaro.FIBARO_EXTRA = "v0.950"
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
-local function assertf(test,fmt,...) if not test then error(format(fmt,...),2) end end
+function asserts(condition, ...)
+   if not condition then
+      if next({...}) then
+         local s,r = pcall(function (...) return(string.format(...)) end, ...)
+         if s then
+            error("assertion failed!: " .. r, 2)
+         end
+      end
+      error("assertion failed!", 2)
+   end
+end
 local debugFlags,utils = _debugFlags or {},{}
 _debugFlags = debugFlags
 local toTime,copy,equal,member,remove,protectFun
@@ -126,7 +136,7 @@ do
 
   function utils.basicAuthorization(user,password) return "Basic "..utils.base64encode(user..":"..password) end
   function utils.base64encode(data)
-    __assert_type(data,"string" )
+    __assert_type(data,"string")
     local bC='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
     return ((data:gsub('.', function(x) 
             local r,b='',x:byte() for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
@@ -415,7 +425,7 @@ do
       end
     end
     local sg,h,m,s = hmstr:match("^(%-?)(%d+):(%d+):?(%d*)")
-    assertf(h and m,"Bad hm2sec string %s",hmstr)
+    asserts(h and m,"Bad hm2sec string %s",hmstr)
     return (sg == '-' and -1 or 1)*(tonumber(h)*3600+tonumber(m)*60+(tonumber(s) or 0)+(tonumber(offs or 0))*60)
   end
 
@@ -2005,16 +2015,25 @@ do
   end
 
   function fibaro.stopSequence(ref) clearTimeout(ref[1]) end
-
+  local function isEvent(e) return type(e)=='table' and e.type end
+  
   function fibaro.trueFor(time,test,action,delay)
+    local timers = {}
     if type(delay)=='table' then
+      delay = copy(delay)
+      delay = delay[1] and delay or {delay}
+      assert(isEvent(delay[1]),"4th argument not an event for trueFor(...)")
       local state,ref = false
       local function ac()
+        if debugFlags.trueFor then fibaro.debug(nil,"trueFor: action()") end
         if action() then
           state = os.time()+time
+          if debugFlags.trueFor then fibaro.debug(nil,"trueFor: rescheduling action()") end
           ref = setTimeout(ac,1000*(state-os.time()))
+          timers[1]=ref
         else
           ref = nil
+          timers[1]=nil
           state = true 
         end
       end
@@ -2022,12 +2041,15 @@ do
         if test() then
           if state == false then
             state=os.time()+time
+            if debugFlags.trueFor then fibaro.debugf(nil,"trueFor: test() true, running action() in %ss",state-os.time()) end
             ref = setTimeout(ac,1000*(state-os.time()))
+            timers[1]=ref
           elseif state == true then
             state = state -- NOP
           end
         else
-          if ref then ref = clearTimeout(ref) end
+          if ref then timers[1]=nil ref = clearTimeout(ref) end
+          if debugFlags.trueFor then fibaro.debugf(nil,"trueFor: test() false, cancelling action()") end
           state=false
         end
       end
@@ -2035,6 +2057,10 @@ do
         fibaro.event(e,check)
       end
       check()
+      return function() 
+        if timers[1] then clearTimeout(timers[1]) end
+        for _,e in ipairs(delay) do fibaro.removeEvent(e,check) end
+      end
     else
       delay = delay or 1000
       local state = false
@@ -2054,9 +2080,10 @@ do
         else
           state=false
         end
-        setTimeout(loop,delay)
+        timers[1]=setTimeout(loop,delay)
       end
       loop()
+      return function() if timers[1] then clearTimeout(timers[1]) end end 
     end
   end
 

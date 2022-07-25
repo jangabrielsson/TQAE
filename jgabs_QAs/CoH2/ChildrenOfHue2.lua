@@ -14,7 +14,7 @@ local _=loadfile and loadfile("TQAE.lua"){
 --FILE:jgabs_QAs/CoH2/HueClasses.lua,Hue;
 --FILE:lib/HUEv2Engine.lua,HueEngine;
 --FILE:lib/HueColors.lua,Colors;
---FILE:lib/ColorConversion.lua,ColorConversion;
+--FILE:test/ColorConversion3.lua,ColorConversion;
 
 --luacheck: globals ignore QuickApp
 ----------- Code -----------------------------------------------------------
@@ -61,7 +61,7 @@ local HueClassMap = {
   ['LCT012']         = {ftype='com.fibaro.philipsHueLight',   class='ColorLight'},   -- Hue color candle
   ['LCA001']         = {ftype='com.fibaro.philipsHueLight',   class='ColorLight'},   -- Hue color lamp
   ['LCG002']         = {ftype='com.fibaro.philipsHueLight',   class='ColorLight'},   -- Hue color spot
-  ['LCT015']         = {ftype='com.fibaro.philipsHueLight',   class='ColorLight'},   -- Hue color lamp
+  ['LCT015']         = {ftype='com.fibaro.colorController',   class='ColorLight2'},  -- Hue color lamp
   ['LOM007']         = {ftype='com.fibaro.binarySwitch',      class='BinarySwitch'}, -- Hue smart plug
   ['LWO003']         = {ftype='com.fibaro.multilevelSwitch',  class='DimmableLight'},-- Hue filament bulb  
   ['RWL021']         = {ftype='com.fibaro.remoteController',  class='Switch'},       -- Hue dimmer switch

@@ -6,8 +6,8 @@
  Everyone is permitted to copy and distribute verbatim copies
  of this license document, but changing it is not allowed.
  --]]
- 
- -- luacheck: globals ignore quickApp plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
+
+-- luacheck: globals ignore quickApp plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
 -- luacheck: globals ignore hc3_emulator HUEv2Engine fibaro
 -- luacheck: ignore 212/self
 
@@ -57,7 +57,6 @@ local function main()
   local hueGET,huePUT
   local app_key,url,callBack
   local fmt = string.format
-  local utils = fibaro.utils
   local merge = utils.keyMerge
   local function createResourceTable()
     local self = { resources={}, id2resource={} }
@@ -162,6 +161,18 @@ local function main()
       end
     end
   end
+  function hueResource:publishMySubs()
+    local p = props[self.type] -- { power_state = { get, set changed }, ...
+    if p then
+      local r = self.rsrc
+      for k,f in pairs(p) do
+        if r[k] then self:publish(k,f.get(r)) end
+      end
+    end
+  end
+  function hueResource:publishAll()
+    for _,s in ipairs(self.services or {}) do resolve(s):publishMySubs() end
+  end
   function hueResource:publish(key,value)
     local ll = self.listernes[key] or {}
     if next(ll) then
@@ -170,6 +181,7 @@ local function main()
       end
     end
   end
+
   function hueResource:subscribe(key,fun)
     if self.services then
       for _,s in ipairs(self.services or {}) do resolve(s):subscribe(key,fun) end
@@ -185,7 +197,7 @@ local function main()
   function hueResource:sendCmd(cmd) return huePUT(self.path,cmd) end
   function hueResource:__tostring() return self._str or fmt("[rsrc:%s]",self.id) end
 
-  -------
+-------
 
   class 'homekit'(hueResource)
   function homekit:__init(id)
@@ -254,8 +266,8 @@ local function main()
 
   props.device_power = {
     power_state={
-      get=function(r) return r.power_state.battery_state end,
-      set=function(r,v) r.power_state.battery_state=v end,
+      get=function(r) return r.power_state end,
+      set=function(r,v) r.power_state=v end,
       changed=function(o,n) local s0,s1 = o.power_state,n.power_state return s0.battery_state~=s1.battery_state or s0.battery_level~=s1.battery_level,s1  end
     },
   }

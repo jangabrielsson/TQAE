@@ -38,17 +38,19 @@ local function setupChildren(HueClassMap,HueDeviceMap)
   for uid,info in pairs(HueDeviceMap) do
     if not Objects[uid] then
       finfo = HueClassMap[info.model]
-      _G[finfo.class]({new=true,name=info.name,type=finfo.ftype,uid=uid})
-    else 
+      _G[finfo.class]({NEW=true,name=info.name,type=finfo.ftype,uid=uid,class=finfo.class})
+    elseif HUE:getResource(uid)==nil then
       WARNING("Resource %s does not exists: %s",uid,json.encode(info))
     end
   end
 
 end
 
-function fibaro.hue.createObject(id,model,name) 
-  finfo = classMap[model]
-  return _G[finfo.class]({new=true,name=name,type=finfo.ftype,uid=id})
+function fibaro.hue.createObject(id,model,name)
+  if not Objects[id] then
+    finfo = classMap[model]
+    return _G[finfo.class]({NEW=true,name=name,type=finfo.ftype,uid=id,class=finfo.class})
+  end
 end
 
 local function main()
