@@ -248,7 +248,7 @@ local function classes()
   function ColorLight:__init(dev)
     HueClass.__init(self,dev) 
     self.service = self.d:findServiceByType('light')[1]
-    setupLightMethods(self,"CLight")
+    setupLightMethods2(self,"CLight")
     self:postInit()
   end
   

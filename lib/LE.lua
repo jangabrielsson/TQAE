@@ -41,8 +41,9 @@ function fibaro.lightEvents()
     args.options.data = data and json.encode(data) or nil
     function args.success(resp)
       if resp.status <= 204 then
-        self:debug("success ",url,resp.data:sub(1,100))
-        self:post({type=event.type.."_success",url=url,data=json.decode(resp.data)})
+        self:debug("success ",url,resp.data:sub(1,10))
+        local stat,res = pcall(json.decode,resp.data)
+        self:post({type=event.type.."_success",url=url,data=stat and res or resp.data})
       else
         self:post({type=event.type.."_error",url=url,error="status="..resp.status})
       end
@@ -63,17 +64,17 @@ end
 -- Example
 -----------------------------------------------------
 
-local LE = fibaro.lightEvents()
-if true then -- redefine send for test purpose when no access to remote server
-  local resps={ login={{value={token={name="myToken"}}}}, value={{value={enable=0}}} } -- Fixed responses
-  function LE._send(self,event,method,path,_) -- ignore data, we make our own response
-    local url,resp = (self.baseURL or "")..path,{}
-    for t,d in pairs(resps) do if path:match(t) then resp=d break end end
-    self:debug("success ",url,json.encode(resp))
-    self:post({type=event.type.."_success",url=url,data=resp})
-  end
-end
-EVENT = LE.event
+--local LE = fibaro.lightEvents()
+--if true then -- redefine send for test purpose when no access to remote server
+--  local resps={ login={{value={token={name="myToken"}}}}, value={{value={enable=0}}} } -- Fixed responses
+--  function LE._send(self,event,method,path,_) -- ignore data, we make our own response
+--    local url,resp = (self.baseURL or "")..path,{}
+--    for t,d in pairs(resps) do if path:match(t) then resp=d break end end
+--    self:debug("success ",url,json.encode(resp))
+--    self:post({type=event.type.."_success",url=url,data=resp})
+--  end
+--end
+--EVENT = LE.event
 
 --function EVENT:test1(event)
 --  self:post({type='test2',a=event.a+1},event.a)
@@ -135,36 +136,36 @@ EVENT = LE.event
 
 ------
 
-function EVENT:getValue(event)
-  if not self.token then
-      self.nextStep = 'getValue'
-      self:post({type='login'})
-  else 
-    self:http(event,"GET","valueGet&name=X&token="..self.token)
-  end
-end
-function EVENT:getValue_success(event)
-  self:debug("Enable:",event.data[1].value.enable)
-end
-function EVENT:getValue_error(event)
-  self:error(event.error)
-end
-function EVENT:login(event)
-  self:http(event,"GET","login&pwd="..self.pwd)
-end
-function EVENT:login_success(event)
-  self:debug("Logged in")
-  self.token = event.data[1].value.token.name
-  self:post({type=self.nextStep})
-end
-function EVENT:login_error(event)
-  self:eror(event.error)
-end
+--function EVENT:getValue(event)
+--  if not self.token then
+--      self.nextStep = 'getValue'
+--      self:post({type='login'})
+--  else 
+--    self:http(event,"GET","valueGet&name=X&token="..self.token)
+--  end
+--end
+--function EVENT:getValue_success(event)
+--  self:debug("Enable:",event.data[1].value.enable)
+--end
+--function EVENT:getValue_error(event)
+--  self:error(event.error)
+--end
+--function EVENT:login(event)
+--  self:http(event,"GET","login&pwd="..self.pwd)
+--end
+--function EVENT:login_success(event)
+--  self:debug("Logged in")
+--  self.token = event.data[1].value.token.name
+--  self:post({type=self.nextStep})
+--end
+--function EVENT:login_error(event)
+--  self:eror(event.error)
+--end
 
-function QuickApp:onInit()
-  self:debug(self.name, self.id)
-  local pwd = self:getVariable("password")
-  LE:post({type='getValue'},0,{pwd=pwd,baseURL="http://myservices?cmd="})
-end
+--function QuickApp:onInit()
+--  self:debug(self.name, self.id)
+--  local pwd = self:getVariable("password")
+--  LE:post({type='getValue'},0,{pwd=pwd,baseURL="http://myservices?cmd="})
+--end
 
 

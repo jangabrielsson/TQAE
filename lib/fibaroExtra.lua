@@ -31,10 +31,11 @@ function asserts(condition, ...)
       error("assertion failed!", 2)
    end
 end
-local debugFlags,utils = _debugFlags or {},{}
-_debugFlags = debugFlags
+local debugFlags,utils = fibaro.debugFlags or {},{}
 local toTime,copy,equal,member,remove,protectFun
+fibaro.debugFlags = debugFlags
 fibaro.utils = utils
+_debugFlags = debugFlags
 -------------------- Utilities ----------------------------------------------
 do
   if not setTimeout then
@@ -461,7 +462,6 @@ end
 --------------------- Debug functions -----------------------------------------
 do
   local fformat
-  fibaro.debugFlags = debugFlags
   debugFlags.debugLevel=nil
   debugFlags.traceLevel=nil
   debugFlags.notifyError=true
@@ -2214,7 +2214,7 @@ do
       env.last,env.rule.time = t-(env.rule.time or 0),t
       local status, res = pcall(env.rule.action,env) -- call the associated action
       if not status then
-        if type(res)=='string' and not _debugFlags.extendedErrors then res = res:gsub("(%[.-%]:%d+:)","") end
+        if type(res)=='string' and not debugFlags.extendedErrors then res = res:gsub("(%[.-%]:%d+:)","") end
         fibaro.errorf(nil,"in %s: %s",env.rule.doc,res)
         env.rule._disabled = true -- disable rule to not generate more errors
       else return res end

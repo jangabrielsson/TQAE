@@ -55,9 +55,10 @@ local HTTP, pollingextra
 ACCOUNTS = ACCOUNTS or {}
 local utils = fibaro.utils
 local post
-local debug 
+local debug
+local function printf(...) quickApp:debugf(...) end
 
-SCHEDULE_TIME = SCHEDULE_TIME or 90 -- seconds
+local SCHEDULE_TIME = SCHEDULE_TIME or 90 -- seconds
 SCHEDULE_INTERVAL = SCHEDULE_INTERVAL or false -- true=delay SCHEDULE_TIME between each account poll, false=delay SCHEDULE_TIME/#accounts between each account poll
 SCHEDULE_KEEP_TOGETHER = SCHEDULE_KEEP_TOGETHER or {} -- {{'XXXX1','XXXX2'}} -- poll these accounts together - beware that it can be throttled by Apple if polled too often
 
@@ -347,7 +348,7 @@ local function setupEvents()
       MYAWAY = getVar('AwayName','away')
       quickApp:tracef("Name of home place: '%s'",MYHOME)
       quickApp:tracef("Name of AWAY place: '%s'",MYAWAY)
-
+      printf("----------------------------------------------")
       local accountMap = {}
       for _,u in ipairs(ACCOUNTS) do
         u.name = u.icloud.user
@@ -403,9 +404,8 @@ local function setupEvents()
           properties = {},
           interfaces = {"battery"},
         }
-        print(args.uid)
         Users[args.uid or dev.name].child = self
-        self:debug("UserObject",dev.name)
+        self:debug("Instantiated QA child ",dev.name)
         QuickerAppChild.__init(self,args)
       end
       function UserObject:__tostring()
@@ -456,6 +456,12 @@ local function setupEvents()
         c:updateProperty('value',false)
         c:setVariable('place',"unknown")
       end
+      printf("----------------------------------------------")
+      for name,u in pairs(Users) do
+        printf("[%s:%s, home:%s, iOS:%s, QA:%s]",name,u.id,u.home,u.iOS==true,u.QA~=nil and u.child.id)
+      end
+      printf("----------------------------------------------")
+      
       post({type='setupLocations'})
       post({type='poll',index=1,_sh=true})
     end)

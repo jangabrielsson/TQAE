@@ -25,7 +25,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --FILE:jgabs_QAs/EventRunner/EventRunnerDoc.lua,Doc;
 
 ----------- Code -----------------------------------------------------------
-_debugFlags.trigger = true -- log incoming triggers
+_debugFlags.trigger = true  -- log incoming triggers
 _debugFlags.trigger2 = true -- log incoming triggers
 _debugFlags.sourceTrigger = true
 _debugFlags.fcall=true     -- log fibaro.call
