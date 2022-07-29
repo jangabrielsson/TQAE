@@ -14,6 +14,7 @@ local _=loadfile and loadfile("TQAE.lua"){
 --FILE:jgabs_QAs/CoH2/HueClasses.lua,Hue;
 --FILE:lib/HUEv2Engine.lua,HueEngine;
 --FILE:lib/HueColors.lua,Colors;
+--FILE:lib/UI.lua,UI;
 --FILE:test/ColorConversion3.lua,ColorConversion;
 
 --luacheck: globals ignore QuickApp
@@ -26,6 +27,7 @@ HueDeviceTable = {
 --  ['2219eadd-9464-4149-b52d-073ed1d9754a']={name='Köksö2',model='LCG002'},
 --  ['2d7bfac8-688b-4889-b813-b927e875b533']={name='Star right',model='LCT012'},
   ['3ab27084-d02f-44b9-bd56-70ea41163cb6']={name='Tim',model='LCT015'},
+--  ['21fc2e2f-05e6-4fbd-ad3b-a12762c88e72']={name='Tim2',model='LWA001'},
 --  ['429ee799-9b86-43e5-bf31-ce3d06b45cc7']={name='Roof3',model='LCT012'},
 --  ['598e4796-be01-482f-99c1-92f95fa8a18c']={name='Roof2',model='LCT012'},
 --  ['59cbfb37-eba9-4746-9e64-ded409857abc']={name='Left window',model='LCT012'},
@@ -61,9 +63,10 @@ local HueClassMap = {
   ['LCT012']         = {ftype='com.fibaro.philipsHueLight',   class='ColorLight'},   -- Hue color candle
   ['LCA001']         = {ftype='com.fibaro.philipsHueLight',   class='ColorLight'},   -- Hue color lamp
   ['LCG002']         = {ftype='com.fibaro.philipsHueLight',   class='ColorLight'},   -- Hue color spot
-  ['LCT015']         = {ftype='com.fibaro.colorController',   class='ColorLight2'},  -- Hue color lamp
+  ['LCT015']         = {ftype='com.fibaro.philipsHueLight',   class='ColorLight'},  -- Hue color lamp
   ['LOM007']         = {ftype='com.fibaro.binarySwitch',      class='BinarySwitch'}, -- Hue smart plug
   ['LWO003']         = {ftype='com.fibaro.multilevelSwitch',  class='DimmableLight'},-- Hue filament bulb  
+  ['LWA001']         = {ftype='com.fibaro.multilevelSwitch',  class='DimmableLight'},-- Hue white lamp 
   ['RWL021']         = {ftype='com.fibaro.remoteController',  class='Switch'},       -- Hue dimmer switch
   ['RDM001']         = {ftype='com.fibaro.remoteController',  class='Switch'},       -- Hue wall switch module
   ['SML001']         = {ftype='com.fibaro.motionSensor',      class='MotionSensor'}, -- Hue motion sensor

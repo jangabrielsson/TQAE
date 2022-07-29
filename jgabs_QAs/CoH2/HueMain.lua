@@ -86,7 +86,7 @@ function QuickApp:setupHue(HueClassMap,HueDeviceMap,debugFlags)
 
 --      HUEv2Engine:dumpDevices()
 --      HUE:dumpDeviceTable()
---      HUE:listAllDevicesGrouped()
+      HUE:listAllDevicesGrouped()
       self:post(main) -- Start
     end)
 end

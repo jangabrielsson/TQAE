@@ -59,7 +59,7 @@ local function classes()
 
     return self,created
   end
-  function HueClass:postInit() self.d:publishAll() end
+  function HueClass:postInit() self.d:publishAll() end -- Ask all subservices to publish their parameters to initialize our Fibaro object.
   function HueClass:send(args) end -- raw Hue command
 
   local btnMap = {initial_press="Pressed",['repeat']="HeldDown",short_release="Released",long_release="Released"}
@@ -132,12 +132,12 @@ local function classes()
       function self:turnOn() 
         self.service:turnOn()
         self:updateProperty('state',false) 
-        self:updateProperty('value',0) 
+        self:updateProperty('value',99) 
       end
       function self:turnOff() 
         self.service:turnOff()
         self:updateProperty('state',false) 
-        self:updateProperty('value',99) 
+        self:updateProperty('value',0) 
       end
       self.on = self.turnOn
       self.off = self.turnOff
@@ -148,7 +148,7 @@ local function classes()
           local bri = round(V255*v/100)
           self:updateProperty('value',round(v))
           --self:updateProperty('brightness',bri)
-          self:setView('brightness',"value",bri)
+          --self:setView('brightness',"value",bri)
           DEBUG("class","%s.dimming '%s':%s = %s",tag,self.name,self.id,bri)
         end)
       function self:setValue(v) -- 0-100
@@ -220,6 +220,80 @@ local function classes()
     function self:SEND(x) self.service:sendCmd(x) end
   end
 
+  local function setupLightMethods2(self,tag)
+    self._hue = {}
+    if self.props.on then 
+      self.d:subscribe("on",function(_,v,s) self:updateProperty('state',true) DEBUG("class","%s.on '%s':%s = %s",tag,self.name,self.id,v) end) 
+      function self:turnOn() 
+        self.service:turnOn()
+        self:updateProperty('state',false) 
+        self:updateProperty('value',0) 
+      end
+      function self:turnOff() 
+        self.service:turnOff()
+        self:updateProperty('state',false) 
+        self:updateProperty('value',99) 
+      end
+      self.on = self.turnOn
+      self.off = self.turnOff
+    end
+    if self.props.dimming and self.service.rsrc.dimming then 
+      local min_dim = self.service.rsrc.dimming.min_dim_level or 1
+      self.d:subscribe("dimming",function(_,v,s) 
+          local bri = round(V255*v/100)
+          self:updateProperty('value',round(v))
+          --self:updateProperty('brightness',bri)
+          self:setView('brightness',"value",bri)
+          DEBUG("class","%s.dimming '%s':%s = %s",tag,self.name,self.id,bri)
+        end)
+      function self:setValue(v) -- 0-100
+        self.service:setDim(v) self:setView("brightness","value",round(V255*v/100.0))
+      end
+      function self:startLevelIncrease()
+        self.service:sendCmd({dimming={brightness=100},dynamics={duration=10000}})
+      end
+      function self:startLevelDecrease()
+        self.service:sendCmd({dimming={brightness=0},dynamics={duration=10000}})
+      end
+      function self:stopLevelChange() self.service:sendCmd({dimming_delta={action='stop'}}) end
+    end
+
+    if self.props.color and self.service.rsrc.color then
+      local cc = fibaro.colorConversion
+      local G =  cc.gamut(self.service.rsrc.color.gamut_type)
+      self.hsv,self._t = {h=0,s=0,v=100},0
+      self.d:subscribe("color",function(_,v,_)
+          self.xy=v
+          if os.time()-self._t > 2 then
+            local r,g,b = cc.xy2rgb(v.x,v.y,G)  
+            DEBUG("class","%s.color '%s':%s = %s,%s,%s - %s",tag,self.name,self.id,r,g,b,(json.encode(v)))
+            self.rgb={r=r,g=g,b=b}
+          end
+        end)
+      function self:setColor(r,g,b,w) -- 0-255
+        local bri = w and w > 0 and round(100.0*w/V255) or nil -- normalize 0-100
+        local x,y = cc.rgb2xy(r,g,b,G)
+        self.service:setColor(x,y)
+      end
+
+      function self:setColorComponents(ev) print(json.encode(ev)) end
+      function self:brightness(ev) print("B:",ev) end
+      function self:setValue(ev) print("B1:",ev) end
+      function self:changeBrightness(ev) print("B2:",ev) end
+      function self:setBrightness(ev) print("B3:",ev) end
+
+    end
+    if self.props.color_temperature and self.service.rsrc.color_temperature then 
+      local ms = self.service.rsrc.color_temperature.mirek_schema
+      self.d:subscribe("color_temperature",function(_,v,s)
+          if v==nil then return end
+          DEBUG("class","%s.ctemp '%s':%s = %s",tag,self.name,self.id,v) 
+        end) 
+      function self:setTemperature(t)  print("T:",t)  end
+    end
+    function self:SEND(x) self.service:sendCmd(x) end
+  end
+
   class 'Room'(HueClass)
   function Room:__init(dev)
     HueClass.__init(self,dev)
@@ -241,30 +315,45 @@ local function classes()
     HueClass.__init(self,dev) 
     self.service = self.d:findServiceByType('light')[1]
     setupLightMethods(self,"CLight")
-    self:postInit()
-  end
+    api.post("/plugins/updateProperty",{
+        deviceId=self.id,
+        propertyName='colorComponents',
+        value={warmWhite=0}
+      }
+    )
+        self:postInit()
+      end
 
-  class 'ColorLight2'(HueClass)
-  function ColorLight:__init(dev)
-    HueClass.__init(self,dev) 
-    self.service = self.d:findServiceByType('light')[1]
-    setupLightMethods2(self,"CLight")
-    self:postInit()
-  end
-  
-  class 'DimmableLight'(HueClass)
-  function DimmableLight:__init(dev)
-    HueClass.__init(self,dev) 
-    self.service = self.d:findServiceByType('light')[1]
-    setupLightMethods(self,"DLight")
-    self:postInit()
-  end
-end
+      class 'ColorLight2'(HueClass)
+      function ColorLight2:__init(dev)
+        local new = dev.new
+        HueClass.__init(self,dev) 
+        self.service = self.d:findServiceByType('light')[1]
+        if new then
+--      api.post("/plugins/updateProperty",{
+--          deviceId=self.id,
+--          propertyName='colorComponents',
+--          value={warmWhite=0,red=0,green=0,blue=0}
+--        }
+--      )
+        end
+        setupLightMethods2(self,"CLight")
+        self:postInit()
+      end
 
-function HueClasses.define()
-  setup()
-  classes()
-end
+      class 'DimmableLight'(HueClass)
+      function DimmableLight:__init(dev)
+        HueClass.__init(self,dev) 
+        self.service = self.d:findServiceByType('light')[1]
+        setupLightMethods(self,"DLight")
+        self:postInit()
+      end
+    end
+
+    function HueClasses.define()
+      setup()
+      classes()
+    end
 
 
 

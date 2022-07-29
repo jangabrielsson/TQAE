@@ -487,7 +487,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     if cfg.offline or D then
       if D then
         D.storage = D.storage or {}
-        if D.storage[key] then return {name=key,value=D.storage[key],200} else return nil,404 end
+        if D.storage[key] then return {name=key,value=D.storage[key]},200 else return nil,404 end
       else return nil, 404 end
     else return HC3Request(method,path) end
   end,
@@ -497,19 +497,25 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       if D then
         D.storage = D.storage or {}
         D.storage[data.name]=data.value 
-        return true,200
+        if (not cfg.offline) and D.proxy or D.childProxy then
+--          return HC3Request(method,path,data)
+            return HC3Request("POST","/devices/"..id.."/action/APIPOST",{args={path,data}})
+        else return true,202 end
       else return nil, 409 end
     else return HC3Request(method,path,data) end
     --return nil,409
   end,
-  ["PUT/plugins/#id/variables"] = function(method,path,data,_,id,key)   -- modify key
+  ["PUT/plugins/#id/variables/#name"] = function(method,path,data,_,id,key)   -- modify key
     local D = Devices[id]
     if cfg.offline or D then
       if D then
         D.storage = D.storage or {}
         if D.storage[key] then
           D.storage[key] = data.value
-          return true,200
+          if (not cfg.offline) and D.proxy or D.childProxy then
+--            return HC3Request(method,path,data)
+              return HC3Request("PUT","/devices/"..id.."/action/APIPUT",{args={path,data}})
+          else return true,202 end
         else return nil,404 end
       else return nil,404 end
     else return HC3Request(method,path,data) end

@@ -160,6 +160,10 @@ local function main()
         end
       end
     end
+    if self.owner then
+      local o = resolve(self.owner)
+      if o._postEvent then o:_postEvent(self.id) end
+    end
   end
   function hueResource:publishMySubs()
     local p = props[self.type] -- { power_state = { get, set changed }, ...
@@ -254,7 +258,7 @@ local function main()
       changed=function(o,n) return o.status~=n.status,n.status end,
     },
   }
-  meths.zigbee_connectivity = { "connected" }
+  meths.zigbee_connectivity = { connected=true }
   class 'zigbee_connectivity'(hueResource)
   function zigbee_connectivity:__init(id)
     hueResource.__init(self,id)
@@ -271,7 +275,7 @@ local function main()
       changed=function(o,n) local s0,s1 = o.power_state,n.power_state return s0.battery_state~=s1.battery_state or s0.battery_level~=s1.battery_level,s1  end
     },
   }
-  meths.device_power = { "connected" }
+  meths.device_power = { connected=true }
   class 'device_power'(hueResource)
   function device_power:__init(id)
     hueResource.__init(self,id)
@@ -289,7 +293,7 @@ local function main()
   props.zgp_connectivity = {
     status={get=function(r) return r.status end,set=function(r,v) r.status=v end},
   }
-  meths.zgp_connectivity = { "connected" }
+  meths.zgp_connectivity = { connected=true }
   class 'zgp_connectivity'(hueResource)
   function zgp_connectivity:__init(id)
     hueResource.__init(self,id)
@@ -629,8 +633,9 @@ local function main()
 
   local filter2 = { device=1, light=4, button=5, scene=10, room=2, zone=3, temperature=6, light_level=7, motion=8, grouped_light=9, zigbee_connectivity=10, device_power=11 }
 
-  function HUEv2Engine:dumpDeviceTable(groups,filter)
+  function HUEv2Engine:dumpDeviceTable(filter,selector)
     filter =filter and filter2 or filter1
+    selector = selector or function() return true end
     local  pb = utils.printBuffer("\n")
     pb:add("\nHueTable = {\n")
     local rs = {}
@@ -640,7 +645,7 @@ local function main()
       end
     end
     table.sort(rs,function(a,b) return a.order < b.order or a.order==b.order and a.str < b.str end) 
-    for _,r in ipairs(rs) do pb:printf("  ['%s']={name='%s',model='%s'},\n",r.r.id,r.r.name,r.r.resourceType) end
+    for _,r in ipairs(rs) do pb:printf("%s['%s']={type='%s',name='%s',model='%s'},\n",selector(r.r.id) and "  " or "--",r.r.id,r.r.type,r.r.name,r.r.resourceType) end
     pb:add("}\n")
     print(pb:tostring())
   end
