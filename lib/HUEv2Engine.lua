@@ -13,7 +13,8 @@
 
 local version = 0.2
 
-local HUEv2Engine = { version = version }
+HUEv2Engine = HUEv2Engine or {}
+HUEv2Engine.version = version
 local DEBUG,WARNING,ERROR,TRACE
 fibaro.hue = fibaro.hue or {}
 fibaro.hue.Engine = HUEv2Engine
@@ -115,6 +116,8 @@ local function main()
     self.path = "/clip/v2/resource/"..self.type.."/"..self.id
     self._inited = true
     self.listernes = {}
+    self._props = props[self.type] 
+    self._meths = meths[self.type]
     DEBUG("class","Setup %s '%s' %s",self.id,self.type,self.name or "rsrc")
   end
   function hueResource:getName(dflt)
@@ -131,23 +134,29 @@ local function main()
     for _,s in ipairs(self.services or {}) do local x=resolve(s) if x.type==typ then r[#r+1]=x end end
     return r
   end
+  function hueResource:getCommand(cmd)
+    for _,s in ipairs(self.services or {}) do 
+      local x=resolve(s) 
+      if x[cmd] then return x end
+    end
+  end
 
   function hueResource:getProps()
     local r = {}
     for _,s in ipairs(self.services or {}) do merge(r,resolve(s):getProps()) end
-    merge(r,props[self.type] or {})
+    merge(r,self._props or {})
     return r
   end
   function hueResource:getMethods()
     local r = {}
     for _,s in ipairs(self.services or {}) do merge(r,resolve(s):getMethods()) end
-    merge(r,meths[self.type] or {})
+    merge(r,self._meths or {})
     return r
   end
   function hueResource:event(data)
     DEBUG('event',"Event %s",data)
     if self.update then self:updata(data) return end
-    local p = props[self.type] -- { power_state = { get, set changed }, ...
+    local p = self._props -- { power_state = { get, set changed }, ...
     if p then
       local r = self.rsrc
       for k,f in pairs(p) do
@@ -166,7 +175,7 @@ local function main()
     end
   end
   function hueResource:publishMySubs()
-    local p = props[self.type] -- { power_state = { get, set changed }, ...
+    local p = self._props -- { power_state = { get, set changed }, ...
     if p then
       local r = self.rsrc
       for k,f in pairs(p) do
@@ -189,7 +198,7 @@ local function main()
   function hueResource:subscribe(key,fun)
     if self.services then
       for _,s in ipairs(self.services or {}) do resolve(s):subscribe(key,fun) end
-    elseif props[self.type] and props[self.type][key] then 
+    elseif self._props and self._props[key] then 
       self.listernes[key] = self.listernes[key] or {}
       self.listernes[key][fun]=true
     end
@@ -217,18 +226,45 @@ local function main()
     self._str = fmt("[device:%s,%s,%s]",self.id,self.name,self.resourceType)
   end
 
+  local pprops = { color={"setColor"},color_temperature={"setTemperature"},dimming={"setDim"} }
+  local function pruneLights(self)
+    self._props = table.copyShallow(self._props)
+    self._meths = table.copyShallow(self._meths)
+    for p,m in ipairs(pprops) do
+      if self.rsrc[p]==nil then 
+        self._props[p]=nil 
+        for _,f in ipairs(m) do self._meths[f]=nil end
+      end
+    end
+  end
+
   class 'light'(hueResource)
   function light:__init(id)
     hueResource.__init(self,id)
     self.archetype = resolve(self.owner).archetype or "unknown_archetype"
+    pruneLights(self)
     self._str = fmt("[ligh:%s,%s,%s]",self.id,self:getName("LGHT"),self.resourceType)
   end
   function light:turnOn() self:sendCmd({on={on=true}}) end
   function light:turnOff() self:sendCmd({on={on=false}}) end
-  function light:setDim(val) self:sendCmd({dimming={brightness=val}}) end
-  function light:setColor(x,y) self:sendCmd({color={xy={x=x,y=y}}}) end
+  function light:setDim(val,delay)
+    if val == -1 then
+      self:sendCmd({dimming_delta={action='stop'}})
+    else 
+      self:sendCmd({dimming={brightness=val},dynamics=delay and {duration=delay} or nil}) 
+    end
+  end
+  function light:setColor(x,y,z)
+    if type(z)=='number' then      -- R,G,B
+    elseif type(y)=='number' then  -- X,Y
+      self:sendCmd({color={xy={x=x,y=y}}}) 
+    else                           -- Color name
+      local xy = HUEv2Engine.xyColors[tostring(x:lower())] or HUEv2Engine.xyColors['white']
+      self:sendCmd({color={xy=xy}}) 
+    end
+  end
   function light:setTemperature(t) self:sendCmd({color_temperature={mirek=math.floor(t+0.5)}}) end
-  meths.light = { turnOn=true, turnOff=true, setDim=true,setColor=true, setTemperature=true }
+  meths.light = { turnOn=true, turnOff=true, setDim=true, setColor=true, setTemperature=true }
   props.light = {
     on={get=function(r) return r.on.on end,set=function(r,v) r.on.on=v end, changed=function(o,n) return o.on.on ~= n.on.on, n.on.on end },
     dimming={
@@ -239,7 +275,7 @@ local function main()
     color_temperature={
       get=function(r) return r.color_temperature.mirek end,
       set=function(r,v) r.color_temperature.mirek=v end,
-      changed=function(o,n) return o.color_temperature.mirek~=n.color_temperature.mirek,n.color_temperature.mirek end,
+      changed=function(o,n) return n.color_temperature.mirek_valid and o.color_temperature.mirek~=n.color_temperature.mirek,n.color_temperature.mirek end,
     },
     color={
       get=function(r) return r.color.xy end,
@@ -258,7 +294,6 @@ local function main()
       changed=function(o,n) return o.status~=n.status,n.status end,
     },
   }
-  meths.zigbee_connectivity = { connected=true }
   class 'zigbee_connectivity'(hueResource)
   function zigbee_connectivity:__init(id)
     hueResource.__init(self,id)
@@ -275,7 +310,6 @@ local function main()
       changed=function(o,n) local s0,s1 = o.power_state,n.power_state return s0.battery_state~=s1.battery_state or s0.battery_level~=s1.battery_level,s1  end
     },
   }
-  meths.device_power = { connected=true }
   class 'device_power'(hueResource)
   function device_power:__init(id)
     hueResource.__init(self,id)
@@ -335,12 +369,27 @@ local function main()
   class 'grouped_light'(hueResource)
   function grouped_light:__init(id)
     hueResource.__init(self,id)
+    pruneLights(self)
   end
   function grouped_light:__tostring() return fmt("[grouped_light:%s,%s]",self.id,self:getName("GROUP")) end
   function grouped_light:turnOn() self:sendCmd({on={on=true}}) end
   function grouped_light:turnOff() self:sendCmd({on={on=false}}) end
-  function grouped_light:setDim(val) self:sendCmd({dimming={brightness=val}}) end
-  function grouped_light:setColor(x,y) self:sendCmd({color={xy={x=x,y=y}}}) end
+  function grouped_light:setDim(val,delay)
+    if val == -1 then
+      self:sendCmd({dimming_delta={action='stop'}})
+    else 
+      self:sendCmd({dimming={brightness=val},dynamics=delay and {duration=delay} or nil}) 
+    end
+  end
+  function grouped_light:setColor(x,y,z)
+    if type(z)=='number' then      -- R,G,B
+    elseif type(y)=='number' then  -- X,Y
+      self:sendCmd({color={xy={x=x,y=y}}}) 
+    else                           -- Color name
+      local xy = HUEv2Engine.xyColors[tostring(x:lower())] or HUEv2Engine.xyColors['white']
+      self:sendCmd({color={xy=xy}}) 
+    end
+  end
   function grouped_light:setTemperature(t) self:sendCmd({color_temperature={mirek=math.floor(t+0.5)}}) end
 
   class 'scene'(hueResource)
@@ -638,18 +687,32 @@ local function main()
     orgDevMap = orgDevMap or {}
     selector = selector or function() return true end
     local  pb = utils.printBuffer("\n")
-    pb:add("\nlocal HueTable = {\n")
+    pb:add("\nlocal HueDeviceTable = {\n")
     local rs = {}
     for _,r in pairs(HUEv2Engine:getResourceIds()) do
       if filter[r.type] then
         rs[#rs+1]={order=filter[r.type],str=tostring(r),r=r}
       end
     end
+    local parentMap = {room={},zone={}}
+    for _,r0 in ipairs(rs) do
+      local r = r0.r
+      if r.type=='room' or r.type=='zone' then
+        for _,c in ipairs(r.children) do
+          parentMap[r.type][c.rid]=r.name
+        end
+      end
+    end
     table.sort(rs,function(a,b) return a.order < b.order or a.order==b.order and a.str < b.str end) 
     for _,r0 in ipairs(rs) do
       local r = r0.r
-      --local ref = orgDevMap[r.id] or 
-      pb:printf("%s['%s']={type='%s',name='%s',model='%s'},\n",selector(r.id) and "  " or "--",r.id,r.type,r.name,r.resourceType) 
+      local room = parentMap.room[r.id]
+      local zone = parentMap.zone[r.id]
+      local ref = (orgDevMap[r.id] or {}).ref
+      room=room and (",room='"..room.."'") or ""
+      zone=zone and (",zone='"..zone.."'") or ""
+      ref=ref and (",ref='"..ref.."'") or ""
+      pb:printf("%s['%s']={type='%s',name='%s',model='%s'%s%s%s},\n",selector(r.id) and "  " or "--",r.id,r.type,r.name,r.resourceType,room,zone,ref) 
     end
     pb:add("}\n")
     print(pb:tostring())

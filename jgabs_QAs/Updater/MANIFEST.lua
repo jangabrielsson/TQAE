@@ -54,7 +54,7 @@ return {
       },   
       { version = 0.86,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.85"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.86"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "enable/disable events",
@@ -168,6 +168,25 @@ return {
         },
         descr = "First release",
         mainfile = "$base1/jgabs_QAs/TriggerQA.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+    }
+  },
+  
+    ["896781234567895"] = {
+    name = "HueConnector",
+    type = "com.fibaro.deviceController",
+    versions = {
+      { version= 0.1,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.1"
+        },
+        descr = "First release",
+        mainfile = "$base1/jgabs_QAs/HueConnector.lua",
         files = "generate",
         keep = {
         },

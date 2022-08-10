@@ -72,10 +72,10 @@ function QuickApp:main()    -- EventScript version
 --  rule("post(#profile{property='activeProfile', value=HomeProfile})") 
 --  rule("wait(20); post(#profile{property='activeProfile', value=AwayProfile})") 
   
-    Util.defTriggerVar('A',true)
-    a=rule("trueFor(00:00:05,A) => log('A')").start()
-    rule("wait(20); disable(a)")
-    rule("#ruleDisable => log('Disable:%s',a==env.event.rule)")
+--    Util.defTriggerVar('A',true)
+--    a=rule("trueFor(00:00:05,A) => log('A')").start()
+--    rule("wait(20); disable(a)")
+--    rule("#ruleDisable => log('Disable:%s',a==env.event.rule)")
 --  alarms = 1
 --  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")
