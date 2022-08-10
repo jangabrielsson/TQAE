@@ -633,11 +633,12 @@ local function main()
 
   local filter2 = { device=1, light=4, button=5, scene=10, room=2, zone=3, temperature=6, light_level=7, motion=8, grouped_light=9, zigbee_connectivity=10, device_power=11 }
 
-  function HUEv2Engine:dumpDeviceTable(filter,selector)
+  function HUEv2Engine:dumpDeviceTable(filter,selector,orgDevMap)
     filter =filter and filter2 or filter1
+    orgDevMap = orgDevMap or {}
     selector = selector or function() return true end
     local  pb = utils.printBuffer("\n")
-    pb:add("\nHueTable = {\n")
+    pb:add("\nlocal HueTable = {\n")
     local rs = {}
     for _,r in pairs(HUEv2Engine:getResourceIds()) do
       if filter[r.type] then
@@ -645,7 +646,11 @@ local function main()
       end
     end
     table.sort(rs,function(a,b) return a.order < b.order or a.order==b.order and a.str < b.str end) 
-    for _,r in ipairs(rs) do pb:printf("%s['%s']={type='%s',name='%s',model='%s'},\n",selector(r.r.id) and "  " or "--",r.r.id,r.r.type,r.r.name,r.r.resourceType) end
+    for _,r0 in ipairs(rs) do
+      local r = r0.r
+      --local ref = orgDevMap[r.id] or 
+      pb:printf("%s['%s']={type='%s',name='%s',model='%s'},\n",selector(r.id) and "  " or "--",r.id,r.type,r.name,r.resourceType) 
+    end
     pb:add("}\n")
     print(pb:tostring())
   end

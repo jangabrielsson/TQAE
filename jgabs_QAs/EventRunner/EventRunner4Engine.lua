@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.84,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.85,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -665,7 +665,7 @@ function Module.autopatch.init(self)
 
   function Util.updateFile(file)
     if UpdaterID and UpdateVersion then
-        fibaro.call(UpdaterID,"updateMe",self.id,UpdateVersion)
+      fibaro.call(UpdaterID,"updateMe",self.id,UpdateVersion)
     end
   end
 
@@ -1716,13 +1716,21 @@ function Module.eventScript.init()
 
     instr['%always'] = function(s,n,_,_) local v = s.pop(n) s.push(v or true) end
     instr['enable'] = function(s,n,e,_) 
-      if n == 0 then fibaro.EM.enable(e.rule) s.push(true) return end
+      if n == 0 then 
+        fibaro.EM.enable(e.rule) 
+        s.push(true) 
+        quickApp:post({type='ruleEnable',rule=e.rule,excl=false,_sh=true})
+        return 
+      end
       local t,g = s.pop(),false; if n==2 then g,t=t,s.pop() end 
-      s.push(fibaro.EM.enable(t,g)) 
+      s.push(fibaro.EM.enable(t,g))
+      quickApp:post({type='ruleEnable',rule=t,excl=g,_sh=true})
     end
     instr['disable'] = function(s,n,e,_) 
-      if n == 0 then fibaro.EM.disable(e.rule) s.push(true) return end
-      s.push(fibaro.EM.disable(s.pop())) 
+      if n == 0 then fibaro.EM.disable(e.rule) s.push(true) quickApp:post({type='ruleDisable',rule=e.rule,_sh=true}) return end
+      local r = s.pop()
+      s.push(fibaro.EM.disable(r)) 
+      quickApp:post({type='ruleDisable',rule=r,_sh=true})
     end
     instr['post'] = function(s,n,ev) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end 
     s.push(quickApp:post(e,t,ev.rule)) 
@@ -1762,6 +1770,13 @@ function Module.eventScript.init()
     local val,time = s.pop(),s.pop()
     e.rule._event = e.event
     local flags = i[5] or {}; i[5]=flags
+
+    if not e.rule.isTrueFor then
+      e.rule.isTrueFor = true
+      local df = e.rule.disable
+      function e.rule.disable() if flags.timer then clearTimeout(flags.timer) flags.timer=nil end df() end
+    end
+
     if val then
       if flags.expired then 
         s.push(val); 

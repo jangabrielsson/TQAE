@@ -46,10 +46,37 @@ function QuickApp:main()    -- EventScript version
     temp = 22,
     lux = 23,
   }
-  
+
   Util.defvars(HT)
   Util.reverseMapDef(HT)
-    
+
+--  Util.defTriggerVar("A",24)
+
+--  fibaro.EM.SECTION = 'Home'  
+--  rule("@@00:01:00 => log('Home profile active!')").disable()   
+
+---- rule 2
+--  r2 = rule("trueFor(00:00:10,A > 23) => log('[dagelijkeRules] Keuken temperatuur %s',99);again()").disable()
+
+--  fibaro.EM.SECTION = 'Away'  
+--  rule("@@00:01:00 => log('Away profile active!')").disable()  
+
+--  rule("99:isOn => 88:off; log('[dagelijkseRules] testSwitch is uitgezet')").disable() 
+
+--  fibaro.EM.SECTION = nil  
+--  AwayProfile=fibaro.profileNameToId('Away')  
+--  HomeProfile=fibaro.profileNameToId('Home')
+
+--  rule("#profile{property='activeProfile', value=AwayProfile} => enable('Away',true)") 
+--  rule("#profile{property='activeProfile', value=HomeProfile} => enable('Home',true); r2.start()") 
+--  rule("post(#profile{property='activeProfile', value=HomeProfile})") 
+--  rule("wait(20); post(#profile{property='activeProfile', value=AwayProfile})") 
+
+--  Util.defTriggerVar("A",true)
+--  a = rule("trueFor(00:00:05,A) => log('B'); again()").start()
+--  rule("wait(30); disable(a)")
+--  rule("#ruleDisable => log('Disable:%s',env.event.rule==a)")
+  
 --  alarms = 1
 --  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")
@@ -75,9 +102,6 @@ function QuickApp:main()    -- EventScript version
 ---- Testar Earth hour --------
 --  rule("#earthHour2 => states = lights:value; lights:off; wait(00:00:06); lights:value = states")
 --  rule("@now+00:00:05 => post(#earthHour2)")
-    Util.defTriggerVar("A")
-    rule("trueFor(00:00:05,A) => log('%s',tjson(env.event))")
-    rule("A=true")
 -- rule("@@00:01 & date('0/5 12-15 *') => log('ping')")
 -- rule("@@00:00:05 => log(now % 2 == 1 & 'Tick' | 'Tock')")
 -- rule("remote(1356,#foo)")

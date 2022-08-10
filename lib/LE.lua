@@ -39,13 +39,14 @@ function fibaro.lightEvents()
     args.options.headers['Accept']=args.options.headers['Accept'] or "application/json"
     args.options.method = method or "GET"
     args.options.data = data and json.encode(data) or nil
+    local cont = type(event)=='table' and event.type or tostring(event)
     function args.success(resp)
       if resp.status <= 204 then
         self:debug("success ",url,resp.data:sub(1,10))
         local stat,res = pcall(json.decode,resp.data)
-        self:post({type=event.type.."_success",url=url,data=stat and res or resp.data})
+        self:post({type=cont.."_success",url=url,data=stat and res or resp.data})
       else
-        self:post({type=event.type.."_error",url=url,error="status="..resp.status})
+        self:post({type=cont.."_error",url=url,error="status="..resp.status})
       end
     end
     function args.error(err) self:post({type=event.type.."_error",url=url,error=err}) end 
