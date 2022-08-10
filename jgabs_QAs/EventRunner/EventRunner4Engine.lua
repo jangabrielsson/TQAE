@@ -1719,18 +1719,15 @@ function Module.eventScript.init()
       if n == 0 then 
         fibaro.EM.enable(e.rule) 
         s.push(true) 
-        quickApp:post({type='ruleEnable',rule=e.rule,excl=false,_sh=true})
         return 
       end
       local t,g = s.pop(),false; if n==2 then g,t=t,s.pop() end 
       s.push(fibaro.EM.enable(t,g))
-      quickApp:post({type='ruleEnable',rule=t,excl=g,_sh=true})
     end
     instr['disable'] = function(s,n,e,_) 
-      if n == 0 then fibaro.EM.disable(e.rule) s.push(true) quickApp:post({type='ruleDisable',rule=e.rule,_sh=true}) return end
+      if n == 0 then fibaro.EM.disable(e.rule) s.push(true) return end
       local r = s.pop()
       s.push(fibaro.EM.disable(r)) 
-      quickApp:post({type='ruleDisable',rule=r,_sh=true})
     end
     instr['post'] = function(s,n,ev) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end 
     s.push(quickApp:post(e,t,ev.rule)) 

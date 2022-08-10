@@ -2285,8 +2285,8 @@ do
         end
       end
       if fn then rules[#rules+1] = {rule} end
-      rule.enable = function() rule._disabled = nil return rule end
-      rule.disable = function() rule._disabled = true return rule end
+      rule.enable = function() rule._disabled = nil fibaro.post({type='ruleEnable',rule=rule,_sh=true}) return rule end
+      rule.disable = function() rule._disabled = true fibaro.post({type='ruleDisable',rule=rule,_sh=true}) return rule end
       rule.start = function(event) invokeHandler({rule=rule, event=event, p={}}) return rule end
       rule.__tostring = rule2str
       if em.SECTION then
