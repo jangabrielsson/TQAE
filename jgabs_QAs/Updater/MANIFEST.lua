@@ -176,8 +176,8 @@ return {
       },
     }
   },
-  
-    ["896781234567895"] = {
+
+  ["896781234567895"] = {
     name = "HueConnector",
     type = "com.fibaro.deviceController",
     versions = {
@@ -193,6 +193,18 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
+      { version= 0.11,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.11"
+        },
+        descr = "Improvements",
+        mainfile = "$base1/jgabs_QAs/HueConnector.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
     }
-  }
+  },
 }

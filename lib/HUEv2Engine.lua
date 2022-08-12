@@ -11,7 +11,7 @@
 -- luacheck: globals ignore hc3_emulator HUEv2Engine fibaro
 -- luacheck: ignore 212/self
 
-local version = 0.2
+local version = 0.3
 
 HUEv2Engine = HUEv2Engine or {}
 HUEv2Engine.version = version
@@ -135,6 +135,7 @@ local function main()
     return r
   end
   function hueResource:getCommand(cmd)
+    if self[cmd] then return self end
     for _,s in ipairs(self.services or {}) do 
       local x=resolve(s) 
       if x[cmd] then return x end
@@ -205,7 +206,10 @@ local function main()
   end
   function hueResource:unsubscribe(key,fun)
     for _,s in ipairs(self.services or {}) do resolve(s):unsubscribe(key,fun) end
-    if self.listerners[key] then self.listerners[key][fun]=nil end
+    if self.listerners[key] then 
+      if fun==true then self.listerners[key]={}
+      else self.listerners[key][fun]=nil end
+    end
   end
   function hueResource:sendCmd(cmd) return huePUT(self.path,cmd) end
   function hueResource:__tostring() return self._str or fmt("[rsrc:%s]",self.id) end
@@ -245,26 +249,34 @@ local function main()
     pruneLights(self)
     self._str = fmt("[ligh:%s,%s,%s]",self.id,self:getName("LGHT"),self.resourceType)
   end
-  function light:turnOn() self:sendCmd({on={on=true}}) end
-  function light:turnOff() self:sendCmd({on={on=false}}) end
-  function light:setDim(val,delay)
+  function light:turnOn(transition) self:sendCmd({on={on=true},dynamics=transition and {duration=transition} or nil}) if OPTIMISTIC then self.rsrc.on.on = true end end
+  function light:turnOff(transition) self:sendCmd({on={on=false},dynamics=transition and {duration=transition} or nil}) if OPTIMISTIC then self.rsrc.on.on = true end end
+  function light:setDim(val,transition)
     if val == -1 then
       self:sendCmd({dimming_delta={action='stop'}})
     else 
-      self:sendCmd({dimming={brightness=val},dynamics=delay and {duration=delay} or nil}) 
+      self:sendCmd({dimming={brightness=val},dynamics=transition and {duration=transition} or nil}) 
     end
   end
-  function light:setColor(x,y,z)
-    if type(z)=='number' then      -- R,G,B
-    elseif type(y)=='number' then  -- X,Y
-      self:sendCmd({color={xy={x=x,y=y}}}) 
-    else                           -- Color name
-      local xy = HUEv2Engine.xyColors[tostring(x:lower())] or HUEv2Engine.xyColors['white']
-      self:sendCmd({color={xy=xy}}) 
+  function light:setColor(arg,transition) -- {x=x,y=y} <string>, {r=r,g=g,b=b}
+    local xy
+    if type(arg)=='string' then
+      xy = HUEv2Engine.xyColors[tostring(arg:lower())] or HUEv2Engine.xyColors['white']
+    elseif type(arg)=='table' then
+      if arg.x and arg.y then xy = arg 
+      elseif arg.r and arg.g and arg.b then
+      end
     end
+    if xy then self:sendCmd({color={xy=xy},dynamics=transition and {duration=transition} or nil}) end
   end
-  function light:setTemperature(t) self:sendCmd({color_temperature={mirek=math.floor(t+0.5)}}) end
-  meths.light = { turnOn=true, turnOff=true, setDim=true, setColor=true, setTemperature=true }
+  function light:toggle(transition)
+    local on = self.rsrc.on.on
+    self:sendCmd({on={on=not on},dynamics=transition and {duration=transition} or nil})
+    if OPTIMISTIC then self.rsrc.on.on = not on end
+  end
+  function light:rawCmd(cmd) self:sendCmd(cmd) end
+  function light:setTemperature(t,transition) self:sendCmd({color_temperature={mirek=math.floor(t+0.5)},dynamics=transition and {duration=transition} or nil}) end
+  meths.light = { turnOn=true, turnOff=true, setDim=true, setColor=true, setTemperature=true, toggle=true, rawCmd=true }
   props.light = {
     on={get=function(r) return r.on.on end,set=function(r,v) r.on.on=v end, changed=function(o,n) return o.on.on ~= n.on.on, n.on.on end },
     dimming={
@@ -372,31 +384,41 @@ local function main()
     pruneLights(self)
   end
   function grouped_light:__tostring() return fmt("[grouped_light:%s,%s]",self.id,self:getName("GROUP")) end
-  function grouped_light:turnOn() self:sendCmd({on={on=true}}) end
-  function grouped_light:turnOff() self:sendCmd({on={on=false}}) end
-  function grouped_light:setDim(val,delay)
+  function grouped_light:turnOn(transition) self:sendCmd({on={on=true},dynamics=transition and {duration=transition} or nil}) if OPTIMISTIC then self.rsrc.on.on = true end end
+  function grouped_light:turnOff(transition) self:sendCmd({on={on=false},dynamics=transition and {duration=transition} or nil}) if OPTIMISTIC then self.rsrc.on.on = true end end
+  function grouped_light:setDim(val,transition)
     if val == -1 then
       self:sendCmd({dimming_delta={action='stop'}})
     else 
-      self:sendCmd({dimming={brightness=val},dynamics=delay and {duration=delay} or nil}) 
+      self:sendCmd({dimming={brightness=val},dynamics=transition and {duration=transition} or nil}) 
     end
   end
-  function grouped_light:setColor(x,y,z)
-    if type(z)=='number' then      -- R,G,B
-    elseif type(y)=='number' then  -- X,Y
-      self:sendCmd({color={xy={x=x,y=y}}}) 
-    else                           -- Color name
-      local xy = HUEv2Engine.xyColors[tostring(x:lower())] or HUEv2Engine.xyColors['white']
-      self:sendCmd({color={xy=xy}}) 
+  function grouped_light:setColor(arg,transition) -- {x=x,y=y} <string>, {r=r,g=g,b=b}
+    local xy
+    if type(arg)=='string' then
+      xy = HUEv2Engine.xyColors[tostring(arg:lower())] or HUEv2Engine.xyColors['white']
+    elseif type(arg)=='table' then
+      if arg.x and arg.y then xy = arg 
+      elseif arg.r and arg.g and arg.b then
+      end
     end
+    if xy then self:sendCmd({color={xy=xy},dynamics=transition and {duration=transition} or nil}) end
   end
-  function grouped_light:setTemperature(t) self:sendCmd({color_temperature={mirek=math.floor(t+0.5)}}) end
+  function light:toggle(transition)
+    local on = self.rsrc.on.on
+    self:sendCmd({on={on=not on},dynamics=transition and {duration=transition} or nil})
+    if OPTIMISTIC then self.rsrc.on.on = not on end
+  end
+  function light:rawCmd(cmd) self:sendCmd(cmd) end
+  function grouped_light:setTemperature(t,transition) self:sendCmd({color_temperature={mirek=math.floor(t+0.5)},dynamics=transition and {duration=transition} or nil}) end
 
+  meths.scene = { recall=true }
   class 'scene'(hueResource)
   function scene:__init(id)
     hueResource.__init(self,id)
     self._str = fmt("[scene:%s,%s]",self.id,self.name)
   end
+  function scene:recall(transition) self:sendCmd({recall = { action = "active" },dynamics=transition and {duration=transition} or nil }) end
 
   props.button = {
     button = {
@@ -712,10 +734,43 @@ local function main()
       room=room and (",room='"..room.."'") or ""
       zone=zone and (",zone='"..zone.."'") or ""
       ref=ref and (",ref='"..ref.."'") or ""
+      if r.type=='scene' then
+        room = (",room='"..resolve(r.rsrc.group).name.."'") 
+      end
       pb:printf("%s['%s']={type='%s',name='%s',model='%s'%s%s%s},\n",selector(r.id) and "  " or "--",r.id,r.type,r.name,r.resourceType,room,zone,ref) 
     end
     pb:add("}\n")
     print(pb:tostring())
+  end
+
+  function HUEv2Engine:createDeviceTable(filter)
+    filter =filter and filter2 or filter1
+    local rs,rs2,res = HUEv2Engine:getResourceIds(),{},{}
+
+    local parentMap = {room={},zone={}}
+    for uid,r in pairs(rs) do
+      if filter[r.type] then
+        rs2[uid]=r
+        if r.type=='room' or r.type=='zone' then
+          for _,c in ipairs(r.children) do
+            parentMap[r.type][c.rid]=r.name
+          end
+        end
+      end
+    end
+    for uid,r in pairs(rs2) do
+      local m = {}
+      res[uid]=m
+      m.room = parentMap.room[r.id]
+      m.zone = parentMap.zone[r.id]
+      if r.type=='scene' then
+        m.room = resolve(r.rsrc.group).name
+      end
+      m.type=r.type
+      m.name=r.name
+      m.model=r.resourceType
+    end
+    return res
   end
 
   local function sortResources(list,f)
@@ -747,6 +802,15 @@ local function main()
       pb:add(string.rep(' ',ind+2).."Services:\n")
       for _,c in ipairs(rs) do
         printResource(c,pb,ind+4)
+      end
+    end
+    if r.rsrc.actions then
+      local w = resolve(r.rsrc.group)
+      pb:add(string.rep(' ',ind+2).."Group:"..tostring(w).."\n")
+      pb:add(string.rep(' ',ind+2).."Targets:\n")
+      for _,a in ipairs(r.rsrc.actions or {}) do
+        local f = resolve(a.target)
+        pb:add(string.rep(' ',ind+4)..tostring(f).."\n")
       end
     end
   end

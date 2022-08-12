@@ -4,7 +4,7 @@
 -- luacheck: globals ignore HueDeviceQA MotionSensorQA TempSensorQA LuxSensorQA SwitchQA HueTable HUEv2Engine
 -- luacheck: globals ignore LightOnOff LightDimmable LightTemperature LightColor
 
-local VERSION = 0.1
+local VERSION = 0.11
 local SERIAL = "UPD896781234567895" 
 
 local debug
@@ -30,19 +30,16 @@ local equal
 local HUE
 
 function QuickApp:hueCmd(args)
-  if type(args)~="table" then self:error("hueCmd expecting table argument") end
+  if type(args)~="table" then self:error("hueCmd expecting table argument") return end
   local hueId = args.id
   local cmd = args.cmd
   local params = args.args
   local rsrc = HUE:getResource(hueId)
-  local service = rsrc:getCommand(cmd)
-  if not service then
-    self:errorf("No command:%s for %s",cmd,hueId)
-  else
-    local stat,err=pcall(service[cmd],service,table.unpack(params))
-    if not stat then
-      self:errorf("%s:%s%s -> %s",tostring(hueId),tostring(cmd),json.encode(params or {}),err)
-    end
+  local service = rsrc:getCommand(cmd)  -- ToDo: Optimize with cache!
+  if not service then self:errorf("No command:%s for %s",cmd,hueId) return end
+  local stat,err=pcall(service[cmd],service,table.unpack(params))
+  if not stat then
+    self:errorf("%s:%s%s -> %s",tostring(hueId),tostring(cmd),json.encode(params or {}),err)
   end
 end
 
@@ -75,15 +72,70 @@ local function publish(uid,props)
   end
 end
 
+local function subscribeTo(uid)
+  if subscriptions[uid] then return end
+  local r = HUE:getResource(uid)
+  local function strip(l) local r={} for k,_ in pairs(l) do r[#r+1]=k end return r end
+  local props = strip(r:getProps())
+  local methods = strip(r:getMethods())
+  local rsrcKey = "r"..uid:gsub("-","")
+  initResource(rsrcKey,{
+      name = r.name or r.owner,
+      type = r.type,
+      props = props,
+      methods = methods,
+    })
+  local changeMap = {}
+  function r:_postEvent(id)
+    local c = changeMap
+    setTimeout(function() publish(uid,c) end,0)
+    changeMap = {}
+  end
+  for prop,_ in pairs(r:getProps()) do
+    quickApp:debugf("Watching %s:%s:%s",uid,r.name or r.owner.name,prop)
+    r:subscribe(prop,function(key,value)
+        local stat,res = pcall(function() 
+            quickApp:debugf("E: name:%s, %s=%s",r.name or r.owner.name,key,tostring(value))
+          end)
+        if not stat then
+          res=stat
+        end
+        updateResource(rsrcKey,key,value)
+        changeMap[key]=value
+      end)
+  end
+  r:publishAll()
+end
+
+local function unsubscribeTo(uid)
+  local r = HUE:getResource(uid)
+  for prop,_ in pairs(r:getProps()) do
+    quickApp:debugf("Unwatching %s:%s:%s",uid,r.name or r.owner.name,prop)
+    r:unsubscribe(prop,true)
+  end
+end
+
 local function updateSubscriber(id,value)
   local notify=false
   if type(value)=='table' then 
+    if #value==1 and value[1]==true then
+      fibaro.call(id,"HUE_EVENT","INFO",{id=quickApp.id})
+      return
+    end
     if next(value)==nil then
       quickApp:debugf("QA:%s unsubscribed",tostring(id))
-      for uid,subs in pairs(subscriptions) do subs[id]=nil end
+      for uid,subs in pairs(subscriptions) do 
+        subs[id]=nil
+        if next(subs)==nil then
+          unsubscribeTo(uid)
+        end
+      end
     else
+      local sm = {}
       for _,uid in ipairs(value) do
         if HUE:getResource(uid) then
+          sm[uid]=true
+          subscribeTo(uid)
           subscriptions[uid]=subscriptions[uid] or {}
           subscriptions[uid][id]=true
           quickApp:debugf("QA:%s subscribed to %s",tostring(id),tostring(uid))
@@ -91,6 +143,9 @@ local function updateSubscriber(id,value)
         else
           quickApp:errorf("QA:%s bad resource specifier - %s",tostring(id),tostring(uid))
         end
+      end
+      for uid,subs in pairs(subscriptions) do
+        if not sm[uid] then subs[id]=nil end
       end
     end
   else
@@ -116,7 +171,9 @@ local function main(self,map)
   end
 
   self:event({type='quickvar',name=CONNECTOR_VAR},        -- If some QA changes subscription
-    function(env) updateSubscriber(env.event.id,env.event.value) end) -- update
+    function(env) 
+      updateSubscriber(env.event.id,env.event.value) 
+    end) -- update
 
   self:event({type='deviceEvent',value='removed'},      -- If some QA is removed
     function(env) 
@@ -137,61 +194,34 @@ local function main(self,map)
       end
     end)
 
-  local function strip(l) local r={} for k,_ in pairs(l) do r[#r+1]=k end return r end
+end
 
-  for uid,_ in pairs(map) do
-    local r = HUE:getResource(uid)
-    local props = strip(r:getProps())
-    local methods = strip(r:getMethods())
-    local rsrcKey = "r"..uid:gsub("-","")
-    initResource(rsrcKey,{
-        name = r.name or r.owner,
-        type = r.type,
-        props = props,
-        methods = methods,
-      })
-    local changeMap = {}
-    function r:_postEvent(id)
-      local c = changeMap
-      setTimeout(function() publish(uid,c) end,0)
-      changeMap = {}
+local allProps,fmt = { "type","name","model","room","zone","ref" },string.format
+function QuickApp:deviceTable()
+  local r={}
+  for uid,r0 in pairs(HueDeviceTable) do r[#r+1]={uid,r0.type,r0} end
+  table.sort(r,function(a,b) return a[2]< b[2] or (a[2]==b[2] and a[1] < b[1]) end)
+  for _,i in ipairs(r) do
+    local b,k,v = {},i[1],i[3]
+    for _,p in ipairs(allProps) do
+      if v[p]~=nil then b[#b+1]=fmt("%s='%s', ",p,tostring(v[p])) end
     end
-    for prop,_ in pairs(r:getProps()) do
-      self:debugf("Watching %s:%s:%s",uid,r.name or r.owner.name,prop)
-      r:subscribe(prop,function(key,value)
-          local stat,res = pcall(function() 
-              quickApp:debugf("E: name:%s, %s=%s",r.name or r.owner.name,key,tostring(value))
-            end)
-          if not stat then
-            res=stat
-          end
-          updateResource(rsrcKey,key,value)
-          changeMap[key]=value
-        end)
-    end
-    r:publishAll()
+    print("['"..k.."']","= {",table.concat(b),"},")
   end
 end
 
-function QuickApp:deviceTable()
-  HUE:dumpDeviceTable(nil,function(id) if next(HueDeviceTable) then return HueDeviceTable[id] else return true end end,HueDeviceTable)
-end
+function QuickApp:dump() HUE:listAllDevicesGrouped() end
 
-function QuickApp:dump()
-  HUE:listAllDevicesGrouped()
-end
-
-function QuickApp:setupHue(HueDeviceMap,debugFlags)
+function QuickApp:setupHue(_,debugFlags)
   self:debugf("%s deviceId:%s, v%s",self.name,self.id,VERSION)
   self:setVersion("HueConnector",SERIAL,VERSION)
   self:setView('info',"HueConnector v%s",VERSION)
+  fibaro.enableSourceTriggers({'quickvar','deviceEvent'},true) -- Get events of these types
 
   fibaro.debugFlags.extendedErrors=true
   fibaro.hue.debug,debug = debugFlags,debugFlags
 
   HUE = fibaro.hue.Engine
-  HueDeviceTable = HueDeviceMap or {}
-  self:internalStorageSet("rdeviceMap",HueDeviceTable)
 
   local ip = self:getVariable("Hue_IP"):match("(%d+.%d+.%d+.%d+)")
   local key = self:getVariable("Hue_User") --:match("(.+)")
@@ -199,9 +229,9 @@ function QuickApp:setupHue(HueDeviceMap,debugFlags)
   assert(key,"Missing Hue_User - Hue hub key")
 
   HUE:init(ip,key,function()
+      HueDeviceTable = HUE:createDeviceTable()
       if self.main then self:main(HUE) end
---      HUEv2Engine:dumpDevices()
---      HUE:listAllDevicesGrouped()
-      self:post(function() main(self,HueDeviceMap) end)-- Start
+      self:internalStorageSet("rdeviceMap",HueDeviceTable)
+      self:post(function() main(self) end)-- Start
     end)
 end

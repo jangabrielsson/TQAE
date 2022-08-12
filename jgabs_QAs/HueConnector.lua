@@ -61,12 +61,16 @@ local HueDeviceTable = {
 --['9bfda4bf-b17e-4ec9-9123-a97afbcca814']={type='zone',name='Window lights',model='recreation'},
 --['b5f12b5f-20c7-47a5-8535-c7a20fb9e66d']={type='zone',name='Kitchen island',model='kitchen'},
 --['fe101c36-3dcc-4831-90f1-5052fc54e08b']={type='zone',name='Kitchen table',model='kitchen'},
---['03541e04-3481-47e7-ad22-c167437ca905']={type='scene',name='Bright',model='unknown'},
---['29d8ba67-980a-4ab9-9fa6-50a0f994b273']={type='scene',name='Bright',model='unknown'},
+--['03541e04-3481-47e7-ad22-c167437ca905']={type='scene',name='Bright',model='unknown',room='Kitchen table'},
+--['29d8ba67-980a-4ab9-9fa6-50a0f994b273']={type='scene',name='Bright',model='unknown',room='Window lights'},
+  ['dd2cef77-e4fb-455b-867f-bad85f8f846c']={type='scene',name='Miami',model='unknown',room='Guest room'},
+  ['f1677f3f-db72-45b2-a922-97046cdbff9d']={type='scene',name='Bright',model='unknown',room='Guest room'},
 }
 
 function QuickApp:main(HUE)
-  HUE:dumpDeviceTable(nil,function(id) return HueDeviceTable[id] end,HueDeviceTable)
+--  HUE:dumpDeviceTable(nil,function(id) return HueDeviceTable[id] end,HueDeviceTable)
+--  HUE:listAllDevicesGrouped()
+  self:deviceTable()
 end
 
 function QuickApp:onInit() 
