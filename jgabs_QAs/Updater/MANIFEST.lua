@@ -207,4 +207,22 @@ return {
       },
     }
   },
+    ["896781234551432"] = {
+    name = "HueSensors",
+    type = "com.fibaro.deviceController",
+    versions = {
+      { version= 0.1,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueSensors_0.1"
+        },
+        descr = "First version",
+        mainfile = "$base1/jgabs_QAs/HueSensors.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+    }
+  },
 }
