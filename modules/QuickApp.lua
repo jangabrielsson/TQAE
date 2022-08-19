@@ -80,12 +80,20 @@ function QuickAppBase:getVariable(name)
   return ""
 end
 
+local function copy(l) local r={}; for _,i in ipairs(l) do r[#r+1]={name=i.name,value=i.value} end return r end
 function QuickAppBase:setVariable(name,value)
   __assert_type(name,'string')
-  local vars = self.properties.quickAppVariables or {}
-  for _,v in ipairs(vars) do if v.name==name then v.value=value return end end
-  self.properties.quickAppVariables = vars
+  local vars = copy(self.properties.quickAppVariables or {})
+  for _,v in ipairs(vars) do 
+    if v.name==name then 
+      v.value=value
+      api.post("/plugins/updateProperty", {deviceId=self.id, propertyName='quickAppVariables', value=vars})
+      return 
+    end 
+  end
+  --self.properties.quickAppVariables = vars
   vars[#vars+1]={name=name,value=value}
+  api.post("/plugins/updateProperty", {deviceId=self.id, propertyName='quickAppVariables', value=vars})
 end
 
 function QuickAppBase:updateProperty(prop,val)
@@ -164,7 +172,7 @@ function QuickAppBase:internalStorageSet(key, val, hidden)
   --print(key,stat)
   if stat>206 then 
     local _,stat = api.post("/plugins/"..self.id.."/variables",data)
-      --print(key,stat)
+    --print(key,stat)
     return stat
   end
 end

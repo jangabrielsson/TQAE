@@ -21,7 +21,7 @@ fibaro.hue.Engine = HUEv2Engine
 local function setup()
   DEBUG,WARNING,ERROR,TRACE=fibaro.hue.DEBUG,fibaro.hue.WARNING,fibaro.hue.ERROR,fibaro.hue.TRACE
 end
-
+local function strip(l) local r={} for k,v in pairs(l) do r[#r+1]=k end return r end
 
 --[[
 debug.info          -- greetings etc
@@ -143,8 +143,11 @@ local function main()
   end
 
   function hueResource:getProps()
-    local r = {}
-    for _,s in ipairs(self.services or {}) do merge(r,resolve(s):getProps()) end
+    local r,btns = {},0
+    for _,s in ipairs(self.services or {}) do
+      local ps = resolve(s):getProps()
+      merge(r,ps) 
+    end
     merge(r,self._props or {})
     return r
   end
@@ -156,7 +159,7 @@ local function main()
   end
   function hueResource:event(data)
     DEBUG('event',"Event %s",data)
-    if self.update then self:updata(data) return end
+    if self.update then self:update(data) return end
     local p = self._props -- { power_state = { get, set changed }, ...
     if p then
       local r = self.rsrc
@@ -186,6 +189,7 @@ local function main()
   end
   function hueResource:publishAll()
     for _,s in ipairs(self.services or {}) do resolve(s):publishMySubs() end
+    if self._postEvent then self:_postEvent(self.id) end
   end
   function hueResource:publish(key,value)
     local ll = self.listernes[key] or {}
@@ -206,9 +210,9 @@ local function main()
   end
   function hueResource:unsubscribe(key,fun)
     for _,s in ipairs(self.services or {}) do resolve(s):unsubscribe(key,fun) end
-    if self.listerners[key] then 
-      if fun==true then self.listerners[key]={}
-      else self.listerners[key][fun]=nil end
+    if self.listernes[key] then 
+      if fun==true then self.listernes[key]={}
+      else self.listernes[key][fun]=nil end
     end
   end
   function hueResource:sendCmd(cmd) return huePUT(self.path,cmd) end
@@ -418,15 +422,15 @@ local function main()
     hueResource.__init(self,id)
     self._str = fmt("[scene:%s,%s]",self.id,self.name)
   end
-  function scene:recall(transition) self:sendCmd({recall = { action = "active" },dynamics=transition and {duration=transition} or nil }) end
+  function scene:recall(transition) self:sendCmd({recall = { action = "active",dynamics=transition and {duration=transition} or nil  }}) end
 
   props.button = {
     button = {
-      get=function(r) return r.button and r.button.last_event end,
+      get=function(r) if r.button then return r.button end end,
       set=function(r,v) if not r.button then r.button = { last_event = v } else r.button.last_event=v end end,
       changed=function(o,n)
         local ob,nb = o.button or {},n.button or {}
-        return ob.last_event~=nb.last_event,nb.last_event 
+        return ob.last_event~=nb.last_event,nb.last_event
       end
     }
   }
@@ -769,6 +773,14 @@ local function main()
       m.type=r.type
       m.name=r.name
       m.model=r.resourceType
+      m.props=strip(r:getProps())
+      local btns=0
+      if r.services then
+        for _,s in ipairs(r.services) do
+          btns = btns + (s.rtype=='button' and 1 or 0)
+        end
+      end
+      m.buttons=btns
     end
     return res
   end

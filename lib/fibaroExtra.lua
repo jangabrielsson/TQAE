@@ -2135,8 +2135,10 @@ do
       if debugFlags.post and not ev._sh then fibaro.tracef(nil,"Posting %s at %s%s",ev,os.date("%c",t),type(log)=='string' and ("("..log..")") or "") end
       if type(ev) == 'function' then
         return setTimeout(function() ev(ev) end,1000*(t-now),log)
-      else
+      elseif isEvent(ev) then
         return setTimeout(function() handleEvent(ev) end,1000*(t-now),log)
+      else
+        error("post(...) not event or function;",tostring(ev))
       end
     end
     fibaro.post = post 

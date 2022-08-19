@@ -122,7 +122,7 @@ function QuickerAppChild:__init(args)
     devices = devices or {}
     devices[#devices+1]=dev
     if callbacks then setCallbacks(self,callbacks) end
-    fibaro.tracef(__TAG,"Created new child:%s %s",dev.id,dev.type)
+    fibaro.trace(__TAG,"Created new child:"..dev.id.." "..dev.type)
   else
     callbacks = getVar(dev,"_callbacks")
   end

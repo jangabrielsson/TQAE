@@ -1,7 +1,7 @@
 -- luacheck: globals ignore _debugFlags hc3_emulator QuickApp Util
 
 _=loadfile and loadfile("TQAE.lua"){
-  refreshStates=true,
+  --refreshStates=true,
   debug = { 
     onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true, qa=true-- timersSched=true
   },
@@ -67,11 +67,11 @@ function QuickApp:main()    -- EventScript version
 --  AwayProfile=fibaro.profileNameToId('Away')  
 --  HomeProfile=fibaro.profileNameToId('Home')
 
+    rule("#foo => log('A')").start()
 --  rule("#profile{property='activeProfile', value=AwayProfile} => enable('Away',true)") 
 --  rule("#profile{property='activeProfile', value=HomeProfile} => enable('Home',true); r2.start()") 
 --  rule("post(#profile{property='activeProfile', value=HomeProfile})") 
---  rule("wait(20); post(#profile{property='activeProfile', value=AwayProfile})") 
-  
+--  rule("wait(20); post(#profile{property='activeProfile', value=AwayProfile})")
 --    Util.defTriggerVar('A',true)
 --    a=rule("trueFor(00:00:05,A) => log('A')").start()
 --    rule("wait(20); disable(a)")

@@ -2006,9 +2006,9 @@ local function makeEventScriptRuleCompiler()
       local event,env={type=Util.gensym("INTERV")},{code=reps[1]}
       events[#events+1] = quickApp:event(event,action,src)
       event._sh=true
-      local timeVal,skip = nil,ScriptEngine.eval2(env)
+      local timeVal,skip = os.time(),ScriptEngine.eval2(env)
       local function interval()
-        timeVal = timeVal or os.time()
+        --timeVal = timeVal or os.time()
         quickApp:post(event)
         timeVal = timeVal+math.abs(ScriptEngine.eval2(env))
         setTimeout(interval,1000*(timeVal-os.time()))

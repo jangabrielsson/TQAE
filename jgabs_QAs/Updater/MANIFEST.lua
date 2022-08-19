@@ -181,11 +181,11 @@ return {
     name = "HueConnector",
     type = "com.fibaro.deviceController",
     versions = {
-      { version= 0.1,
+      { version= 0.11,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.1"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.11"
         },
-        descr = "First release",
+        descr = "Improvements",
         mainfile = "$base1/jgabs_QAs/HueConnector.lua",
         files = "generate",
         keep = {
@@ -193,11 +193,11 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
-      { version= 0.11,
+      { version= 0.12,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.11"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.12"
         },
-        descr = "Improvements",
+        descr = "Works with HueSensors",
         mainfile = "$base1/jgabs_QAs/HueConnector.lua",
         files = "generate",
         keep = {

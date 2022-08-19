@@ -4,7 +4,7 @@
 -- luacheck: globals ignore HueDeviceQA MotionSensorQA TempSensorQA LuxSensorQA SwitchQA HueTable HUEv2Engine
 -- luacheck: globals ignore LightOnOff LightDimmable LightTemperature LightColor
 
-local VERSION = 0.11
+local VERSION = 0.12
 local SERIAL = "UPD896781234567895" 
 
 local debug
@@ -51,15 +51,30 @@ if hc3_emulator and hc3_emulator.EM.Devices[plugin.mainDeviceId].proxy then
     return stat == 200 and res.value or nil 
   end
 end
-local function initResource(uid,rsrc) quickApp:internalStorageSet(uid, rsrc) end
+local rsrcKeys = {}
+local function getResourceKey(uid)
+  local map = rsrcKeys[uid]
+  if map then return map else rsrcKeys[uid]="r"..uid:gsub('-',"") return rsrcKeys[uid] end
+end
+local function initResource(uid,rsrc) quickApp:internalStorageSet(getResourceKey(uid), rsrc) end
+local function getResource(uid) return quickApp:internalStorageGet(getResourceKey(uid)) end
 local function updateResource(uid,prop,value)
-  local rsrc = quickApp:internalStorageGet(uid) or {}
+  local key = getResourceKey(uid)
+  local rsrc = quickApp:internalStorageGet(key) or {}
   rsrc[prop]=value
-  quickApp:internalStorageSet(uid, rsrc)
+  quickApp:internalStorageSet(key, rsrc)
 end
 
 
 local subscriptions={}
+
+local function publishToQA(id,uid)
+  local props = getResource(uid)
+  if props and next(props) then
+    quickApp:debugf("Publishing %s to QA%s",uid,id)
+    fibaro.call(id,"HUE_EVENT",uid,props)
+  end
+end
 
 local function publish(uid,props)
   local qas = subscriptions[uid] or {}
@@ -73,13 +88,11 @@ local function publish(uid,props)
 end
 
 local function subscribeTo(uid)
-  if subscriptions[uid] then return end
   local r = HUE:getResource(uid)
   local function strip(l) local r={} for k,_ in pairs(l) do r[#r+1]=k end return r end
   local props = strip(r:getProps())
   local methods = strip(r:getMethods())
-  local rsrcKey = "r"..uid:gsub("-","")
-  initResource(rsrcKey,{
+  initResource(uid,{
       name = r.name or r.owner,
       type = r.type,
       props = props,
@@ -88,19 +101,17 @@ local function subscribeTo(uid)
   local changeMap = {}
   function r:_postEvent(id)
     local c = changeMap
-    setTimeout(function() publish(uid,c) end,0)
+    --if next(c) then publish(uid,c) end
+    if next(c) then setTimeout(function() publish(uid,c) end,0) end
     changeMap = {}
   end
   for prop,_ in pairs(r:getProps()) do
     quickApp:debugf("Watching %s:%s:%s",uid,r.name or r.owner.name,prop)
-    r:subscribe(prop,function(key,value)
-        local stat,res = pcall(function() 
-            quickApp:debugf("E: name:%s, %s=%s",r.name or r.owner.name,key,tostring(value))
-          end)
-        if not stat then
-          res=stat
-        end
-        updateResource(rsrcKey,key,value)
+    r:subscribe(prop,function(key,value,obj)
+        quickApp:debugf("E: name:%s, %s=%s",r.name or r.owner.name,key,tostring(value))
+        value = {value=value, timestamp=os.time()}
+        if prop=='button' then value.keyId = obj.metadata.control_id or 0 end
+        updateResource(uid,key,value)
         changeMap[key]=value
       end)
   end
@@ -116,15 +127,11 @@ local function unsubscribeTo(uid)
 end
 
 local function updateSubscriber(id,value)
-  local notify=false
-  if type(value)=='table' then 
-    if #value==1 and value[1]==true then
-      fibaro.call(id,"HUE_EVENT","INFO",{id=quickApp.id})
-      return
-    end
+  fibaro.call(id,"HUE_EVENT","INFO",{id=quickApp.id})
+  if type(value)=='table' then
     if next(value)==nil then
-      quickApp:debugf("QA:%s unsubscribed",tostring(id))
       for uid,subs in pairs(subscriptions) do 
+        if subs[id] then quickApp:debugf("QA:%s unsubscribed to %s",tostring(id),uid) end
         subs[id]=nil
         if next(subs)==nil then
           unsubscribeTo(uid)
@@ -135,11 +142,14 @@ local function updateSubscriber(id,value)
       for _,uid in ipairs(value) do
         if HUE:getResource(uid) then
           sm[uid]=true
-          subscribeTo(uid)
-          subscriptions[uid]=subscriptions[uid] or {}
-          subscriptions[uid][id]=true
           quickApp:debugf("QA:%s subscribed to %s",tostring(id),tostring(uid))
-          notify=true
+          if subscriptions[uid] then
+            subscriptions[uid][id]=true
+            publishToQA(id,uid)
+          else
+            subscriptions[uid]={[id]=true}
+            subscribeTo(uid)
+          end
         else
           quickApp:errorf("QA:%s bad resource specifier - %s",tostring(id),tostring(uid))
         end
@@ -151,7 +161,6 @@ local function updateSubscriber(id,value)
   else
     quickApp:errorf("QA:%s bad subscription list - %s",tostring(id),tostring(value))
   end
-  if notify then fibaro.call(id,"HUE_EVENT","INFO",{id=quickApp.id}) end
 end
 
 local function checkVars(id,vars)
@@ -219,6 +228,9 @@ function QuickApp:setupHue(_,debugFlags)
   fibaro.enableSourceTriggers({'quickvar','deviceEvent'},true) -- Get events of these types
 
   fibaro.debugFlags.extendedErrors=true
+  fibaro.debugFlags.logTrigger=false
+  --fibaro.debugFlags.sourceTrigger=true
+  --fibaro.debugFlags._allRefreshStates=true
   fibaro.hue.debug,debug = debugFlags,debugFlags
 
   HUE = fibaro.hue.Engine

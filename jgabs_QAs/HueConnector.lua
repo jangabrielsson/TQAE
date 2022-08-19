@@ -1,6 +1,6 @@
 local _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
-  debug = { onAction=true, http=false, UIEevent=true, },
+  debug = { onAction=true, http=false, UIEevent=true, color=true },
   copas=true,
 }
 
@@ -19,13 +19,14 @@ local _=loadfile and loadfile("TQAE.lua"){
 --FILE:lib/ColorConversion3.lua,ColorConversion;
 
 if hc3_emulator then
-  hc3_emulator.installQA{id=88,file='test/HueConnectorClient.lua'}
+--  hc3_emulator.installQA{id=88,file='test/HueConnectorClient.lua'}
+  hc3_emulator.installQA{id=88,file='jgabs_QAs/HueSensors.lua'}
 end
 
 --luacheck: globals ignore QuickApp
 ----------- Code -----------------------------------------------------------
 
-local debug = { info = true, resource_mgmt=false, call=true, event=false, all_event=false, v2api=true, logger=false, class=false }
+local debug = { info = true, resource_mgmt=false, call=true, event=true, all_event=false, v2api=true, logger=false, class=false }
 
 local HueDeviceTable = {
 --['1c10e485-e52b-4144-9991-46dbb2eedafa']={type='device',name='Middle window',model='LCT012',room='Living room'},
@@ -71,6 +72,7 @@ function QuickApp:main(HUE)
 --  HUE:dumpDeviceTable(nil,function(id) return HueDeviceTable[id] end,HueDeviceTable)
 --  HUE:listAllDevicesGrouped()
   self:deviceTable()
+--  self:dump()
 end
 
 function QuickApp:onInit() 
