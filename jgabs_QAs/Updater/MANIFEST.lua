@@ -205,6 +205,18 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
+      { version= 0.14,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.14"
+        },
+        descr = "Works with HueSensors",
+        mainfile = "$base1/jgabs_QAs/HueConnector.lua",
+        files = "Rotary support",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
     }
   },
     ["896781234551432"] = {
@@ -218,6 +230,18 @@ return {
         descr = "First version",
         mainfile = "$base1/jgabs_QAs/HueSensors.lua",
         files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+      { version= 0.11,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueSensors_0.11"
+        },
+        descr = "First version",
+        mainfile = "$base1/jgabs_QAs/HueSensors.lua",
+        files = "Rotary and wall plug support",
         keep = {
         },
         interfaces = {"quickApp"},

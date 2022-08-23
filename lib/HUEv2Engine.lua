@@ -9,9 +9,12 @@
 
 -- luacheck: globals ignore quickApp plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
 -- luacheck: globals ignore hc3_emulator HUEv2Engine fibaro
+-- luacheck: globals ignore homekit device light zigbee_connectivity device_power zgp_cpnnectivity entertainment entertainment_configuration
+-- luacheck: globals ignore room zone grouped_light scene button relative_rotary temperature motion light_level bridge bridge_home behavior_script 
+-- luacheck: globals ignore behavior_instance geolocation geolocation_client
 -- luacheck: ignore 212/self
 
-local version = 0.3
+local version = 0.4
 
 HUEv2Engine = HUEv2Engine or {}
 HUEv2Engine.version = version
@@ -238,7 +241,7 @@ local function main()
   local function pruneLights(self)
     self._props = table.copyShallow(self._props)
     self._meths = table.copyShallow(self._meths)
-    for p,m in ipairs(pprops) do
+    for p,m in pairs(pprops) do
       if self.rsrc[p]==nil then 
         self._props[p]=nil 
         for _,f in ipairs(m) do self._meths[f]=nil end
@@ -445,6 +448,28 @@ local function main()
     return fmt("[button:%s,%s,value:%s]",self.id,self:getName("BTN"),self:button_state())
   end
 
+  local equal = fibaro.utils.equal
+  props.relative_rotary = {
+    relative_rotary = {
+      get=function(r) if r.relative_rotary then return r.relative_rotary.last_event end end,
+      set=function(r,v) if not r.relative_rotary then r.relative_rotary = { last_event = v } else r.relative_rotary.last_event=v end end,
+      changed=function(o,n)
+        local ob,nb = o.relative_rotary or {},n.relative_rotary or {}
+        return true,nb.last_event
+      end
+    }
+  }
+  class 'relative_rotary'(hueResource)
+  function relative_rotary:__init(id)
+    hueResource.__init(self,id)
+  end
+  function relative_rotary:relative_rotary_state()
+    if self.rsrc.relative_rotary then return self.rsrc.relative_rotary.last_event.rotation.steps,self.rsrc.relative_rotary.last_event.rotation.direction end
+  end
+  function relative_rotary:__tostring()
+    return fmt("[rotary:%s,%s,value:%s]",self.id,self:getName("ROT"),self:relative_rotary_state())
+  end
+
   props.temperature = {
     temperature={
       get=function(r) return r.temperature.temperature end,
@@ -452,6 +477,7 @@ local function main()
       changed=function(o,n) return o.temperature.temperature~=n.temperature.temperature,n.temperature.temperature end,
     },
   }
+  
   class 'temperature'(hueResource)
   function temperature:__init(id)
     hueResource.__init(self,id)

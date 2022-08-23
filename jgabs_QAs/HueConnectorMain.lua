@@ -4,7 +4,7 @@
 -- luacheck: globals ignore HueDeviceQA MotionSensorQA TempSensorQA LuxSensorQA SwitchQA HueTable HUEv2Engine
 -- luacheck: globals ignore LightOnOff LightDimmable LightTemperature LightColor
 
-local VERSION = 0.12
+local VERSION = 0.14
 local SERIAL = "UPD896781234567895" 
 
 local debug
@@ -35,6 +35,10 @@ function QuickApp:hueCmd(args)
   local cmd = args.cmd
   local params = args.args
   local rsrc = HUE:getResource(hueId)
+  if rsrc==nil then
+    self:errorf("Nu such resource:%s - %s%s",tostring(hueId),tostring(cmd),json.encode(params or {}))
+    return
+  end
   local service = rsrc:getCommand(cmd)  -- ToDo: Optimize with cache!
   if not service then self:errorf("No command:%s for %s",cmd,hueId) return end
   local stat,err=pcall(service[cmd],service,table.unpack(params))
@@ -127,11 +131,12 @@ local function unsubscribeTo(uid)
 end
 
 local function updateSubscriber(id,value)
+  DEBUG("QA","Sending INFO to QA:%s",id)
   fibaro.call(id,"HUE_EVENT","INFO",{id=quickApp.id})
   if type(value)=='table' then
     if next(value)==nil then
       for uid,subs in pairs(subscriptions) do 
-        if subs[id] then quickApp:debugf("QA:%s unsubscribed to %s",tostring(id),uid) end
+        if subs[id] then DEBUG("QA","QA:%s unsubscribed to %s",tostring(id),uid) end
         subs[id]=nil
         if next(subs)==nil then
           unsubscribeTo(uid)
@@ -142,7 +147,7 @@ local function updateSubscriber(id,value)
       for _,uid in ipairs(value) do
         if HUE:getResource(uid) then
           sm[uid]=true
-          quickApp:debugf("QA:%s subscribed to %s",tostring(id),tostring(uid))
+          DEBUG("QA","QA:%s subscribed to %s",tostring(id),tostring(uid))
           if subscriptions[uid] then
             subscriptions[uid][id]=true
             publishToQA(id,uid)
@@ -155,7 +160,10 @@ local function updateSubscriber(id,value)
         end
       end
       for uid,subs in pairs(subscriptions) do
-        if not sm[uid] then subs[id]=nil end
+        if not sm[uid] then
+          DEBUG("QA","QA:%s unsubscribed to %s",tostring(id),uid)
+          subs[id]=nil 
+        end
       end
     end
   else
@@ -163,9 +171,12 @@ local function updateSubscriber(id,value)
   end
 end
 
-local function checkVars(id,vars)
+local function checkVars(id,vars,tag)
   for _,var in ipairs(vars or {}) do 
-    if var.name==CONNECTOR_VAR then updateSubscriber(id,var.value) end
+    if var.name==CONNECTOR_VAR then 
+      DEBUG("QA","%s, adding QA:%s",tag,id)
+      updateSubscriber(id,var.value) 
+    end
   end
 end
 
@@ -176,17 +187,19 @@ local function main(self,map)
 
   -- At startup, check all QAs for subscriptions
   for _,d in ipairs(api.get("/devices?interface=quickApp") or {}) do
-    checkVars(d.id,d.properties.quickAppVariables)
+    checkVars(d.id,d.properties.quickAppVariables,"Start")
   end
 
   self:event({type='quickvar',name=CONNECTOR_VAR},        -- If some QA changes subscription
-    function(env) 
+    function(env)
+      DEBUG("QA","QA:%s quickVar updated",id)
       updateSubscriber(env.event.id,env.event.value) 
     end) -- update
 
   self:event({type='deviceEvent',value='removed'},      -- If some QA is removed
     function(env) 
       local id = env.event.id
+      DEBUG("QA","QA:%s removed",id)
       if id ~= self.id then
         updateSubscriber(env.event.id,{})               -- update
       end
@@ -198,8 +211,9 @@ local function main(self,map)
     },
     function(env)                                        -- update
       local id = env.event.id
+      DEBUG("QA","QA:%s updated",id)
       if id ~= self.id then
-        checkVars(id,api.get("/devices/"..id).properties.quickAppVariables)
+        checkVars(id,api.get("/devices/"..id).properties.quickAppVariables,"Modified/created")
       end
     end)
 

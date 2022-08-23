@@ -26,7 +26,7 @@ end
 --luacheck: globals ignore QuickApp
 ----------- Code -----------------------------------------------------------
 
-local debug = { info = true, resource_mgmt=false, call=true, event=true, all_event=false, v2api=true, logger=false, class=false }
+local debug = { QA=true, info = true, resource_mgmt=false, call=true, event=true, all_event=false, v2api=true, logger=false, class=false }
 
 local HueDeviceTable = {
 --['1c10e485-e52b-4144-9991-46dbb2eedafa']={type='device',name='Middle window',model='LCT012',room='Living room'},
