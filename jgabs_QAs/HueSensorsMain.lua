@@ -4,7 +4,7 @@
 -- luacheck: globals ignore HueDeviceQA MotionSensorQA TempSensorQA LuxSensorQA SwitchQA HueTable HUEv2Engine
 -- luacheck: globals ignore LightOnOff LightDimmable LightTemperature LightColor
 
-local VERSION = 0.1
+local VERSION = 0.11
 local SERIAL = "UPD896781234551432" 
 local Devices = {}
 local debug = { class=true }
@@ -62,7 +62,7 @@ local function classes()
   class 'Temperature'(HueClass)
   function Temperature:__init(dev) HueClass.__init(self,dev) end
   function Temperature:update(event)
-        HueClass.update(self,event)
+    HueClass.update(self,event)
     if not event.temperature then return end
     local temp = event.temperature.value
     self:updateProperty("value",temp)
@@ -72,7 +72,7 @@ local function classes()
   class 'Lux'(HueClass)
   function Lux:__init(dev) HueClass.__init(self,dev) end
   function Lux:update(event)
-        HueClass.update(self,event)
+    HueClass.update(self,event)
     if not event.light then return end
     local lux = event.light.value
     lux = math.pow(10, (lux - 1) / 10000)
@@ -83,12 +83,40 @@ local function classes()
   class 'Motion'(HueClass)
   function Motion:__init(dev) HueClass.__init(self,dev) end
   function Motion:update(event)
-        HueClass.update(self,event)
+    HueClass.update(self,event)
     if not event.motion then return end
     local motion = event.motion.value
     self:updateProperty("value",motion)
     DEBUG("class","Motion '%s':%s = %s",self.name,self.id,motion)
   end
+
+  class 'Plug'(HueClass)
+  function Plug:__init(dev) HueClass.__init(self,dev) end
+  function Plug:update(event)
+    HueClass.update(self,event)
+    if not event.on then return end
+    local on = event.on.value
+    self:updateProperty("value",on)
+    self:updateProperty("state",on)
+    DEBUG("class","Plug '%s':%s = %s",self.name,self.id,on)
+  end
+  function Plug:turnOn() fibaro.call(self.uid:sub(2),"turnOn") end
+  function Plug:turnOff() fibaro.call(self.uid:sub(2),"turnOff") end
+
+  class 'Rotary'(HueClass)
+  function Rotary:__init(dev) HueClass.__init(self,dev) self.value = 0 end
+  function Rotary:update(event)
+    HueClass.update(self,event)
+    if not event.relative_rotary then return end
+    local rot = event.relative_rotary.value
+    local dir = rot.rotation.direction
+    local steps = rot.rotation.steps
+    local action = rot.action
+--    self:updateProperty("value",on)
+--    self:updateProperty("state",on)
+    DEBUG("class","Rotary '%s':%s = %s,%s,%s",self.name,self.id,steps,dir,action)
+  end
+
 end
 
 local function createDevice(className,typ,uid,battery,r,properties,interfaces)
@@ -110,7 +138,6 @@ function QuickApp:hueInited()
       for i=1,r.buttons or 0 do 
         centralSceneSupport[#centralSceneSupport+1]={ keyAttributes = {"Pressed","Released","HeldDown"},keyId = i }
       end
-
       ds[#ds+1]=createDevice("Switch","com.fibaro.remoteController", "b"..uid,m.power_state,r,{centralSceneSupport=centralSceneSupport},interfaces)
     end
     if m.light then
@@ -121,6 +148,15 @@ function QuickApp:hueInited()
     end
     if m.motion then
       ds[#ds+1]=createDevice("Motion","com.fibaro.motionSensor","m"..uid,m.power_state,r)
+    end
+    if m.on and m.status then
+      m.on,m.status=nil,nil
+      if next(m)==nil then -- Assume it's a plug
+        ds[#ds+1]=createDevice("Plug","com.fibaro.binarySwitch","m"..uid,m.power_state,r)
+      end
+    end
+    if m.relative_rotary then
+      ds[#ds+1]=createDevice("Rotary","com.fibaro.multilevelSensor","m"..uid,m.power_state,r)
     end
     if next(ds) then
       Devices[uid]=function(event) for _,d in ipairs(ds) do d:update(event) end end
