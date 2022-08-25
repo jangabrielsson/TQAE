@@ -239,9 +239,9 @@ return {
         vars= {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueSensors_0.11"
         },
-        descr = "First version",
+        descr = "Rotary and wall plug support",
         mainfile = "$base1/jgabs_QAs/HueSensors.lua",
-        files = "Rotary and wall plug support",
+        files = "generate",
         keep = {
         },
         interfaces = {"quickApp"},
