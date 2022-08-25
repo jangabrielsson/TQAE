@@ -54,7 +54,7 @@ function EVENTSCRIPT.setupFuns()
       resolvedDevices[id]=d.type
       if not cachedTypes[d.type] then
         local p = d.properties; 
-        for k,v in pairs(p) do if skips[k] or type(v)=='table' then p[k]=nil else p[k]=type(v) end end end
+        for k,v in pairs(p) do if skips[k] or type(v)=='table' then p[k]=nil else p[k]=type(v) end end 
         cachedTypes[d.type] = {props=p,actions=d.actions,isQA=qa}
       end
     end
