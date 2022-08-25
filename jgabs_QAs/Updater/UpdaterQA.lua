@@ -41,13 +41,14 @@ if hc3_emulator then
 end
 
 local SERIAL = "UPD896661234567894"
-local VERSION = 0.65
+local VERSION = 0.67
 local QAs={}
 local manifest = {}
 local updates,updP = {},0
 local veP = 0
 local qaP = 0
 local fmt = string.format
+local equal = fibaro.utils.equal
 
 function QuickApp:BTN(ev) btnHandlers[ev.elementName](ev) end -- Avoid (too) global handlers
 
@@ -88,11 +89,14 @@ end
 
 local lastData -- cache
 local function process(data)
+  local dirty = false
   if data then lastData = data else data = lastData end
   if not data then return end
   manifest = data.updates
   Date = data.date
   updates={}
+  local oldData = quickApp:getVariable("MANIFEST")
+  if oldData == "" or not equal(oldData,data) then dirty=true end
   quickApp:setVariable("MANIFEST",data)
   for id,data in pairs(manifest) do
     local name,typ,descr,noUpgrade = data.name,data.type,data.noUpgrade,data.descr
@@ -127,6 +131,7 @@ local function process(data)
     updates[#updates+1]=update
   end
   updP = 0; btnHandlers.NextU()
+  if dirty or testNotify then quickApp:setVariable("UPDATES",updates) end
 end
 
 local function updateInfo()
@@ -245,13 +250,13 @@ local function fetchFiles(fs,n,cont)
     })
 end
 
-local function Update(ev)
+local function Update(ev,updP0,veP0,qaP0)
   logf(ev.elementName)
-  local upd      = updates[updP]  or {}
+  local upd      = updates[updP0 or updP] or {}
   local versions = upd.versions   or {}
-  local version  = versions[veP]  or {}
+  local version  = versions[veP0 or veP]  or {}
   local qaList   = version.QAs    or {}
-  local qa       = qaList[qaP]
+  local qa       = qaList[qaP0 or qaP]
   if not qa then return end
 
   local data = version.data
@@ -271,7 +276,7 @@ local function Update(ev)
       local stat,_ = pcall(function()
           for _,f in ipairs(deviceFiles) do -- delete files not in new QA
             existMap[f.name]=f
-            if not files[f.name] and not keeps[f.name] then
+            if not files[f.name] and not keeps[f.name] and not f.name:match("^[uU]_") then
               filesAltered[#filesAltered+1]={'deleted',f}
               local _,code = api.delete("/quickApp/"..qa.id.."/files/"..f.name)
               if code > 204 then 
@@ -401,8 +406,33 @@ btnHandlers = {
 function QuickApp:updateMe(id,vers)
   local qa = QAs[id]
   if not qa then self:warning("Update requested from non-updateble QA:%s",id) return end
-  local update = updates[qa.serial]
-  if update == nil then self:warning("No update for QA:%s",id) return end
+  local update,version,udpP0,veP0,qaP0
+--[[
+  local upd      = updates[udpP0 or updP]  or {}
+  local versions = upd.versions   or {}
+  local version  = versions[veP0 or veP]  or {}
+  local qaList   = version.QAs    or {}
+  local qa       = qaList[qaP0 or qaP]
+--]]
+  for i,up in ipairs(updates) do
+    if up.serial == qa.serial then 
+      update = up; udpP0 = i break 
+    end
+  end
+  if not udpP0 then self:warning("No update for QA:%s",id) return end
+  for i,v in ipairs(update.versions) do
+    if v.version == vers then
+      version = v; veP0 = i break
+    end
+  end
+  if not veP0 then self:warning("No update for QA:%s vers:%s",id,tostring(vers)) return end
+  for i,q in ipairs(version.QAs or {}) do
+    if q.id == id then
+      qaP0 = i break
+    end
+  end
+  local stat,res = pcall(Update,{elementName='Remote update'},udpP0,veP0,qaP0)
+  if not stat then self:error(res) end
 end
 
 ----------- Code -----------------------------------------------------------
@@ -432,5 +462,7 @@ function QuickApp:onInit()
         end)
 
       Refresh()
+      setInterval(Refresh,1000*(3600*24))
+      --setTimeout(function() self:updateMe(53,0.82) end,3000)
     end,0)
 end

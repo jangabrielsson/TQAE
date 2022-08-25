@@ -25,7 +25,7 @@ local GUI_HANDLERS = {
     end
     local stat,err=pcall(FB.__fibaro_call,id,action,"",{args=args})
     if not stat then LOG.error("Bad callAction:%s",err) end
-    client:send("HTTP/1.1 302 Found\nLocation: "..ref.."\n\n")
+    client:send("HTTP/1.1 302 Found\nLocation: "..(ref or "").."\n\n")
     return true
   end,
   --[[
@@ -160,6 +160,12 @@ local function getItem(rname,id)
 end
 
 local function createItem(rname,id,data)
+  if id == nil then
+    for rid,r in pairs(EM.rsrc[rname]) do
+      if r.name == data.name then id = rid break end
+    end
+    id = id or "nil"
+  end
   local cfun = rname:sub(1,-2)
   if cfg.offline or cfg.shadow or EM.rsrc[rname][id] then
     if EM.rsrc[rname][id] then return nil,404 
@@ -180,7 +186,7 @@ local function modifyItem(rname,id,data)
   return r,200
 end
 
-local function deleteItem(rname,id)
+local function deleteItem(rname,id,data)
   if EM.rsrc[rname][id] then
     EM.rsrc[rname][id] = nil
     return nil,200
@@ -239,17 +245,18 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       end
       return data,202
       -- Should check other device values too - usually needs restart of QA
-    elseif not cfg.offline then return HC3Request("GET",path, data)
+    elseif not cfg.offline then return HC3Request("PUT",path, data)
     else return nil,404 end
   end,
 
-  ["GET/globalVariables"] = function(_,path,_,_) return getAllItems('globalVariables') end,
-  ["GET/globalVariables/#name"] = function(_,path,_,_,name) return getItem('globalVariables',name) end,
-  ["POST/globalVariables"] = function(_,path,data,_) return createItem('globalVariables',name,data) end,
-  ["PUT/globalVariables/#name"] = function(_,path,data,_,name)
+  ["GET/globalVariables"] = function(_,_,_,_) return getAllItems('globalVariables') end,
+  ["GET/globalVariables/#name"] = function(_,_,_,_,name) return getItem('globalVariables',name) end,
+  ["POST/globalVariables"] = function(_,_,data,_) return createItem('globalVariables',data.name,data) end,
+  ["PUT/globalVariables/#name"] = function(_,_,data,_,name)
     local oldVar  = EM.rsrc.globalVariables[name] or {}
     local oldValue  = oldVar.value
     local res,code  = modifyItem('globalVariables',name,data)
+    if code > 205 then return res,code end
     local var = EM.rsrc.globalVariables[name]
     if cfg.offline or cfg.shadow and code <  205 and oldValue ~= var.value then
       EM.addRefreshEvent({
@@ -264,7 +271,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
 
   ["GET/rooms"] = function(_,path,_,_) return getAllItems('rooms') end,
   ["GET/rooms/#id"] = function(_,path,_,_,id) return getItem('rooms',id) end,
-  ["POST/rooms"] = function(_,path,data,_) return createItem('rooms',id,data) end,
+  ["POST/rooms"] = function(_,path,data,_) return createItem('rooms',nil,data) end,
   ["POST/rooms/#id/action/setAsDefault"] = function(_,path,data,_,id)
     cfg.defaultRoom = id
     if cfg.offline or cfg.shadow then return id,200 else return HC3Request("POST",path,data) end
@@ -274,13 +281,13 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
 
   ["GET/sections"] = function(_,path,_,_) return getAllItems('sections') end,
   ["GET/sections/#id"] = function(_,path,_,_,id) return getItem('sections',id) end,
-  ["POST/sections"] = function(_,path,data,_) return createItem('sections',id,data) end,
+  ["POST/sections"] = function(_,path,data,_) return createItem('sections',nil,data) end,
   ["PUT/sections/#id"] = function(_,path,data,_,id) return modifyItem('sections',id,data) end,
   ["DELETE/sections/#id"] = function(_,path,data,_,id) return deleteItem('sections',id,data) end,
 
   ["GET/customEvents"] = function(_,path,_,_) return getAllItems('customEvents') end,
   ["GET/customEvents/#name"] = function(_,path,_,name) return getItem('customEvents',name) end,
-  ["POST/customEvents"] = function(_,path,data,_) return createItem('customEvents',id,data) end,
+  ["POST/customEvents"] = function(_,path,data,_) return createItem('customEvents',data.name,data) end,
   ["POST/customEvents/#name"] = function(_,path,data,_,name)
     if EM.rsrc.customEvents[name] then
       EM.addRefreshEvent({
@@ -294,7 +301,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   ["PUT/customEvents/#name"] = function(_,path,data,name) return modifyItem('customEvents',name,data) end,
   ["DELETE/customEvents/#name"] = function(_,path,data,name) return deleteItem('customEvents',name) end,
 
-  ["GET/scenes"] = function(m,path,h,j)
+  ["GET/scenes"] = function(_,path,_,_)
     return HC3Request("GET",path)
   end,
   ["GET/scenes/#id"] = function(_,path,_,_)
@@ -386,13 +393,13 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
 
   ["GET/panels/location"] = function(_,path,_,_) return getAllItems('panels/location') end,
   ["GET/panels/location/#id"] = function(_,path,_,_,id) return getItem('panels/location',id) end,
-  ["POST/panels/location"] = function(_,path,data,_) return createItem('panels/location',id,data) end,
+  ["POST/panels/location"] = function(_,path,data,_) return createItem('panels/location',nil,data) end,
   ["PUT/panels/location/#id"] = function(_,path,data,_,id) return modifyItem('panels/location',id,data) end,
   ["DELETE/panels/location/#id"] = function(_,path,data,_,id) return deleteItem('panels/location',id,data) end,
 
   ["GET/users"] = function(_,path,_,_) return getAllItems('users') end,
   ["GET/users/#id"] = function(_,path,_,_,id) return getItem('users',id) end,
-  ["POST/users"] = function(_,path,data,_) return createItem('users',id,data) end,
+  ["POST/users"] = function(_,path,data,_) return createItem('users',nil,data) end,
   ["PUT/users/#id"] = function(_,path,data,_,id) return modifyItem('users',id,data) end,
   ["DELETE/users/#id"] = function(_,path,data,_,id) return deleteItem('users',id,data) end,
 
@@ -408,7 +415,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   ["POST/quickApp/#id/files"] = function(method,path,data,_,id)                        --Create file
     local D = Devices[id]
     if D then
-      local f,files = D.fileMap or {},{}
+      local f = D.fileMap or {}
       if f[data.name] then return nil,404 end
       f[data.name] = data
       return data,200
@@ -480,7 +487,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     if cfg.offline or D then
       if D then
         D.storage = D.storage or {}
-        if D.storage[key] then return {name=key,value=D.storage[key],200} else return nil,404 end
+        if D.storage[key] then return {name=key,value=D.storage[key]},200 else return nil,404 end
       else return nil, 404 end
     else return HC3Request(method,path) end
   end,
@@ -490,19 +497,25 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
       if D then
         D.storage = D.storage or {}
         D.storage[data.name]=data.value 
-        return true,200
+        if (not cfg.offline) and D.proxy or D.childProxy then
+--          return HC3Request(method,path,data)
+            return HC3Request("POST","/devices/"..id.."/action/APIPOST",{args={path,data}})
+        else return true,202 end
       else return nil, 409 end
     else return HC3Request(method,path,data) end
     --return nil,409
   end,
-  ["PUT/plugins/#id/variables"] = function(method,path,data,_,id,key)   -- modify key
+  ["PUT/plugins/#id/variables/#name"] = function(method,path,data,_,id,key)   -- modify key
     local D = Devices[id]
     if cfg.offline or D then
       if D then
         D.storage = D.storage or {}
         if D.storage[key] then
           D.storage[key] = data.value
-          return true,200
+          if (not cfg.offline) and D.proxy or D.childProxy then
+--            return HC3Request(method,path,data)
+              return HC3Request("PUT","/devices/"..id.."/action/APIPUT",{args={path,data}})
+          else return true,202 end
         else return nil,404 end
       else return nil,404 end
     else return HC3Request(method,path,data) end
@@ -564,7 +577,7 @@ local function exportAPIcall(p,f)
   if p ~= "GET/api/callAction" then
     local method = p:match("^(.-)/")
 
-    local function fe(path,client,ref,data,opts,...)
+    local function fe(path,client,_,data,opts,...)
       data = data and json.decode(data)
       DEBUG("api","sys","Incoming API call: %s",path)
       local res,code = f(method,path:sub(5),data,opts,...)

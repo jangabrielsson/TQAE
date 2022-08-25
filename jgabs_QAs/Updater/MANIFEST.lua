@@ -28,30 +28,42 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.75,
+      { version = 0.84,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.75"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.84"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "error events and multiPositionSwitch support",
+        descr = "Bug fix",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.77,
+      { version = 0.85,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.77"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.85"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "log property event support",
+        descr = "enable/disable trueFor rules",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",
         interfaces= {"quickApp"},
         quickAppVariables = {},
-      },
+      },   
+      { version = 0.86,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.86"
+        },
+        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
+        descr = "enable/disable events",
+        files = "generate",
+        keep= { "main" },
+        viewLayout = "generate",
+        interfaces= {"quickApp"},
+        quickAppVariables = {},
+      }, 
 --      { version = 0.x,
 --        vars = {
 --          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.XX"
@@ -119,11 +131,11 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
-      { version= 0.64,
+      { version= 0.66,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.64"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.66"
         },
-        descr = "bug fix (refs)",
+        descr = "support for remote update by other QAs",
         mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
         files = "generate",
         keep = {
@@ -131,11 +143,11 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
-      { version= 0.65,
+      { version= 0.67,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.65"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.67"
         },
-        descr = "bug fix (New QA)",
+        descr = "support user keep files u_...",
         mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
         files = "generate",
         keep = {
@@ -145,8 +157,8 @@ return {
       },
     }
   },
-  
-    ["896661234567895"] = {
+
+  ["896661234567895"] = {
     name = "TriggerQA",
     type = "com.fibaro.deviceController",
     versions = {
@@ -163,5 +175,78 @@ return {
         viewLayout = "generate",
       },
     }
-  }
+  },
+
+  ["896781234567895"] = {
+    name = "HueConnector",
+    type = "com.fibaro.deviceController",
+    versions = {
+      { version= 0.11,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.11"
+        },
+        descr = "Improvements",
+        mainfile = "$base1/jgabs_QAs/HueConnector.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+      { version= 0.12,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.12"
+        },
+        descr = "Works with HueSensors",
+        mainfile = "$base1/jgabs_QAs/HueConnector.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+      { version= 0.14,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.14"
+        },
+        descr = "Rotary support",
+        mainfile = "$base1/jgabs_QAs/HueConnector.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+    }
+  },
+    ["896781234551432"] = {
+    name = "HueSensors",
+    type = "com.fibaro.deviceController",
+    versions = {
+      { version= 0.1,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueSensors_0.1"
+        },
+        descr = "First version",
+        mainfile = "$base1/jgabs_QAs/HueSensors.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+      { version= 0.11,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueSensors_0.11"
+        },
+        descr = "Rotary and wall plug support",
+        mainfile = "$base1/jgabs_QAs/HueSensors.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+    }
+  },
 }

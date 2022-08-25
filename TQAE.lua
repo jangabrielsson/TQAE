@@ -2,25 +2,12 @@
 TQAE - Tiny QuickApp emulator for the Fibaro Home Center 3
 Copyright (c) 2021 Jan Gabrielsson
 Email: jan@gabrielsson.com
-MIT License
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
 
 Sources included:
 json           -- Copyright (c) 2019 rxi
@@ -103,7 +90,7 @@ QuickApp options: (set with --%% directive in file)
 --]]
 
 local embedded=...              -- get parameters if emulator included from QA code...
-local version = "0.54"
+local version = "0.57"
 local EM = { cfg = embedded or {} }
 local cfg,pfvs = EM.cfg
 local function DEF(x,y) if x==nil then return y else return x end end
@@ -537,13 +524,13 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
     },
     hc3_emulator={
       getmetatable=getmetatable,setmetatable=setmetatable,io=io,installQA=EM.installQA,EM=EM,IPaddress=EM.IPAddress,
-      os={setTimer=setTimeout, exit=os.exit},trigger=EM.trigger,create=EM.create,rawset=rawset,rawget=rawget,
-      registerURL = EM.registerURL,
+      os={setTimer=setTimeout, exit=os.exit,getenv=os.getenv,remove=os.remove},trigger=EM.trigger,create=EM.create,rawset=rawset,rawget=rawget,
+      registerURL = EM.registerURL, webPort=EM.webPort,
     },
     coroutine=EM.userCoroutines,
     table=table,select=select,pcall=pcall,xpcall=xpcall,print=print,string=string,error=error,
     collectgarbage=collectgarbage,unpack=table.unpack,
-    next=next,pairs=pairs,ipairs=ipairs,tostring=tostring,tonumber=tonumber,math=math,assert=assert
+    next=next,pairs=pairs,ipairs=ipairs,tostring=tostring,tonumber=tonumber,math=math,assert=assert,
   }
   if info.fullLUA then
     EM._createQA = createQA

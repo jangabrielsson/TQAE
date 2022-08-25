@@ -72,7 +72,7 @@ function QuickAppBase:getVariable(name)
   if hc3_emulator then
     local d = hc3_emulator.EM.Devices[self.id]
     if d.proxy or d.childProxy then
-      local qvs = api.get("/devices/"..self.id.."/properties/quickAppVariables","remote")
+      local qvs = api.get("/devices/"..self.id,"remote").properties.quickAppVariables
       if qvs then self.properties.quickAppVariables = qvs end
     end
   end
@@ -80,12 +80,20 @@ function QuickAppBase:getVariable(name)
   return ""
 end
 
+local function copy(l) local r={}; for _,i in ipairs(l) do r[#r+1]={name=i.name,value=i.value} end return r end
 function QuickAppBase:setVariable(name,value)
   __assert_type(name,'string')
-  local vars = self.properties.quickAppVariables or {}
-  for _,v in ipairs(vars) do if v.name==name then v.value=value return end end
-  self.properties.quickAppVariables = vars
+  local vars = copy(self.properties.quickAppVariables or {})
+  for _,v in ipairs(vars) do 
+    if v.name==name then 
+      v.value=value
+      api.post("/plugins/updateProperty", {deviceId=self.id, propertyName='quickAppVariables', value=vars})
+      return 
+    end 
+  end
+  --self.properties.quickAppVariables = vars
   vars[#vars+1]={name=name,value=value}
+  api.post("/plugins/updateProperty", {deviceId=self.id, propertyName='quickAppVariables', value=vars})
 end
 
 function QuickAppBase:updateProperty(prop,val)
@@ -161,7 +169,12 @@ function QuickAppBase:internalStorageSet(key, val, hidden)
   __assert_type(key,'string')
   local data = { name=key, value=val, isHidden=hidden}
   local _,stat = api.put("/plugins/"..self.id.."/variables/"..key,data)
-  if stat==404 then api.post("/plugins/"..self.id.."/variables",data) end
+  --print(key,stat)
+  if stat>206 then 
+    local _,stat = api.post("/plugins/"..self.id.."/variables",data)
+    --print(key,stat)
+    return stat
+  end
 end
 
 function QuickAppBase:internalStorageGet(key)

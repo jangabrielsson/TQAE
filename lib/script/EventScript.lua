@@ -79,7 +79,7 @@ local function setupES()
     if isTriggerVar(n) and oldval and oldval[1]~=v or oldval==nil then fibaro.post({type='%triggervar',name=n, value=v}) end
   end
   EVENTSCRIPT.defvar,EVENTSCRIPT.defvars = defvar,defvars
-  EVENTSCRIPT.defTriggerVar,EVENTSCRIPT.reverseMapDef = defTriggerVar,reverseMapDef
+  EVENTSCRIPT.defTriggerVar,EVENTSCRIPT.reverseMapDef,EVENTSCRIPT.reverseVar = defTriggerVar,reverseMapDef,reverseVar
 
   EVENTSCRIPT.setupFuns()
   

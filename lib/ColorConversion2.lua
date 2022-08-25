@@ -4,8 +4,104 @@ Based on Philips implementation guidance:
 http://www.developers.meethue.com/documentation/color-conversions-rgb-xy
 Copyright (c) 2016 Benjamin Knight / MIT License.
 --]]
-
+--static void rgb_to_hsv(double r, double g, double b)
+--    {
+ 
+--        // R, G, B values are divided by 255
+--        // to change the range from 0..255 to 0..1
+--        r = r / 255.0;
+--        g = g / 255.0;
+--        b = b / 255.0;
+ 
+--        // h, s, v = hue, saturation, value
+--        double cmax = Math.max(r, Math.max(g, b)); // maximum of r, g, b
+--        double cmin = Math.min(r, Math.min(g, b)); // minimum of r, g, b
+--        double diff = cmax - cmin; // diff of cmax and cmin.
+--        double h = -1, s = -1;
+         
+--        // if cmax and cmax are equal then h = 0
+--        if (cmax == cmin)
+--            h = 0;
+ 
+--        // if cmax equal r then compute h
+--        else if (cmax == r)
+--            h = (60 * ((g - b) / diff) + 360) % 360;
+ 
+--        // if cmax equal g then compute h
+--        else if (cmax == g)
+--            h = (60 * ((b - r) / diff) + 120) % 360;
+ 
+--        // if cmax equal b then compute h
+--        else if (cmax == b)
+--            h = (60 * ((r - g) / diff) + 240) % 360;
+ 
+--        // if cmax equal zero
+--        if (cmax == 0)
+--            s = 0;
+--        else
+--            s = (diff / cmax) * 100;
+ 
+--        // compute v
+--        double v = cmax * 100;
+--        System.out.println("(" + h + " " + s + " " + v + ")");
+ 
+--  }
+  
+  
 local __version__ = '0.5.1'
+
+local function round(x) return math.floor(x+0.5) end
+
+local function hsb2rgb(hue,saturation,brightness)            --0-65535,0-255,0-255
+  if saturation == 0 then return {r=brightness, g=brightness, b=brightness} end
+  hue        = 360*hue/65535.0
+  saturation = saturation/255.0
+  brightness = brightness/255.0
+
+  -- the color wheel consists of 6 sectors. Figure out which sector you're in.
+  local sectorPos = hue / 60.0
+  local sectorNumber = math.floor(sectorPos)
+  -- get the fractional part of the sector
+  local fractionalSector = sectorPos - sectorNumber
+
+  -- calculate values for the three axes of the color. 
+  local p = brightness * (1.0 - saturation)
+  local q = brightness * (1.0 - (saturation * fractionalSector))
+  local t = brightness * (1.0 - (saturation * (1 - fractionalSector)))
+
+  p,q,t,brightness=round(p*255.0),round(q*255.0),round(t*255.0),round(brightness*255.0)
+  -- assign the fractional colors to r, g, and b based on the sector the angle is in.
+  if sectorNumber==0     then return brightness,t,p
+  elseif sectorNumber==1 then return q,brightness,p
+  elseif sectorNumber==2 then return p,brightness,t
+  elseif sectorNumber==3 then return p,q,brightness
+  elseif sectorNumber==4 then return t,p,brightness
+  elseif sectorNumber==5 then return brightness,p,q end
+end
+
+local function rgb2hsb(r,g,b) -- 0-255,0-255,0-255
+  local dRed   = r / 255.0;
+  local dGreen = g / 255.0;
+  local dBlue  = b / 255.0;
+
+  local max = math.max(dRed, math.max(dGreen, dBlue));
+  local min = math.min(dRed, math.min(dGreen, dBlue));
+
+  local h = 0.0;
+  if (max == dRed and dGreen >= dBlue) then
+    h = 60.0 * (dGreen - dBlue) / (max - min);
+  elseif (max == dRed and dGreen < dBlue) then
+    h = 60.0 * (dGreen - dBlue) / (max - min) + 360;
+  elseif (max == dGreen) then
+    h = 60.0 * (dBlue - dRed) / (max - min) + 120;
+  elseif (max == dBlue) then
+    h = 60.0 * (dRed - dGreen) / (max - min) + 240;
+  end
+
+  local s = (max == 0) and 0.0 or (1.0 - (min / max))
+
+  return round(65535.0*h/360.0), round(255.0*s), round(255.0*max)
+end
 
 -- Represents a CIE 1931 XY coordinate pair.
 local function XYPoint(x,y) return {x=x, y=y} end
@@ -169,7 +265,7 @@ local function ColorHelper(gamut)
       xy_point = get_closest_point_to_point(xy_point)
     end
 
-    return xy_point
+    return xy_point.x,xy_point.y
   end
 
   local function get_rgb_from_xy_and_brightness(x, y, bri)
@@ -204,10 +300,6 @@ local function ColorHelper(gamut)
       r, g, b = r / max_component, g / max_component, b / max_component
     end
     -- Apply reverse gamma correction
---  r, g, b = map(
---    lambda x: (12.92 * x) if (x <= 0.0031308) else ((1.0 + 0.055) * pow(x, (1.0 / 2.4)) - 0.055),
---    [r, g, b]
---  )
     r = (r <= 0.0031308) and (12.92 * r) or ((1.0 + 0.055) * r^(1.0 / 2.4) - 0.055)
     g = (g <= 0.0031308) and (12.92 * g) or ((1.0 + 0.055) * g^(1.0 / 2.4) - 0.055)
     b = (b <= 0.0031308) and (12.92 * b) or ((1.0 + 0.055) * b^(1.0 / 2.4) - 0.055)
@@ -221,78 +313,19 @@ local function ColorHelper(gamut)
       r, g, b = r / max_component, g / max_component, b / max_component
     end
 
-    r, g, b = math.floor(r*255+0.5),math.floor(g*255+0.5),math.floor(b*255+0.5) 
+    r, g, b = round(r*255.0),round(g*255.0),round(b*255.0) 
 
     -- Convert the RGB values to your color object The rgb values from the above formulas are between 0.0 and 1.0.
     return r, g, b
   end
 
-  self.rgb2xy =  get_xy_point_from_rgb -- (r,g,b) -- 0-255,0-255,0-255
+  self.rgb2xy =  get_xy_point_from_rgb           -- (r,g,b)   -- 0-255,0-255,0-255
   self.xyb2rgb = get_rgb_from_xy_and_brightness  -- (x,y,bri) -- 0-1.0,0-1.0,0-1.0
+  self.hsb2rgb = hsb2rgb                                      -- 0-65535,0-255,0-255
+  self.rgb2hsb = rgb2hsb                                      -- 0-255,0-255,0-255
   self.getGamutFromModel = get_light_gamut -- (modelId)
   return self
 end
 
-local function round(x) return math.floor(x+0.5) end
-
-local function hsb2rgb(hue,saturation,brightness) --0-65535,0-255,0-255
-  if saturation == 0 then return {r=brightness, g=brightness, b=brightness} end
-  hue        = 360*hue/65535.0
-  saturation = saturation/254
-  brightness = brightness/254
-
-  -- the color wheel consists of 6 sectors. Figure out which sector you're in.
-  local sectorPos = hue / 60.0
-  local sectorNumber = math.floor(sectorPos)
-  -- get the fractional part of the sector
-  local fractionalSector = sectorPos - sectorNumber
-
-  -- calculate values for the three axes of the color. 
-  local p = brightness * (1.0 - saturation)
-  local q = brightness * (1.0 - (saturation * fractionalSector))
-  local t = brightness * (1.0 - (saturation * (1 - fractionalSector)))
-
-  p,q,t,brightness=round(p*255),round(q*255),round(t*255),round(brightness*255)
-  -- assign the fractional colors to r, g, and b based on the sector the angle is in.
-  if sectorNumber==0 then return {r=brightness,g=t,b=p}
-  elseif sectorNumber==1 then return {r=q,g=brightness,b=p}
-  elseif sectorNumber==2 then return {r=p,g=brightness,b=t}
-  elseif sectorNumber==3 then return {r=p,g=q,b=brightness}
-  elseif sectorNumber==4 then return {r=t,g=p,b=brightness}
-  elseif sectorNumber==5 then return {r=brightness,g=p,b=q} end
-end
-
-local function rgb2hsb(r,g,b) -- 0-255,0-255,0-255
-  local dRed   = r / 255.0;
-  local dGreen = g / 255.0;
-  local dBlue  = b / 255.0;
-
-  local max = math.max(dRed, math.max(dGreen, dBlue));
-  local min = math.min(dRed, math.min(dGreen, dBlue));
-
-  local h = 0.0;
-  if (max == dRed and dGreen >= dBlue) then
-    h = 60.0 * (dGreen - dBlue) / (max - min);
-  elseif (max == dRed and dGreen < dBlue) then
-    h = 60.0 * (dGreen - dBlue) / (max - min) + 360;
-  elseif (max == dGreen) then
-    h = 60.0 * (dBlue - dRed) / (max - min) + 120;
-  elseif (max == dBlue) then
-    h = 60.0 * (dRed - dGreen) / (max - min) + 240;
-  end
-
-  local s = (max == 0) and 0.0 or (1.0 - (min / max))
-
-  return math.floor(65535*h/360+0.5), math.floor(0.5+254*s), math.floor(0.5+254*max)
-end
-
---- xyb2rgb(x,y,b) => { r=r, g=g, b=b }
---- rgb2xy(r,g,b,gamut) => { x=x, y=y }
 fibaro = fibaro or {}
-fibaro.colorConverter = { 
-  xy = ColorHelper,   --
---  xyb2rgb=xyb2rgb, 
---  rgb2xy=rgb2xy,
-  hsb2rgb = hsb2rgb,
-  rgb2hsb = rgb2hsb
-}
+fibaro.colorConverter = ColorHelper

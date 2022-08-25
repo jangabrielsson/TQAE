@@ -64,7 +64,7 @@ local function mkRow(elms,weight)
     else comp[#comp+1]=c[1] end
     comp[#comp+1]=ELMS['space']({},"0.5")
   else
-    comp[#comp+1]=ELMS[elms.type](elms,"1.2")
+    comp[#comp+1]=ELMS[elms.type or "space"](elms,"1.2")
     comp[#comp+1]=ELMS['space']({},"0.5")
   end
   return {components=comp,style={weight=weight or "1.2"},type="vertical"}
@@ -239,7 +239,7 @@ local initElm = {
 
 function EM.addUI(info)
   local dev = info.dev
-  local defUI = (not info.UI and customUI[dev.type] or customUI[dev.baseType or ""]) or {}
+  local defUI = (not info.UI and (customUI[dev.type] or customUI[dev.baseType or ""])) or {}
 
   if dev.properties.viewLayout then
     info.UI = view2UI(dev.properties.viewLayout or {},dev.properties.uiCallbacks or {}) or {}

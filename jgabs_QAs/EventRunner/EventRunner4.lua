@@ -1,14 +1,14 @@
 -- luacheck: globals ignore _debugFlags hc3_emulator QuickApp Util
 
 _=loadfile and loadfile("TQAE.lua"){
-  refreshStates=true,
+  --refreshStates=true,
   debug = { 
     onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true, qa=true-- timersSched=true
   },
   --startTime="10:00:00 5/12/2020",
   --speed = 48,
   --deploy=true,
-  ---offline=true,
+  --offline=true,
 }
 
 
@@ -22,9 +22,10 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 --FILE:jgabs_QAs/EventRunner/EventRunner4Engine.lua,EventRunner;
+--FILE:jgabs_QAs/EventRunner/EventRunnerDoc.lua,Doc;
 
 ----------- Code -----------------------------------------------------------
-_debugFlags.trigger = true -- log incoming triggers
+_debugFlags.trigger = true  -- log incoming triggers
 _debugFlags.trigger2 = true -- log incoming triggers
 _debugFlags.sourceTrigger = true
 _debugFlags.fcall=true     -- log fibaro.call
@@ -32,12 +33,12 @@ _debugFlags.post = true    -- log internal posts
 _debugFlags.rule=true      -- log rules being invoked (true or false)
 _debugFlags.ruleTrue=true  -- log only rules that are true
 _debugFlags.pubsub=true    -- log only rules that are true
-
+_debugFlags.extendedErrors=true
 ------------- Put your rules inside QuickApp:main() -------------------
 
 function QuickApp:main()    -- EventScript version
   local rule = function(...) return self:evalScript(...) end          -- old rule function
-  self:enableTriggerType({"device","global-variable","custom-event","profile","alarm","location","quickvar"}) -- types of events we want
+  self:enableTriggerType({"device","global-variable","custom-event","profile","alarm","location","quickvar","user"}) -- types of events we want
   fibaro.debugFlags.sourceTrigger=true 
   local HT = { 
     keyfob = 26, 
@@ -48,15 +49,33 @@ function QuickApp:main()    -- EventScript version
 
   Util.defvars(HT)
   Util.reverseMapDef(HT)
-  --rule("46:central =>  post(#keyFob{value=46:central.keyAttribute++46:central.keyId})")
-  rule("#keyFob{value='Pressed4'}  => log('OKOK %s',tjson(env.event))")
---[[
-  rule("@sunset => lamp:value=40; sched=40")
-  rule("@00:00 => lamp:value=20; sched=20")
-  rule("@sunrise => lamp:off")
-  rule("pir:breached & lamp:isOn => lamp:value=80")
-  rule("pir:safe & lamp:value == 80 => lamp:dim={00:02,'down',nil,'linear',sched,80}")
---]]
+
+--  Util.defTriggerVar("A",24)
+
+--  fibaro.EM.SECTION = 'Home'  
+--  rule("@@00:01:00 => log('Home profile active!')").disable()   
+
+---- rule 2
+--  r2 = rule("trueFor(00:00:10,A > 23) => log('[dagelijkeRules] Keuken temperatuur %s',99);again()").disable()
+
+--  fibaro.EM.SECTION = 'Away'  
+--  rule("@@00:01:00 => log('Away profile active!')").disable()  
+
+--  rule("99:isOn => 88:off; log('[dagelijkseRules] testSwitch is uitgezet')").disable() 
+
+--  fibaro.EM.SECTION = nil  
+--  AwayProfile=fibaro.profileNameToId('Away')  
+--  HomeProfile=fibaro.profileNameToId('Home')
+
+    rule("#foo => log('A')").start()
+--  rule("#profile{property='activeProfile', value=AwayProfile} => enable('Away',true)") 
+--  rule("#profile{property='activeProfile', value=HomeProfile} => enable('Home',true); r2.start()") 
+--  rule("post(#profile{property='activeProfile', value=HomeProfile})") 
+--  rule("wait(20); post(#profile{property='activeProfile', value=AwayProfile})")
+--    Util.defTriggerVar('A',true)
+--    a=rule("trueFor(00:00:05,A) => log('A')").start()
+--    rule("wait(20); disable(a)")
+--    rule("#ruleDisable => log('Disable:%s',a==env.event.rule)")
 --  alarms = 1
 --  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")
@@ -65,14 +84,13 @@ function QuickApp:main()    -- EventScript version
 --  rule("alarms:willArm => log('Any will arm')")
 --  rule("{1,2}:allArmed => log('1,2 armed')")
 --  rule("{1,2}:disarmed => log('1,2 disarmed')")
---rule("wait(2); 0:alarm=true")
-
+--  rule("wait(2); 0:alarm=true")
 --  rule("0:armed => log('all armed')").print()
 --  rule("0:armed==false => log('all disarmed')").print()
 --  rule("2:armed => log('2 armed')")
 --  rule("2:disarmed => log('2 disarmed')")
 --  rule("2:willArm => log('2 will arm')")
-
+  rule("#se-start => log('START')")
 --  Phone = {2,107}
 --  lights={267,252,65,67,78,111,129,158,292,127,216,210,205,286,297,302,305,410,384,389,392,272,329,276} -- eller hämta värden från HomeTable
 --  rule("earthDates={2021/3/27/20:30,2022/3/26/20:30,2023/3/25/20:30}")
@@ -83,7 +101,6 @@ function QuickApp:main()    -- EventScript version
 ---- Testar Earth hour --------
 --  rule("#earthHour2 => states = lights:value; lights:off; wait(00:00:06); lights:value = states")
 --  rule("@now+00:00:05 => post(#earthHour2)")
-
 -- rule("@@00:01 & date('0/5 12-15 *') => log('ping')")
 -- rule("@@00:00:05 => log(now % 2 == 1 & 'Tick' | 'Tock')")
 -- rule("remote(1356,#foo)")
@@ -101,8 +118,9 @@ function QuickApp:main()    -- EventScript version
 
 --  rule("wait(3); log('Res:%s',http.get('https://jsonplaceholder.typicode.com/todos/1').data)")
 
---   Nodered.connect("http://192.168.1.49:1880/ER_HC3")
---   rule("Nodered.post({type='echo1',value='Hello'},true).value")
+--   Nodered.connect("http://192.168.1.50:1880/ER_HC3")
+--  Nodered.connect("http://192.168.1.88:30011/ER_HC3")
+--  rule("Nodered.post({type='echo1',value='Hello'},true).value")
 --  rule("Nodered.post({type='echo1',value=42})")
 --  rule("#echo1 => log('ECHO:%s',env.event.value)")
 

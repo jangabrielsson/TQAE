@@ -13,37 +13,22 @@ _=loadfile and loadfile("TQAE.lua"){
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 
 ----------- Code -----------------------------------------------------------
-_version = "0.2"
+_version = "0.3"
 
 ------------ main program ------------------
 local fmt = string.format
-local enabled = true
+local enabled = false
 local messages = {"","",""}
 local ID = 0
 
 function QuickApp:enableClicked(_) 
   enabled=not enabled
-  setTimeout(function() -- I imagine this sometimes works better...
-      self:setView("enable","text","Push errors - %s",enabled and "enabled" or "disabled")
-    end,1)
+  self:setView("enable","text","Push errors - %s",enabled and "enabled" or "disabled")
   self:updateProperty("value", enabled)
 end
 
-function QuickApp:turnOn()
-  enabled=true 
-  setTimeout(function() -- I imagine this sometimes works better...
-      self:setView("enable","text","Push errors - %s",enabled and "enabled" or "disabled")
-    end,1)
-  self:updateProperty("value", enabled)
-end
-
-function QuickApp:turnOff()
-  enabled=false
-  setTimeout(function() -- I imagine this sometimes works better...
-      self:setView("enable","text","Push errors - %s",enabled and "enabled" or "disabled")
-    end,1)
-  self:updateProperty("value", enabled)
-end
+function QuickApp:turnOn() enabled=false;  self:enableClicked() end
+function QuickApp:turnOff() enabled=true; self:enableClicked() end
 
 function QuickApp:main()
   self:event({type='deviceEvent', value='crashed'},function(event)

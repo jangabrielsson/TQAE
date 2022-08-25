@@ -33,7 +33,7 @@ local devices = {
     if self.properties.value then self:turnOff() else self:turnOn() end
   end
   function QuickApp:onInit()
-    self:debug("onInit",self.name,self.id)
+    self:debug("onInit",self.name,self.id,self.type)
   end
 ]],
 
@@ -53,7 +53,7 @@ local devices = {
       s*1000)
   end
   function QuickApp:onInit()
-    self:debug("onInit",self.name,self.id)
+    self:debug("onInit",self.name,self.id,self.type)
   end
 ]],
 
@@ -69,10 +69,20 @@ local devices = {
     self:updateProperty("state",false) 
   end
   function QuickApp:setValue(value)
+    print("SET",value)
     self:updateProperty("value",value)
   end
-  function QuickApp:onInit()
-    self:debug("onInit",self.name,self.id)
+  function QuickApp:startLevelIncrease()
+    self:debug("startLevelIncrease")
+  end
+  function QuickApp:startLevelDecrease()
+    self:debug("startLevelDecrease")
+  end
+  function QuickApp:stopLevelChange()
+    self:debug("stopLevelChange")
+  end
+function QuickApp:onInit()
+    self:debug("onInit",self.name,self.id,self.type)
   end
 ]],
 
@@ -83,9 +93,123 @@ local devices = {
     self:updateProperty("value",value)
   end
   function QuickApp:onInit()
-    self:debug("onInit",self.name,self.id)
+    self:debug("onInit",self.name,self.id,self.type)
   end
 ]],
+
+  ["player"] = 
+[[
+  --%%type="com.fibaro.player"
+  function QuickApp:play(value)
+    self:debug("play")
+    self:updateProperty("state", 'play')
+  end
+  function QuickApp:pause(value)
+    self:debug("pause")
+    self:updateProperty("state", 'pause')
+  end
+  function QuickApp:stop(value)
+    self:debug("stop")
+    self:updateProperty("state", 'stop')
+  end
+  function QuickApp:prev(value)
+    self:debug("prev")
+  end
+  function QuickApp:next(value)
+    self:debug("next")
+  end
+  function QuickApp:setVolume(volume)
+    self:debug("setting volume to:", volume)
+    self:updateProperty("volume", volume)
+  end
+  function QuickApp:setMute(value)
+    if mute == 0 or value == false then 
+        self:debug("setting mute to:", false)
+        self:updateProperty("mute", false)
+    else
+        self:debug("setting mute to:", true)
+        self:updateProperty("mute", true)
+    end
+  end
+  function QuickApp:onInit()
+    self:debug("onInit",self.name,self.id,self.type)
+  end
+]],
+
+  ["rollerShutter"] = 
+[[
+  --%%type="com.fibaro.rollerShutter"
+  function QuickApp:open()
+    self:debug("roller shutter opened")
+    self:updateProperty("value", 99)
+  end
+
+  function QuickApp:close()
+    self:debug("roller shutter closed")
+    self:updateProperty("value", 0)    
+  end
+
+  function QuickApp:stop()
+    self:debug("roller shutter stopped ")
+  end
+
+-- Value is type of integer (0-99)
+  function QuickApp:setValue(value)
+    self:debug("roller shutter set to: " .. tostring(value))
+    self:updateProperty("value", value)    
+   end
+  function QuickApp:onInit()
+    self:debug("onInit",self.name,self.id,self.type)
+  end
+]],
+
+  ["doorLock"] = 
+[[
+  --%%type="com.fibaro.doorLock"
+  function QuickApp:secure()
+    self:debug("door lock secured")
+    self:updateProperty("secured", 255)
+  end
+
+  function QuickApp:unsecure()
+    self:debug("door lock unsecured")
+    self:updateProperty("secured", 0)
+  end
+  function QuickApp:onInit()
+    self:debug("onInit",self.name,self.id,self.type)
+    self:updateProperty("secured", 255)
+  end
+]],
+
+
+  ["thermostat"] = 
+[[
+  --%%type="com.fibaro.hvacSystemAuto"
+function QuickApp:setThermostatMode(mode)
+    self:updateProperty("thermostatMode", mode)
+end
+
+-- handle action for setting set point for cooling
+function QuickApp:setCoolingThermostatSetpoint(value) 
+    self:updateProperty("coolingThermostatSetpoint", value)
+end
+
+-- handle action for setting set point for heating
+function QuickApp:setHeatingThermostatSetpoint(value) 
+    self:updateProperty("heatingThermostatSetpoint", value)
+end
+
+function QuickApp:onInit()
+    self:debug("onInit",self.name,self.id,self.type)
+    -- set supported modes for thermostat
+    self:updateProperty("supportedThermostatModes", {"Auto", "Off", "Heat", "Cool"})
+    -- setup default values
+    self:updateProperty("thermostatMode", "Auto")
+    self:updateProperty("coolingThermostatSetpoint", 23)
+    self:updateProperty("heatingThermostatSetpoint", 20)
+end
+]]
+
 }
 
 local create = {}

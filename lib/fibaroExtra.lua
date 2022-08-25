@@ -1,18 +1,41 @@
+--[[
+TQAE - fibaroExtra for the Fibaro Home Center 3
+Copyright (c) 2021 Jan Gabrielsson
+Email: jan@gabrielsson.com
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
+
+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+--]]
+
+
 -- luacheck: globals ignore QuickAppBase QuickApp QuickAppChild quickApp fibaro
 -- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
 -- luacheck: globals ignore __assert_type __fibaro_get_device __TAG
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.938"
-
+fibaro.FIBARO_EXTRA = "v0.950"
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
-local function assertf(test,fmt,...) if not test then error(format(fmt,...),2) end end
-local debugFlags,utils = _debugFlags or {},{}
-_debugFlags = debugFlags
+function asserts(condition, ...)
+   if not condition then
+      if next({...}) then
+         local s,r = pcall(function (...) return(string.format(...)) end, ...)
+         if s then
+            error("assertion failed!: " .. r, 2)
+         end
+      end
+      error("assertion failed!", 2)
+   end
+end
+local debugFlags,utils = fibaro.debugFlags or {},{}
 local toTime,copy,equal,member,remove,protectFun
+fibaro.debugFlags = debugFlags
 fibaro.utils = utils
+_debugFlags = debugFlags
 -------------------- Utilities ----------------------------------------------
 do
   if not setTimeout then
@@ -74,14 +97,14 @@ do
   utils.shallowCopy = table.shallowCopy
   function utils.member(e,l) return member(l,e) end  
   function utils.remove(k,tab) return remove(tab,k) end
-  function utils.map(f,l) return l:map(f) end
-  function utils.mapf(f,l) return l:mapf(f) end
-  function utils.mapAnd(f,l) return l:mapAnd(f) end
-  function utils.mapOr(f,l) return l:mapOr(f) end
-  function utils.reduce(f,l) return l:reduce(f) end
-  function utils.mapk(f,l) return l:mapk(f) end
-  function utils.mapkv(f,l) return l:mapkv(f) end
-  function utils.size(l) return l:size() end
+  function utils.map(f,l) return table.map(l,f) end
+  function utils.mapf(f,l) return table.mapf(l,f) end
+  function utils.mapAnd(f,l) return table.mapAnd(l,f) end
+  function utils.mapOr(f,l) return table.mapOr(l,f) end
+  function utils.reduce(f,l) return table.reduce(l,f) end
+  function utils.mapk(f,l) return table.mapk(l,f) end
+  function utils.mapkv(f,l) return table.mapkv(l,f) end
+  function utils.size(l) return table.size(l) end
 
   function utils.gensym(s) return (s or "G")..fibaro._orgToString({}):match("%s(.*)") end
 
@@ -114,7 +137,7 @@ do
 
   function utils.basicAuthorization(user,password) return "Basic "..utils.base64encode(user..":"..password) end
   function utils.base64encode(data)
-    __assert_type(data,"string" )
+    __assert_type(data,"string")
     local bC='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
     return ((data:gsub('.', function(x) 
             local r,b='',x:byte() for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
@@ -201,6 +224,134 @@ do
     local sunset_t = string.format("%.2d:%.2d", set_time_t.hour, set_time_t.min)
     return sunrise, sunset, sunrise_t, sunset_t
   end
+
+  local function dateTest(dateStr0)
+    local days = {sun=1,mon=2,tue=3,wed=4,thu=5,fri=6,sat=7}
+    local months = {jan=1,feb=2,mar=3,apr=4,may=5,jun=6,jul=7,aug=8,sep=9,oct=10,nov=11,dec=12}
+    local last,month = {31,28,31,30,31,30,31,31,30,31,30,31},nil
+
+    local function seq2map(seq) local s = {} for _,v in ipairs(seq) do s[v] = true end return s; end
+
+    local function flatten(seq,res) -- flattens a table of tables
+      res = res or {}
+      if type(seq) == 'table' then for _,v1 in ipairs(seq) do flatten(v1,res) end else res[#res+1] = seq end
+      return res
+    end
+
+    function _assert(test,msg,...) if not test then error(string.format(msg,...),3) end end
+
+    local function expandDate(w1,md)
+      local function resolve(id)
+        local res
+        if id == 'last' then month = md res=last[md] 
+        elseif id == 'lastw' then month = md res=last[md]-6 
+        else res= type(id) == 'number' and id or days[id] or months[id] or tonumber(id) end
+        _assert(res,"Bad date specifier '%s'",id) return res
+      end
+      local w,m,step= w1[1],w1[2],1
+      local start,stop = w:match("(%w+)%p(%w+)")
+      if (start == nil) then return resolve(w) end
+      start,stop = resolve(start), resolve(stop)
+      local res,res2 = {},{}
+      if w:find("/") then
+        if not w:find("-") then -- 10/2
+          step=stop; stop = m.max
+        else step=w:match("/(%d+)") end
+      end
+      step = tonumber(step)
+      _assert(start>=m.min and start<=m.max and stop>=m.min and stop<=m.max,"illegal date intervall")
+      while (start ~= stop) do -- 10-2
+        res[#res+1] = start
+        start = start+1; if start>m.max then start=m.min end  
+      end
+      res[#res+1] = stop
+      if step > 1 then for i=1,#res,step do res2[#res2+1]=res[i] end; res=res2 end
+      return res
+    end
+
+    local function parseDateStr(dateStr,last)
+      local map = utils.map
+      local seq = string.split(dateStr," ")   -- min,hour,day,month,wday
+      local lim = {{min=0,max=59},{min=0,max=23},{min=1,max=31},{min=1,max=12},{min=1,max=7},{min=2000,max=3000}}
+      for i=1,6 do if seq[i]=='*' or seq[i]==nil then seq[i]=tostring(lim[i].min).."-"..lim[i].max end end
+      seq = map(function(w) return string.split(w,",") end, seq)   -- split sequences "3,4"
+      local month0 = os.date("*t",os.time()).month
+      seq = map(function(t) local m = table.remove(lim,1);
+          return flatten(map(function (g) return expandDate({g,m},month0) end, t))
+        end, seq) -- expand intervalls "3-5"
+      return map(seq2map,seq)
+    end
+    local sun,offs,day,sunPatch = dateStr0:match("^(sun%a+) ([%+%-]?%d+)")
+    if sun then
+      sun = sun.."Hour"
+      dateStr0=dateStr0:gsub("sun%a+ [%+%-]?%d+","0 0")
+      sunPatch=function(dateSeq)
+        local h,m = (fibaro.getValue(1,sun)):match("(%d%d):(%d%d)")
+        dateSeq[1]={[(tonumber(h)*60+tonumber(m)+tonumber(offs))%60]=true}
+        dateSeq[2]={[math.floor((tonumber(h)*60+tonumber(m)+tonumber(offs))/60)]=true}
+      end
+    end
+    local dateSeq = parseDateStr(dateStr0)
+    return function() -- Pretty efficient way of testing dates...
+      local t = os.date("*t",os.time())
+      if month and month~=t.month then parseDateStr(dateStr0) end -- Recalculate 'last' every month
+      if sunPatch and (month and month~=t.month or day~=t.day) then sunPatch(dateSeq) day=t.day end -- Recalculate sunset/sunrise
+      return
+      dateSeq[1][t.min] and    -- min     0-59
+      dateSeq[2][t.hour] and   -- hour    0-23
+      dateSeq[3][t.day] and    -- day     1-31
+      dateSeq[4][t.month] and  -- month   1-12
+      dateSeq[5][t.wday] or false      -- weekday 1-7, 1=sun, 7=sat
+    end
+  end
+
+  do
+    -- Alternative, several timers share a cron loop instance.
+    local jobs,timer = {} -- {fun = {test=.., args={...}}}
+
+    local function cronLoop()
+      if timer==nil or timer.expired then
+        local nxt = (os.time() // 60 + 1)*60
+        local function loop()
+          local stat,res
+          for str,args in pairs(jobs) do
+--            setTimeout(function() -- what is better?
+            if args.test() then stat,res = pcall(args.fun,table.unpack(args.args)) else stat=true end
+            if not stat then fibaro.error(__TAG,res) end
+--              end,0)
+          end
+          nxt = nxt + 60
+          timer['%TIMER%']=setTimeout(loop,1000*(nxt-os.time()))
+        end
+        timer = setTimeout(loop,1000*(nxt-os.time()))
+      end
+      return timer
+    end
+
+    function fibaro.cron(str,fun,...)
+      jobs[str]={fun=fun,args={...},test=dateTest(str)}
+      return cronLoop()
+    end
+    function fibaro.removeCronJob(str)
+      jobs[str]=nil
+    end
+  end
+
+  function fibaro.cron2(str,fun,...) 
+    local test,timer,args = dateTest(str),nil,{...}
+    local nxt = (os.time() // 60 + 1)*60
+    local function loop()
+      local stat,res
+      if test() then stat,res = pcall(fun,table.unpack(args)) else stat=true end
+      if stat then
+        nxt = nxt + 60
+        timer['%TIMER%']=setTimeout(loop,1000*(nxt-os.time()))
+      else fibaro.error(__TAG,res) end
+    end
+    timer = setTimeout(loop,1000*(nxt-os.time()))
+    return timer
+  end
+
 end -- Utilities
 
 --------------------- Fibaro functions --------------------------------------
@@ -224,6 +375,14 @@ do
     end
   end
 
+  if not fibaro.callUI then
+    fibaro.callUI = function(id, action, element, value)
+      __assert_type(id,"number") __assert_type(action,"string") __assert_type(element,"string")
+      value = value==nil and "null" or value 
+      local _, code = api.get(format("/plugins/callUIEvent?deviceID=%s&eventType=%s&elementName=%s&value=%s",id,action,element,value))
+      if code == 404 then error(format("Device %s does not exists",id), 3) end
+    end
+  end
 
 end -- Fibaro functions
 
@@ -267,7 +426,7 @@ do
       end
     end
     local sg,h,m,s = hmstr:match("^(%-?)(%d+):(%d+):?(%d*)")
-    assertf(h and m,"Bad hm2sec string %s",hmstr)
+    asserts(h and m,"Bad hm2sec string %s",hmstr)
     return (sg == '-' and -1 or 1)*(tonumber(h)*3600+tonumber(m)*60+(tonumber(s) or 0)+(tonumber(offs or 0))*60)
   end
 
@@ -298,11 +457,11 @@ do
 end -- Time functions
 
 --------------------- Trace functions ------------------------------------------
-
+do
+end
 --------------------- Debug functions -----------------------------------------
 do
   local fformat
-  fibaro.debugFlags = debugFlags
   debugFlags.debugLevel=nil
   debugFlags.traceLevel=nil
   debugFlags.notifyError=true
@@ -402,13 +561,14 @@ do
     for i,v in ipairs(args) do if type(v)=='table' then args[i]=tostring(v) end end
     return (debugFlags.html and not hc3_emulator) and htmlTransform(format(fmt,table.unpack(args))) or format(fmt,table.unpack(args))
   end
+  fibaro.fformat = fformat
 
-  local function arr2str(...)
+  local function arr2str(del,...)
     local args,res = {...},{}
     for i=1,#args do if args[i]~=nil then res[#res+1]=tostring(args[i]) end end 
-    return (debugFlags.html and not hc3_emulator) and htmlTransform(table.concat(res," ")) or table.concat(res," ")
+    return (debugFlags.html and not hc3_emulator) and htmlTransform(table.concat(res,del)) or table.concat(res,del)
   end 
-
+  fibaro.arr2str = arr2str
   local function print_debug(typ,tag,str)
     --__fibaro_add_debug_message(tag or __TAG,str or "",typ or "debug")
     api.post("/debugMessages",{message=str,messageType=typ or "debug",tag=tag or __TAG})
@@ -422,21 +582,21 @@ do
 
   function fibaro.debug(tag,...) 
     if not(type(tag)=='number' and tag > (debugFlags.debugLevel or 0)) then 
-      return print_debug('debug',tag,arr2str(...)) 
+      return print_debug('debug',tag,arr2str(" ",...)) 
     else return "" end 
   end
   function fibaro.trace(tag,...) 
     if not(type(tag)=='number' and tag > (debugFlags.traceLevel or 0)) then 
-      return print_debug('trace',tag,arr2str(...)) 
+      return print_debug('trace',tag,arr2str(" ",...)) 
     else return "" end 
   end
   function fibaro.error(tag,...)
-    local str = print_debug('error',tag,arr2str(...))
+    local str = print_debug('error',tag,arr2str(" ",...))
     if debugFlags.notifyError then notify("alert",str) end
     return str
   end
   function fibaro.warning(tag,...) 
-    local str = print_debug('warning',tag,arr2str(...))
+    local str = print_debug('warning',tag,arr2str(" ",...))
     if debugFlags.notifyWarning then notify("warning",str) end
     return str
   end
@@ -521,23 +681,23 @@ do
 
   function fibaro.deleteGlobalVariable(name) 
     __assert_type(name,"string")
-    return api.delete("/globalVariable/"..name) 
+    return api.delete("/globalVariables/"..name) 
   end
 
   function fibaro.existGlobalVariable(name)
     __assert_type(name,"string")
-    return api.get("/globalVariable/"..name) and true 
+    return api.get("/globalVariables/"..name) and true 
   end
 
   function fibaro.getGlobalVariableType(name)
     __assert_type(name,"string")
-    local v = api.get("/globalVariable/"..name) or {}
+    local v = api.get("/globalVariables/"..name) or {}
     return v.isEnum,v.readOnly
   end
 
   function fibaro.getGlobalVariableLastModified(name)
     __assert_type(name,"string")
-    return (api.get("/globalVariable/"..name) or {}).modified 
+    return (api.get("/globalVariables/"..name) or {}).modified 
   end
 
 
@@ -551,7 +711,7 @@ do
 
   function fibaro.createCustomEvent(name,userDescription) 
     __assert_type(name,"string" )
-    return api.post("/customEvent",{name=name,uderDescription=userDescription or ""})
+    return api.post("/customEvent",{name=name,userDescription=userDescription or ""})
   end
 
   function fibaro.deleteCustomEvent(name) 
@@ -572,7 +732,7 @@ do
   function fibaro.activeProfile(id)
     if id then
       if type(id)=='string' then id = fibaro.profileNameToId(id) end
-      assert(id,"fibaro.getActiveProfile(id) - no such id/name")
+      assert(id,"fibaro.activeProfile(id) - no such id/name")
       return api.put("/profiles",{activeProfile=id}) and id
     end
     return api.get("/profiles").activeProfile 
@@ -842,7 +1002,16 @@ do
     GeofenceEvent = function(d) 
       post({type='location',id=d.userId,property=d.locationId,value=d.geofenceAction,timestamp=d.timestamp})
     end,
+    DeviceActionRanEvent = function(d,e)
+      if e.sourceType=='user' then  
+        post({type='user',id=e.sourceId,value='action',data=d})
+      elseif e.sourceType=='system' then 
+        post({type='system',value='action',data=d})
+      end
+    end,
   }
+
+--  {"date":"08:24 | 9.7.2022","changes":[],"events":[{"objects":[{"objectType":"device","objectId":756}],"type":"DeviceActionRanEvent","created":1657347877,"sourceId":2,"data":{"args":[],"actionName":"turnOn","id":756},"sourceType":"user"}],"last":341112,"status":"IDLE","timestamp":1657347877}
 
   function fibaro.registerSourceTriggerCallback(callback)
     __assert_type(callback,"function")
@@ -874,7 +1043,7 @@ do
 
   function sourceTriggerTransformer(e)
     local handler = EventTypes[e.type]
-    if handler then handler(e.data)
+    if handler then handler(e.data,e)
     elseif handler==nil and fibaro._UNHANDLED_REFRESHSTATES then 
       fibaro.debugf(__TAG,"[Note] Unhandled refreshState/sourceTrigger:%s -- please report",e) 
     end
@@ -944,7 +1113,7 @@ do
         end,
         error=function(res) 
           fibaro.errorf(__TAG,"refreshStates:%s",res)
-          refreshRef = setTimeout(pollRefresh,fibaro._REFRESHSTATERATE)
+          refreshRef = setTimeout(pollRefresh,fibaro.REFRESH_STATES_INTERVAL or 0)
         end,
       })
   end
@@ -1584,6 +1753,39 @@ do
 --      self:rpc(801,"foo",{3,i},3) -- call QA 972, function foo, arguments 3,i and a timeout of 3s
 --    end
 --end
+
+  do
+    local refs = {}
+    function QuickApp:INTERACTIVE_OK_BUTTON(ref)
+      ref,refs[ref]=refs[ref],nil
+      if ref then ref(true) end
+    end
+
+    function QuickApp:pushYesNo(mobileId,title,message,callback,timeout)
+      local ref = fibaro._orgToString({}):match("%s(.*)")
+      api.post("/mobile/push", 
+        {
+          category = "YES_NO", 
+          title = title, 
+          message = message, 
+          service = "Device", 
+          data = {
+            actionName = "INTERACTIVE_OK_BUTTON", 
+            deviceId = self.id, 
+            args = {ref}
+          }, 
+          action = "RunAction", 
+          mobileDevices = { mobileId }, 
+        })
+      local timer = setTimeout(function(r)
+          r,refs[ref] = refs[ref],nil
+          if r then r(false) end 
+        end, 
+        timeout*1000)
+      timeout = timeout or 20*60
+      refs[ref]=function(val) clearTimeout(timer) callback(val) end
+    end
+  end
 end -- QA
 
 --------------------- Misc -----------------------------------------------------
@@ -1608,9 +1810,9 @@ do
     local function timer2str(t)
       return format("[Timer:%d%s %s]",t.n,t.log or "",os.date('%T %D',t.expires or 0))
     end
-    local N = 0
+    local N,NC = 0,0
     local function isTimer(timer) return type(timer)=='table' and timer['%TIMER%'] end
-    local function makeTimer(ref,log,exp) N=N+1 return {['%TIMER%']=(ref or 0),n=N,log=log and " ("..log..")",expires=exp or 0,__tostring=timer2str} end
+    local function makeTimer(ref,log,exp) N=N+1 return {['%TIMER%']=(ref or 0),n=N,log=type(log)=='string' and " ("..log..")" or nil,expires=exp or 0,__tostring=timer2str} end
     local function updateTimer(timer,ref) timer['%TIMER%']=ref end
     local function getTimer(timer) return timer['%TIMER%'] end
 
@@ -1619,7 +1821,6 @@ do
         oldClearTimout(ref)
       end
     end,clearTimeout
-
     setTimeout,oldSetTimout=function(f,ms,log)
       local ref,maxt=makeTimer(nil,log,math.floor(os.time()+ms/1000+0.5)),2147483648-1
       local fun = function() -- wrap function to get error messages
@@ -1627,11 +1828,14 @@ do
           local d = os.time() - ref.expires
           if d > debugFlags.lateTimer then fibaro.warningf(nil,"Late timer (%ds):%s",d,ref) end
         end
+        NC = NC-1
+        ref.expired = true
         local stat,res = pcall(f)
         if not stat then 
           fibaro.error(nil,res)
         end
       end
+      NC = NC+1
       if ms > maxt then
         updateTimer(ref,oldSetTimout(function() updateTimer(ref,getTimer(setTimeout(fun,ms-maxt))) end,maxt))
       else updateTimer(ref,oldSetTimout(fun,math.floor(ms+0.5))) end
@@ -1646,6 +1850,7 @@ do
           end
         end,math.floor(ms+0.5))
     end
+    fibaro.setTimeout = function(ms,fun) return setTimeout(fun,ms) end
 
     function json.decode(...)
       local stat,res = pcall(decode,...)
@@ -1656,6 +1861,11 @@ do
       if not stat then error(res,2) else return res end
     end
   end
+
+  fibaro.setTimeout = function(ms,fun) return setTimeout(fun,ms) end
+  fibaro.clearTimeout = function(ref) return clearTimeout(ref) end
+  fibaro.setInterval = function(ms,fun) return setInterval(fun,ms) end
+  fibaro.clearInterval = function(ref) return clearInterval(ref) end
 
   local httpClient = net.HTTPClient -- protect success/error with pcall and print error
   function net.HTTPClient(args)
@@ -1805,16 +2015,25 @@ do
   end
 
   function fibaro.stopSequence(ref) clearTimeout(ref[1]) end
-
+  local function isEvent(e) return type(e)=='table' and e.type end
+  
   function fibaro.trueFor(time,test,action,delay)
+    local timers = {}
     if type(delay)=='table' then
+      delay = copy(delay)
+      delay = delay[1] and delay or {delay}
+      assert(isEvent(delay[1]),"4th argument not an event for trueFor(...)")
       local state,ref = false
       local function ac()
+        if debugFlags.trueFor then fibaro.debug(nil,"trueFor: action()") end
         if action() then
           state = os.time()+time
+          if debugFlags.trueFor then fibaro.debug(nil,"trueFor: rescheduling action()") end
           ref = setTimeout(ac,1000*(state-os.time()))
+          timers[1]=ref
         else
           ref = nil
+          timers[1]=nil
           state = true 
         end
       end
@@ -1822,12 +2041,15 @@ do
         if test() then
           if state == false then
             state=os.time()+time
+            if debugFlags.trueFor then fibaro.debugf(nil,"trueFor: test() true, running action() in %ss",state-os.time()) end
             ref = setTimeout(ac,1000*(state-os.time()))
+            timers[1]=ref
           elseif state == true then
             state = state -- NOP
           end
         else
-          if ref then ref = clearTimeout(ref) end
+          if ref then timers[1]=nil ref = clearTimeout(ref) end
+          if debugFlags.trueFor then fibaro.debugf(nil,"trueFor: test() false, cancelling action()") end
           state=false
         end
       end
@@ -1835,6 +2057,10 @@ do
         fibaro.event(e,check)
       end
       check()
+      return function() 
+        if timers[1] then clearTimeout(timers[1]) end
+        for _,e in ipairs(delay) do fibaro.removeEvent(e,check) end
+      end
     else
       delay = delay or 1000
       local state = false
@@ -1854,9 +2080,10 @@ do
         else
           state=false
         end
-        setTimeout(loop,delay)
+        timers[1]=setTimeout(loop,delay)
       end
       loop()
+      return function() if timers[1] then clearTimeout(timers[1]) end end 
     end
   end
 
@@ -1867,7 +2094,7 @@ do
   local inited,initEvents,_RECIEVE_EVENT
 
   function fibaro.postRemote(id,ev) if not inited then initEvents() end; return fibaro.postRemote(id,ev) end
-  function fibaro.post(ev,t) if not inited then initEvents() end; return fibaro.post(ev,t) end
+  function fibaro.post(ev,t,l) if not inited then initEvents() end; return fibaro.post(ev,t,l) end
   function fibaro.cancel(ref) if not inited then initEvents() end; return fibaro.cancel(ref) end
   function fibaro.event(ev,fun,doc) if not inited then initEvents() end; return fibaro.event(ev,fun,doc) end
   function fibaro.removeEvent(pattern,fun) if not inited then initEvents() end; return fibaro.removeEvent(pattern,fun) end
@@ -1901,15 +2128,17 @@ do
       fibaro.call(id,'RECIEVE_EVENT',{type='EVENT',ev=ev}) -- We need this as the system converts "99" to 99 and other "helpful" conversions
     end
 
-    function post(ev,t)
+    function post(ev,t,log)
       local now = os.time()
       t = type(t)=='string' and toTime(t) or t or 0
       if t < 0 then return elseif t < now then t = t+now end
-      if debugFlags.post and not ev._sh then fibaro.tracef(nil,"Posting %s at %s",ev,os.date("%c",t)) end
+      if debugFlags.post and not ev._sh then fibaro.tracef(nil,"Posting %s at %s%s",ev,os.date("%c",t),type(log)=='string' and ("("..log..")") or "") end
       if type(ev) == 'function' then
-        return setTimeout(function() ev(ev) end,1000*(t-now))
+        return setTimeout(function() ev(ev) end,1000*(t-now),log)
+      elseif isEvent(ev) then
+        return setTimeout(function() handleEvent(ev) end,1000*(t-now),log)
       else
-        return setTimeout(function() handleEvent(ev) end,1000*(t-now))
+        error("post(...) not event or function;",tostring(ev))
       end
     end
     fibaro.post = post 
@@ -1987,7 +2216,7 @@ do
       env.last,env.rule.time = t-(env.rule.time or 0),t
       local status, res = pcall(env.rule.action,env) -- call the associated action
       if not status then
-        if type(res)=='string' and not _debugFlags.extendedErrors then res = res:gsub("(%[.-%]:%d+:)","") end
+        if type(res)=='string' and not debugFlags.extendedErrors then res = res:gsub("(%[.-%]:%d+:)","") end
         fibaro.errorf(nil,"in %s: %s",env.rule.doc,res)
         env.rule._disabled = true -- disable rule to not generate more errors
       else return res end
@@ -2058,8 +2287,8 @@ do
         end
       end
       if fn then rules[#rules+1] = {rule} end
-      rule.enable = function() rule._disabled = nil return rule end
-      rule.disable = function() rule._disabled = true return rule end
+      rule.enable = function() rule._disabled = nil fibaro.post({type='ruleEnable',rule=rule,_sh=true}) return rule end
+      rule.disable = function() rule._disabled = true fibaro.post({type='ruleDisable',rule=rule,_sh=true}) return rule end
       rule.start = function(event) invokeHandler({rule=rule, event=event, p={}}) return rule end
       rule.__tostring = rule2str
       if em.SECTION then

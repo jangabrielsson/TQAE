@@ -192,6 +192,14 @@ local function profileSet(method,client,data,opts,id)
 end
 ------------------------------
 
+local function notificationCenter(method,client,data,opts,id)
+  if method=='POST' then
+    data = data.data
+    print(string.format("Notification: ID:%s, %s - %s",data.deviceId, data.title,data.text))
+  end
+end
+
+--------------------------------
 local  primaryController  = {
   id= 1,
   name = "zwave",
@@ -239,7 +247,7 @@ for _,name in  ipairs({'globalVariables','rooms','sections','customEvents'}) do
   EM.shadow[name]=function(id)
     if EM.cfg.offline or EM.cfg.shadow and EM.rsrc[name][id] then return end
     if EM.cfg.shadow then
-      EM.rsrc[name][id] = HC3Request("/"..name.."/"..gid)
+      EM.rsrc[name][id] = HC3Request("/"..name.."/"..id)
     end
   end
 end
@@ -317,5 +325,8 @@ end
 EM.create.globalVariables = EM.create.globalVariable
 
 EM.EMEvents('start',function(_)
-    if EM.cfg.offline then setup() end
+    if EM.cfg.offline then setup() 
+    else
+      rsrc['panels/location'] = {}
+    end
   end)
