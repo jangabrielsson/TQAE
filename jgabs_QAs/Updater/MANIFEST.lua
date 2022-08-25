@@ -209,9 +209,9 @@ return {
         vars= {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.14"
         },
-        descr = "Works with HueSensors",
+        descr = "Rotary support",
         mainfile = "$base1/jgabs_QAs/HueConnector.lua",
-        files = "Rotary support",
+        files = "generate",
         keep = {
         },
         interfaces = {"quickApp"},
