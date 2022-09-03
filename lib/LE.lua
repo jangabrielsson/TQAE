@@ -85,7 +85,26 @@ end
 --  self:post({type='test3',a=event.a+1},event.a)
 --end
 
+local funs={}
+funs['=='] = function(val) return function(x) return x==val end end
+funs['>'] = function(val) return function(x) return x>val end end
+funs['>='] = function(val) return function(x) return x>=val end end
+funs['<'] = function(val) return function(x) return x<val end end
+funs['<='] = function(val) return function(x) return x<=val end end
+funs['~='] = function(val) return function(x) return x~=val end end
+
+local function parse(str)
+  local a = str:split("&")
+  local e = map(a,function(o) 
+      local es = o:split("|") 
+      return map(es,function(e)
+        end)
+    end)
+
+end
+
 --function EVENT:test3(event)
+--  self:dispatch("device_%2_%1",event.id,">30",event.value,"==value")
 --  self:print(event.a)
 --end
 

@@ -21,15 +21,15 @@ fibaro.FIBARO_EXTRA = "v0.950"
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
 function asserts(condition, ...)
-   if not condition then
-      if next({...}) then
-         local s,r = pcall(function (...) return(string.format(...)) end, ...)
-         if s then
-            error("assertion failed!: " .. r, 2)
-         end
+  if not condition then
+    if next({...}) then
+      local s,r = pcall(function (...) return(string.format(...)) end, ...)
+      if s then
+        error("assertion failed!: " .. r, 2)
       end
-      error("assertion failed!", 2)
-   end
+    end
+    error("assertion failed!", 2)
+  end
 end
 local debugFlags,utils = fibaro.debugFlags or {},{}
 local toTime,copy,equal,member,remove,protectFun
@@ -1283,7 +1283,6 @@ do
       self.onInit = loadQA
       _init(self,...)
     end
-
     function loadQA(selfv)
       local dev = __fibaro_get_device(selfv.id)
       if not dev.enabled then  
@@ -1293,6 +1292,23 @@ do
       selfv.config = {}
       for _,v in ipairs(dev.properties.quickAppVariables or {}) do
         if v.value ~= "" then selfv.config[v.name] = v.value end
+      end
+      local oldGetVar = selfv.getVariable
+      function selfv:getVariable(str) -- Redirect QuickAppVariable to HomeTable in GV
+        local val = oldGetVar(self,str)
+        local name,var = val:match("^HT/(.-):(.*)$")
+        if name then
+          local HT = fibaro.getGlobalVariable(name)
+          HT = json.decode(HT or "[]") or {}
+          var = var:split('.')
+          for _,i in ipairs(var) do
+            if not HT[i] then return nil end
+            HT = HT[i]
+          end
+          return HT
+        else 
+          return val 
+        end
       end
       quickApp = selfv
       if _onInit then _onInit(selfv) end
@@ -2016,7 +2032,7 @@ do
 
   function fibaro.stopSequence(ref) clearTimeout(ref[1]) end
   local function isEvent(e) return type(e)=='table' and e.type end
-  
+
   function fibaro.trueFor(time,test,action,delay)
     local timers = {}
     if type(delay)=='table' then
@@ -2132,7 +2148,7 @@ do
       local now = os.time()
       t = type(t)=='string' and toTime(t) or t or 0
       if t < 0 then return elseif t < now then t = t+now end
-      if debugFlags.post and not ev._sh then fibaro.tracef(nil,"Posting %s at %s%s",ev,os.date("%c",t),type(log)=='string' and ("("..log..")") or "") end
+      if debugFlags.post and (type(ev)=='function' or not ev._sh) then fibaro.tracef(nil,"Posting %s at %s%s",ev,os.date("%c",t),type(log)=='string' and ("("..log..")") or "") end
       if type(ev) == 'function' then
         return setTimeout(function() ev(ev) end,1000*(t-now),log)
       elseif isEvent(ev) then

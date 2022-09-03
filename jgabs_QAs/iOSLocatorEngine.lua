@@ -3,8 +3,8 @@
 -- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
 
 ---------------------- Setup users -----------------------------
-local VERSION = 0.46
-local SERIAL = "UPD896661234567896"
+local VERSION = 0.47
+local SERIAL = "UPD8969654324567896"
 
 ------------------------------------------------------------------
 local function preInit()
@@ -13,25 +13,25 @@ local function preInit()
       {
         icloud = hc3_emulator.EM.cfg.icloud.jan,
         devices = {
-          {name = 'Jan', deviceName='iPhone', id=2, home=true, QA="JansQA"}
+          {name = 'Jan', deviceName='iPhone', id=2, home=true, QA="JansQA", global='JansPos'}
         }
       },
       {
         icloud = hc3_emulator.EM.cfg.icloud.daniela,
         devices = {
-          {name = 'Daniela', deviceName='iPhone', id=3, home=false}
+          {name = 'Daniela', deviceName='iPhone', id=3, home=true, global='DainielaPos'}
         }
       },
       {
         icloud = hc3_emulator.EM.cfg.icloud.tim,
         devices = {
-          {name = 'Tim', deviceName='iPhone', id=99, home=false}
+          {name = 'Tim', deviceName='iPhone', id=99, home=false, global='TimPos'}
         }
       },
       {
         icloud = hc3_emulator.EM.cfg.icloud.max,
         devices = {{
-            name = 'Max', deviceName='Apple Watch', deviceType='Apple Watch Series 6 %(GPS%)', id=44, home=false
+            name = 'Max', deviceName='Apple Watch', deviceType='Apple Watch Series 6 %(GPS%)', id=44, home=false, global='MaxPos'
           }}
       },
     }
@@ -399,6 +399,7 @@ local function setupEvents()
       function UserObject:__init(dev)
         local args = {
           name = dev.QAname or dev.name,
+          className = 'UserObject',
           uid  = dev.uid or dev.name,
           type = 'com.fibaro.binarySensor',
           properties = {},
@@ -418,11 +419,15 @@ local function setupEvents()
             QA:warning("User removed %s (deviceId:%s)",uid,dev.id)
             api.delete("/plugins/removeChildDevice/" .. dev.id)
             return false
-          else return true end
+          else
+            return true 
+          end
         end)
-
+      for id,c in pairs(quickApp.childDevices or {}) do
+        Users[c.uid].child = c
+      end
       for name,obj in pairs(Users) do
-        if Users[name].QA then
+        if Users[name].QA and not Users[name].child then
           Users[name].child=UserObject({name=name,QAname=type(obj.QA)=='string' and obj.QA or name})
         end
       end
@@ -458,7 +463,7 @@ local function setupEvents()
       end
       printf("----------------------------------------------")
       for name,u in pairs(Users) do
-        printf("[%s:%s, home:%s, iOS:%s, QA:%s]",name,u.id,u.home,u.iOS==true,u.QA~=nil and u.child.id)
+        printf("[%s:%s, home:%s, iOS:%s, QA:%s]",name,u.id,u.home,u.iOS==true,u.QA~=nil and u.child.id or "_")
       end
       printf("----------------------------------------------")
       
@@ -482,6 +487,7 @@ local function setupEvents()
       if place == HOME.name then place = MYHOME end
 
       if UserLocVars[name] then
+        quickApp:tracef("Updating GV '%s' to '%s'",UserLocVars[name],place)
         fibaro.setGlobalVariable(UserLocVars[name],place)
       end
 
@@ -494,6 +500,7 @@ local function setupEvents()
       user.place = place
 
       if user.child then 
+        quickApp:tracef("Updating %s QA:%s to %s", user.child.uid,user.child.id,place == MYHOME)
         user.child:updateProperty('value',place == MYHOME)
         user.child:setVariable('place',place)
       end
@@ -543,6 +550,7 @@ end -- setupEvents
 
 function QuickApp:onInit()
   utils = fibaro.utils
+  fibaro.debugFlags.extendedErrors=true
   local initVars = not preInit()
   setupEvents()
   self:debugf("%s deviceId:%s, v%s",self.name,self.id,VERSION)

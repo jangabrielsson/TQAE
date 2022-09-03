@@ -1236,9 +1236,14 @@ function Module.eventScript.init()
     local toTime,midnight,map,mkStack,copy,coerce,isEvent=Util.toTime,fibaro.midnight,Util.map,Util.mkStack,Util.copy,fibaro.EM.coerce,fibaro.EM.isEvent
     local _vars,triggerVar = Util._vars,Util.triggerVar
 
+    local oldFormat
+    oldFormat,string.format = string.format,function(fmt,...)
+      local r={}; for _,e in ipairs({...}) do r[#r+1]=type(e)=='table' and tostring(e) or e end
+      return oldFormat(fmt,unpack(r))
+    end
     local function userLogFunction(fmt,...)
       local args,t1,t0,str,c1 = {...},__TAG,__TAG
-      str = #args==0 and fmt or string.format(fmt,...)
+      str = #args==0 and tostring(fmt) or string.format(fmt,...)
       str = str:gsub("(#T:)(.-)(#)",function(_,t) t1=t return "" end)
       str = str:gsub("(#C:)(.-)(#)",function(_,c) c1=c return "" end)
       if c1 then str=string.format("<font color=%s>%s</font>",c1,str) end
