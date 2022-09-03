@@ -79,6 +79,7 @@ end
 
 function QuickApp:onInit()
   self:debug(self.name, self.id)
+  self._childsInited=true
   EM.cfg.noFileError = true
   local file = io.open("jgabs_QAs/Updater/MANIFEST.lua","r+")
   local data,res = file:read("*all") file:close()

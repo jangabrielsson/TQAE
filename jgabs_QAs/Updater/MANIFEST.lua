@@ -219,7 +219,7 @@ return {
       },
     }
   },
-    ["896781234551432"] = {
+  ["896781234551432"] = {
     name = "HueSensors",
     type = "com.fibaro.deviceController",
     versions = {
@@ -247,6 +247,24 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
-    }
+    },
+  },
+  ["896965432456789"] = {
+    name = "iOSLocator",
+    type = "com.fibaro.binarySensor",
+    versions = {
+      { version= 0.47,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/iOSLocator_0.47"
+        },
+        descr = "First version",
+        mainfile = "$base1/jgabs_QAs/iOSLocator.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+    },
   },
 }
