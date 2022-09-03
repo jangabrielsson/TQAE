@@ -265,6 +265,18 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
+      { version= 0.48,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/iOSLocator_0.48"
+        },
+        descr = "Fixed sort bug",
+        mainfile = "$base1/jgabs_QAs/iOSLocator.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
     },
   },
 }

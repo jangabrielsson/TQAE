@@ -3,7 +3,7 @@
 -- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
 
 ---------------------- Setup users -----------------------------
-local VERSION = 0.47
+local VERSION = 0.48
 local SERIAL = "UPD8969654324567896"
 
 ------------------------------------------------------------------
@@ -171,8 +171,10 @@ local function setupEvents()
                 end
               end
 
-              table.sort(res,function(a,b) return 
-                  (a.hit and not b.hit) or (a.hit and b.hit and a.isHome and not b.isHome) or (not(a.hit and b.hit) and a.dist <= b.dist) 
+              table.sort(res,function(a,b) 
+                  if a.hit and not b.hit then return true elseif b.hit and not a.hit then return false end
+                  if a.isHome and not b.isHome then return true elseif b.isHome and not a.isHome then return false end
+                  return a.dist <= b.dist
                 end)
 
               if res[1] then
