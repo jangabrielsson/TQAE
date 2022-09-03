@@ -59,8 +59,8 @@ function EVENTSCRIPT.setupFuns()
       if not d then return id end
       resolvedDevices[id]=d.type
       if not cachedTypes[d.type] then
-        local p = d.properties; 
-        for k,v in pairs(p) do if skips[k] or type(v)=='table' then p[k]=nil else p[k]=type(v) end end
+        local p = d.properties;
+        for k,v in pairs(p) do if skips[k] or type(v)=='table' then p[k]=nil else p[k]=type(v) end end 
         cachedTypes[d.type] = {props=p,actions=d.actions,isQA=qa}
       end
     end
@@ -78,8 +78,8 @@ function EVENTSCRIPT.setupFuns()
     return false
   end
 
-  local function mapC(l,prop,e) local r = {} for _,id in ipairs(l) do r[#r+1]=getProp(id,prop,e) end return r end 
-  local function mapF(l,prop,e) for _,id in ipairs(l) do getProp(id,prop,e) end return true end 
+  local function mapC(l,prop,e) local r = {} for _,id in ipairs(l) do r[#r+1]=getProp(id,prop,e) end return r end
+  local function mapF(l,prop,e) for _,id in ipairs(l) do getProp(id,prop,e) end return true end
 
   --------------- User log function -----------------
   local function userLogFunction(fm,...)
@@ -95,7 +95,7 @@ function EVENTSCRIPT.setupFuns()
   --------------- Alarm functions -----------------
   local alarmCache = {}
   for _,p in ipairs(api.get("/alarms/v1/partitions") or {}) do -- prime alarm cache
-    alarmCache[p.id] = { 
+    alarmCache[p.id] = {
       armed = p.armed, breached = p.breached, breachDelay = p.breachDelay, armDelay = p.armDelay, secondsToArm = p.secondsToArm
     }
   end
@@ -103,13 +103,13 @@ function EVENTSCRIPT.setupFuns()
       local e = env.event
       if e.property=='homeArmed' then
         e.id=0
-        e.property='armed' 
+        e.property='armed'
       end
       local c = alarmCache[e.id or 0] or {}
       c[e.property]=e.value
       alarmCache[e.id or 0]  = c
     end)
-  local function alarm(id,_) 
+  local function alarm(id,_)
     if id == 0 then -- Create combined "house partition"
       local ps = api.get("/alarms/v1/partitions") or {}
       if #ps == 0 then return {} end
@@ -158,20 +158,20 @@ function EVENTSCRIPT.setupFuns()
   local alarmFuns = {
     ['true']=function(id) fibaro.alarm(id,"arm") return true end,
     ['false']=function(id) fibaro.alarm(id,"disarm") return true end,
-    ['watch']=function(id) 
+    ['watch']=function(id)
       if id==0 then
         for id0,_ in ipairs(alarmCache) do alarmsToWatch[id0]=true end
       else alarmsToWatch[id]=true end
       if alarmRef==nil then alarmRef = setInterval(watchAlarms,alarmWatchInterval) end
-      return true 
-    end, 
-    ['unwatch']=function(id) 
-      if id == 0 then 
+      return true
+    end,
+    ['unwatch']=function(id)
+      if id == 0 then
         alarmsToWatch = {}
       else alarmsToWatch[id]=nil end
       if  next(alarmsToWatch)==nil and alarmRef then clearInterval(alarmRef); alarmRef=nil end
-      return true 
-    end, 
+      return true
+    end,
   }
   local function gp(pid) return alarmCache[pid] or {} end
   local function setAlarm(id,_,val)
@@ -316,8 +316,8 @@ function EVENTSCRIPT.setupFuns()
   setFuns.defemail={method=set,cmd='sendDefinedEmailNotification'}
   setFuns.btn={method=set,cmd='pressButton'} -- ToDo: click button on QA?
   setFuns.email={method=function(id,_,val) local h,m = val:match("(.-):(.*)"); fibaro.alert('email',{id},val) return val end,cmd=""}
-  setFuns.start={method=function(id,_,val) 
-      if isEvent(val) then quickApp:postRemote(id,val) else fibaro.scene("execute",{id},val) return true end 
+  setFuns.start={method=function(id,_,val)
+      if isEvent(val) then quickApp:postRemote(id,val) else fibaro.scene("execute",{id},val) return true end
     end,cmd=""}
 
   for p,v in pairs(getFuns) do assert(v.method~=nil and v.prop~=nil and v.red~=nil and v.trigger~=nil,"Bad "..p) end
@@ -375,7 +375,7 @@ function EVENTSCRIPT.setupFuns()
     s.push(getProp(id,prop,env.event))
   end
 
-  instr['setprop']= function(i,s,env) 
+  instr['setprop']= function(i,s,env)
     local prop,id,value = i[2],getArg(i[3],s),getArg(i[4],s)
     s.push(setProp(id,prop,value))
   end
@@ -409,14 +409,14 @@ function EVENTSCRIPT.setupFuns()
         elseif t <= now then
           pCatch = true
           if t==now then isTrue = true end
-          rule.timers[t] = fibaro.post({type='%daily', rule=e.event.rule, now=t, _sh=true},t-rnow+24*3600)    
+          rule.timers[t] = fibaro.post({type='%daily', rule=e.event.rule, now=t, _sh=true},t-rnow+24*3600)
         end
       end
     end
     isTrue = isTrue or pCatch and catch  -- catchup
     s.push(isTrue)
   end
-  instr['interv'] = function(i,s,env) 
+  instr['interv'] = function(i,s,env)
     local v,e,isTrue = s.pop(),env.env,false
     local nxt = e.event.nxt + math.abs(v)
     fibaro.post({type='%interv', rule=e.event.rule, nxt=nxt, _sh=true},nxt-os.time())
@@ -446,7 +446,7 @@ function EVENTSCRIPT.setupFuns()
       s.push(t1 <= time and t2 >= time)
     else
       local now = time-midnight()
-      if t1<=t2 then s.push(t1 <= now and now <= t2) else s.push(now >= t1 or now <= t2) end 
+      if t1<=t2 then s.push(t1 <= now and now <= t2) else s.push(now >= t1 or now <= t2) end
     end
   end
 
@@ -457,10 +457,10 @@ function EVENTSCRIPT.setupFuns()
   instrc['HM'] = function(i,s) local t = getArg(i[3],s); s.push(os.date("%H:%M",t < os.time() and t+midnight() or t)) end
   instrc['HMS'] = function(i,s) local t = getArg(i[3],s); s.push(os.date("%H:%M:%S",t < os.time() and t+midnight() or t)) end
   instrc['sign'] = function(i,s) s.push(tonumber(getArg(i[3],s)) < 0 and -1 or 1) end
-  instrc['rnd'] = function(i,s) 
-    local n,mi,ma=i[2] 
+  instrc['rnd'] = function(i,s)
+    local n,mi,ma=i[2]
     if n>1 then ma,mi=getArg(i[4],s),getArg(i[3],s) else mi,ma=1,getArg(i[3],s) end
-    s.push(math.random(mi,ma)) 
+    s.push(math.random(mi,ma))
   end
   instrc['round'] = function(i,s) local v=getArg(i[3],s); s.push(math.floor(v+0.5)) end
   instrc['sum'] = function(i,s) local res=0 for _,x in ipairs({getNargs(i,s)}) do res=res+x end s.push(res) end
@@ -475,38 +475,38 @@ function EVENTSCRIPT.setupFuns()
   instrc['ostime'] = function(i,s) s.push(os.time()) end
   instrc['fmt'] = function(i,s) s.push(fmt(getNargs(i,s))) end
   instrc['eval'] = function(i,s) s.push(EVENTSCRIPT.evalStr(getArg(i[3],s))) end
-  instrc['add'] = function(i,s) 
-    local v,t=getArg(i[4],s),getArg(i[3],s) 
-    table.insert(t,v) s.push(t) 
+  instrc['add'] = function(i,s)
+    local v,t=getArg(i[4],s),getArg(i[3],s)
+    table.insert(t,v) s.push(t)
   end
   instrc['global'] = function(i,s)  s.push(api.post("/globalVariables/",{name=getArg(i[3],s)})) end
   instrc['listglobals'] = function(i,s) s.push(api.get("/globalVariables/")) end
   instrc['deleteglobal'] = function(i,s) s.push(api.delete("/globalVariables/"..getArg(i[3],s))) end
-  instrc['once'] = function(i,s) 
+  instrc['once'] = function(i,s)
     local n = i[2]
-    if n==1 then local f; i[4],f = s.pop(),i[4]; s.push(not f and i[4]) 
-    elseif n==2 then local f,g,e; e,i[4],f = s.pop(),s.pop(),i[4]; g=not f and i[4]; s.push(g) 
+    if n==1 then local f; i[4],f = s.pop(),i[4]; s.push(not f and i[4])
+    elseif n==2 then local f,g,e; e,i[4],f = s.pop(),s.pop(),i[4]; g=not f and i[4]; s.push(g)
       if g then fibaro.cancel(i[5]) i[5]=fibaro.post(function() i[4]=nil end,e) end
     else local f; i[4],f=os.date("%x"),i[4] or ""; s.push(f ~= i[4]) end
   end
   instrc['enable'] = function(i,s,e)
     local n = i[2]
     if n == 0 then fibaro.EM.enable(e.env.rule) s.push(true) return end
-    local t,g = s.pop(),false; if n==2 then g,t=t,s.pop() end 
-    s.push(fibaro.EM.enable(t,g)) 
+    local t,g = s.pop(),false; if n==2 then g,t=t,s.pop() end
+    s.push(fibaro.EM.enable(t,g))
   end
-  instrc['disable'] = function(i,s,e) 
+  instrc['disable'] = function(i,s,e)
     local n = i[2]
     if n == 0 then fibaro.EM.disable(e.env.rule) s.push(true) return end
-    s.push(fibaro.EM.disable(getArg(i[3],s))) 
+    s.push(fibaro.EM.disable(getArg(i[3],s)))
   end
   instrc['post'] = function(i,s) s.push(fibaro.post(getVargs(i,s))) end
   instrc['subscribe'] = function(i,s) fibaro.subscribe(getArg(i[3],s)) s.push(true) end
 --  instrc['publish'] = function(i,s) local e,t=s.pop(),nil; if n==2 then t=e; e=s.pop() end fibaro.publish(e,t) s.push(e) end
   instrc['remote'] = function(i,s)
-    local event,id=getArg(i[4],s),getArg(i[3],s) 
-    fibaro.postRemote(id,event) 
-    s.push(true) 
+    local event,id=getArg(i[4],s),getArg(i[3],s)
+    fibaro.postRemote(id,event)
+    s.push(true)
   end
   instrc['cancel'] = function(i,s) fibaro.cancel(getArg(i[3],s)) s.push(nil) end
 --  instrc['remove'] = function(s,_) local v,t=s.pop(),s.pop() table.remove(t,v) s.push(t) end
@@ -524,7 +524,7 @@ function EVENTSCRIPT.setupFuns()
       s.push(p)
     else s.push(false) end
   end
-  instrc['again'] = function(i,s,e) 
+  instrc['again'] = function(i,s,e)
     local v = i[2]>0 and getArg(i[3],s) or math.huge
     local rule = e.env.rule
     rule._again = (rule._again or 0)+1
@@ -537,21 +537,21 @@ function EVENTSCRIPT.setupFuns()
     rule._event = e.env.event
     local flags = i[5] or {}; i[5]=flags
     if val then
-      if flags.expired then 
-        s.push(val); 
+      if flags.expired then
+        s.push(val);
         flags.expired=nil;
-        return 
+        return
       end
       if flags.timer then s.push(false); return end
-      flags.timer = setTimeout(function() 
-          flags.expired,flags.timer=true,nil; 
+      flags.timer = setTimeout(function()
+          flags.expired,flags.timer=true,nil;
           fibaro.post({type='trueFor',stop=true,expired=true,rule=rule,_sh=true})
-          rule.start(rule._event) 
+          rule.start(rule._event)
         end,1000*time);
       quickApp:post({type='trueFor',start=true,rule=rule,_sh=true})
       s.push(false); return
     else
-      if flags.timer then 
+      if flags.timer then
         flags.timer=clearTimeout(flags.timer)
         fibaro.post({type='trueFor',stop=true,rule=e.rule,_sh=true})
       end
@@ -585,7 +585,7 @@ function EVENTSCRIPT.setupFuns()
     local s,t = pcall(toTime,v); return s and t or v
   end
 
------------------------------------------------------------------------------  
+-----------------------------------------------------------------------------
 
   EVENTSCRIPT.defvars{
     S1 = {click = 16, double = 14, tripple = 15, hold = 12, release = 13},
@@ -632,7 +632,7 @@ function EVENTSCRIPT.setupFuns()
     getClimateMode = fibaro.getClimateMode,  --(id)   -- Returns mode - "Manual", "Vacation", "Schedule"
     climateModeMode = fibaro.climateModeMode, --(id,mode)  -- Returns the currents mode "mode", or sets it - "Auto", "Off", "Cool", "Heat"
     setClimateZoneToScheduleMode = fibaro.setClimateZoneToScheduleMode,--(id)              -- Set zone to scheduled mode
-    setClimateZoneToManualMode =  fibaro.setClimateZoneToManualMode,--(id, mode, time, heatTemp, coolTemp) 
+    setClimateZoneToManualMode =  fibaro.setClimateZoneToManualMode,--(id, mode, time, heatTemp, coolTemp)
     -- Set zone to manual, incl. mode, time ( secs ), heat and cool temp
     setClimateZoneToVacationMode = fibaro.setClimateZoneToVacationMode,--(id, mode, start, stop, heatTemp, coolTemp)
     -- Set zone to vacation, incl. mode, start (secs from now), stop (secs from now), heat and cool temp
