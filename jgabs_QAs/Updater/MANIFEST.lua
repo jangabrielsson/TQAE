@@ -261,6 +261,7 @@ return {
         mainfile = "$base1/jgabs_QAs/iOSLocator.lua",
         files = "generate",
         keep = {
+          "main"
         },
         interfaces = {"quickApp"},
         viewLayout = "generate",
@@ -273,6 +274,7 @@ return {
         mainfile = "$base1/jgabs_QAs/iOSLocator.lua",
         files = "generate",
         keep = {
+          "main"
         },
         interfaces = {"quickApp"},
         viewLayout = "generate",
