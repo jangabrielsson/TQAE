@@ -249,7 +249,7 @@ return {
       },
     },
   },
-  ["896965432456789"] = {
+  ["8969654324567896"] = {
     name = "iOSLocator",
     type = "com.fibaro.binarySensor",
     versions = {
