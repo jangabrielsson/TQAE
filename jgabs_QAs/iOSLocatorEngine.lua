@@ -3,7 +3,7 @@
 -- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
 
 ---------------------- Setup users -----------------------------
-local VERSION = 0.48
+local VERSION = 0.49
 local SERIAL = "UPD8969654324567896"
 
 ------------------------------------------------------------------
@@ -57,6 +57,8 @@ local utils = fibaro.utils
 local post
 local debug
 local function printf(...) quickApp:debugf(...) end
+enabledColor = enabledColor or "green"
+disabledColor = disabledColor or "red"
 
 local SCHEDULE_TIME = SCHEDULE_TIME or 90 -- seconds
 SCHEDULE_INTERVAL = SCHEDULE_INTERVAL or false -- true=delay SCHEDULE_TIME between each account poll, false=delay SCHEDULE_TIME/#accounts between each account poll
@@ -146,7 +148,7 @@ local function setupEvents()
         QA:debugf("Devices for %s:",account.name)
         for _,dev in pairs(dm) do
           local ll = type(dev.location)=='table' and dev.location or {}
-          local color = dev.locationEnabled and type(dev.location)=='table' and "green" or "red"
+          local color = dev.locationEnabled and type(dev.location)=='table' and enabledColor or disabledColor
           QA:debugf("<font color=%s>Name:%s, Device type:%s, battery:%0.2f%%, Latitude:%.4f, Longitude:%.4f, Altitude:%.4f, Floor level:%s</font>",
             color,dev.name,dev.deviceDisplayName or "",tonumber(dev.batteryLevel) or 0,tonumber(ll.latitude) or 0, tonumber(ll.longitude) or 0, tonumber(ll.altitude) or 0, ll.floorLevel or 0)
         end
@@ -520,7 +522,11 @@ local function setupEvents()
         end
       end
       QA:setVariable("status",json.encodeFast(Users))
-      quickApp:setView("user","text","User %s at %s",name,place)
+      local usersV = {}
+      for _,u in pairs(Users) do
+        if u.place then usersV[#usersV+1]=string.format("User %s at %s",u.name,u.place) end
+      end
+      quickApp:updateView("user","text",table.concat(usersV,"\n"))
 
       if not HOME then return end
 
@@ -559,6 +565,6 @@ function QuickApp:onInit()
   self:setVersion("iOSLOcator",SERIAL,VERSION)
   self:setView("version","text","iOSLocator, %s (#Accounts:%d)",tostring(VERSION),#ACCOUNTS)
   self:setView("home","text","Home status: Unknown")
-  self:setView("users","text","")
+  self:setView("user","text","")
   fibaro.post({type='start',initVars=initVars})
 end
