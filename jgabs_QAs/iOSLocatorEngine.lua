@@ -3,7 +3,7 @@
 -- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
 
 ---------------------- Setup users -----------------------------
-local VERSION = 0.49
+local VERSION = 0.50
 local SERIAL = "UPD8969654324567896"
 
 ------------------------------------------------------------------
@@ -176,7 +176,7 @@ local function setupEvents()
               table.sort(res,function(a,b) 
                   if a.hit and not b.hit then return true elseif b.hit and not a.hit then return false end
                   if a.isHome and not b.isHome then return true elseif b.isHome and not a.isHome then return false end
-                  return a.dist <= b.dist
+                  return a.dist < b.dist
                 end)
 
               if res[1] then
@@ -524,7 +524,7 @@ local function setupEvents()
       QA:setVariable("status",json.encodeFast(Users))
       local usersV = {}
       for _,u in pairs(Users) do
-        if u.place then usersV[#usersV+1]=string.format("User %s at %s",u.name,u.place) end
+        usersV[#usersV+1]=string.format("User %s at %s",u.name,u.place or "unknown")
       end
       quickApp:updateView("user","text",table.concat(usersV,"\n"))
 

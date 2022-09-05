@@ -253,11 +253,11 @@ return {
     name = "iOSLocator",
     type = "com.fibaro.binarySensor",
     versions = {
-      { version= 0.48,
+      { version= 0.49,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/iOSLocator_0.48"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/iOSLocator_0.49"
         },
-        descr = "Fixed sort bug",
+        descr = "Small fixes",
         mainfile = "$base1/jgabs_QAs/iOSLocator.lua",
         files = "generate",
         keep = {
@@ -266,11 +266,11 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
-      { version= 0.49,
+      { version= 0.50,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/iOSLocator_0.49"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/iOSLocator_0.50"
         },
-        descr = "Small fixes",
+        descr = "Fixed sort bug again",
         mainfile = "$base1/jgabs_QAs/iOSLocator.lua",
         files = "generate",
         keep = {
