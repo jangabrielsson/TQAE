@@ -3,7 +3,7 @@
 -- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
 
 ---------------------- Setup users -----------------------------
-local VERSION = 0.51
+local VERSION = 0.52
 local SERIAL = "UPD8969654324567896"
 
 ------------------------------------------------------------------
@@ -271,21 +271,26 @@ local function setupEvents()
 
       user.battery=battery
       if user.child then user.child:updateProperty('batteryLevel',math.floor(battery*100+0.5)) end
-
+      --QA:debugf("checkPresence %s %s %s",name,place,tostring(Users[name].place))
       if Users[name].place ~= place then  -- user at new place
         if Users[name].id then
           local id,lid = Users[name].id,getLocationId(orgPlace)
           if Users[name].place==nil then
+            --QA:debugf("2.checkPresence %s %s %s %s",MYAWAY,tostring(lid),orgPlace)
             if place ~= MYAWAY and lid then
               fibaro.postGeofenceEvent(id,lid,"enter")
               fibaro.post({type='location2',id=id,property=lid,value="enter"})
+            elseif place == MYAWAY then
+              fibaro.post({type='location2',id=id,property=-1,value="leave"})
             end
           else
             local oldLid = getLocationId(Users[name].place)
+            --QA:debugf("3.checkPresence %s %s",MYAWAY,tostring(oldLid))
             if oldLid then
               fibaro.postGeofenceEvent(id,oldLid,"leave")
               fibaro.post({type='location2',id=id,property=oldLid,value="leave"})
             end
+            --QA:debugf("4.checkPresence %s",MYAWAY)
             if place ~= MYAWAY then
               fibaro.postGeofenceEvent(id,lid,"enter")
               fibaro.post({type='location2',id=id,property=lid,value="enter"})
@@ -497,7 +502,7 @@ local function setupEvents()
       local time = e.timestamp
       local user = id2user[uid]
       local name = user.name
-      local place = getLocationName(lid)
+      local place = getLocationName(lid) or MYAWAY
       local nearest = user.nearest
       local homeDist = user.homeDist
       --QA:debugf("ID:%s, name:%s, action:%s, place:%s",uid,name,action,place)
