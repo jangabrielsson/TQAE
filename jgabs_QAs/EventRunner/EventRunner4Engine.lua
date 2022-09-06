@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.86,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.87,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
@@ -1241,8 +1241,8 @@ function Module.eventScript.init()
       local r={}; for _,e in ipairs({...}) do r[#r+1]=type(e)=='table' and tostring(e) or e end
       return oldFormat(fmt,unpack(r))
     end
-    local function userLogFunction(fmt,...)
-      local args,t1,t0,str,c1 = {...},__TAG,__TAG
+    local function userLogFunction(rule,fmt,...)
+      local args,t1,t0,str,c1 = {...},rule._tag or __TAG,__TAG
       str = #args==0 and tostring(fmt) or string.format(fmt,...)
       str = str:gsub("(#T:)(.-)(#)",function(_,t) t1=t return "" end)
       str = str:gsub("(#C:)(.-)(#)",function(_,c) c1=c return "" end)
@@ -1520,6 +1520,7 @@ function Module.eventScript.init()
       getFuns.state={get,'state',nil,true}
       getFuns.bat={get,'batteryLevel',nil,true}
       getFuns.power={get,'power',nil,true}
+      getFuns.isDead={get,'dead',mapOr,true}
       getFuns.isOn={on,'value',mapOr,true}
       getFuns.isOff={off,'value',mapAnd,true}
       getFuns.isAllOn={on,'value',mapAnd,true}
@@ -1670,7 +1671,7 @@ function Module.eventScript.init()
     end
 
     instr['%rule'] = function(s,_,e,_) local b,h=s.pop(),s.pop(); s.push(Rule.compRule({'=>',h,b,e.log},e)) end
-    instr['log'] = function(s,n) s.push(userLogFunction(table.unpack(s.lift(n)))) end
+    instr['log'] = function(s,n,e) s.push(userLogFunction(e.rule,table.unpack(s.lift(n)))) end
     instr['%logRule'] = function(s,_,_,_) local src,res = s.pop(),s.pop() 
       Debug(_debugFlags.rule or (_debugFlags.ruleTrue and res),"[%s]>>'%s'",tojson(res),src) s.push(res) 
     end

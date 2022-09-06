@@ -2275,6 +2275,7 @@ do
       local rm = {[em.RULE]=e, action=action, doc=doc, subs=rl}
       rm.enable = function() mapF(function(e0) e0.enable() end,rl) return rm end
       rm.disable = function() mapF(function(e0) e0.disable() end,rl) return rm end
+      rm.tag = function(t) mapF(function(e0) e0.tag(t) end,rl) return rm end
       rm.start = function(event) invokeHandler({rule=rm,event=event}) return rm end
       rm.__tostring = comboToStr
       return rm
@@ -2306,12 +2307,14 @@ do
       rule.enable = function() rule._disabled = nil fibaro.post({type='ruleEnable',rule=rule,_sh=true}) return rule end
       rule.disable = function() rule._disabled = true fibaro.post({type='ruleDisable',rule=rule,_sh=true}) return rule end
       rule.start = function(event) invokeHandler({rule=rule, event=event, p={}}) return rule end
+      rule.tag = function(t) rule._tag = t or __TAG; return rule end
       rule.__tostring = rule2str
       if em.SECTION then
         local s = em.sections[em.SECTION] or {}
         s[#s+1] = rule
         em.sections[em.SECTION] = s
       end
+      if em.TAG then rule._tag = em.TAG end
       return rule
     end
 
