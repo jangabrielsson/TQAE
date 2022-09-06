@@ -3,7 +3,7 @@
 -- luacheck: globals ignore hc3_emulator __fibaro_get_device_property
 
 ---------------------- Setup users -----------------------------
-local VERSION = 0.50
+local VERSION = 0.51
 local SERIAL = "UPD8969654324567896"
 
 ------------------------------------------------------------------
@@ -278,16 +278,21 @@ local function setupEvents()
           if Users[name].place==nil then
             if place ~= MYAWAY and lid then
               fibaro.postGeofenceEvent(id,lid,"enter")
+              fibaro.post({type='location2',id=id,property=lid,value="enter"})
             end
           else
             local oldLid = getLocationId(Users[name].place)
             if oldLid then
               fibaro.postGeofenceEvent(id,oldLid,"leave")
+              fibaro.post({type='location2',id=id,property=oldLid,value="leave"})
             end
             if place ~= MYAWAY then
               fibaro.postGeofenceEvent(id,lid,"enter")
+              fibaro.post({type='location2',id=id,property=lid,value="enter"})
             end
           end
+        else 
+          QA:warning("User %s doesn't have an id - ignored",name)
         end
 
         Users[name].isHome = place == MYHOME
@@ -295,6 +300,8 @@ local function setupEvents()
         Users[name].dist = dist
         Users[name].homeDist = homeDist
         Users[name].nearest = nearest
+      else 
+        QA:debugf("User %s in same place '%s'",name,place)
       end
     end)
 
@@ -470,12 +477,19 @@ local function setupEvents()
         printf("[%s:%s, home:%s, iOS:%s, QA:%s]",name,u.id,u.home,u.iOS==true,u.QA~=nil and u.child.id or "_")
       end
       printf("----------------------------------------------")
-      
+
       post({type='setupLocations'})
       post({type='poll',index=1,_sh=true})
     end)
 
   fibaro.event({type='location'},function(env)
+      local e = env.event
+      if id2user[e.id].iOS then return end
+      e.type = 'location2'
+      fibaro.post(env.event)
+    end)
+
+  fibaro.event({type='location2'},function(env)
       local e = env.event
       local uid = e.id
       local lid = e.property

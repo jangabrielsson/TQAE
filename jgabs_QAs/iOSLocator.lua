@@ -5,7 +5,7 @@
 local _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { 
-    onAction=true, http=false, UIEevent=true 
+    onAction=true, http=false, UIEevent=true , color=false
   },
 }
 
