@@ -17,7 +17,7 @@ Email: jan@gabrielsson.com
 -- luacheck: globals ignore utils hc3_emulator FILES urlencode sceneId
 
 fibaro = fibaro  or  {}
-fibaro.FIBARO_EXTRA = "v0.950"
+fibaro.FIBARO_EXTRA = "v0.951"
 local MID = plugin and plugin.mainDeviceId or sceneId or 0
 local format = string.format
 function asserts(condition, ...)
@@ -1293,23 +1293,23 @@ do
       for _,v in ipairs(dev.properties.quickAppVariables or {}) do
         if v.value ~= "" then selfv.config[v.name] = v.value end
       end
-      local oldGetVar = selfv.getVariable
-      function selfv:getVariable(str) -- Redirect QuickAppVariable to HomeTable in GV
-        local val = oldGetVar(self,str)
-        local name,var = val:match("^HT/(.-):(.*)$")
-        if name then
-          local HT = fibaro.getGlobalVariable(name)
-          HT = json.decode(HT or "[]") or {}
-          var = var:split('.')
-          for _,i in ipairs(var) do
-            if not HT[i] then return nil end
-            HT = HT[i]
-          end
-          return HT
-        else 
-          return val 
-        end
-      end
+--      local oldGetVar = selfv.getVariable
+--      function selfv:getVariable(str) -- Redirect QuickAppVariable to HomeTable in GV
+--        local val = oldGetVar(self,str)
+--        local name,var = val:match("^HT/(.-):(.*)$")
+--        if name then
+--          local HT = fibaro.getGlobalVariable(name)
+--          HT = json.decode(HT or "[]") or {}
+--          var = var:split('.')
+--          for _,i in ipairs(var) do
+--            if not HT[i] then return nil end
+--            HT = HT[i]
+--          end
+--          return HT
+--        else 
+--          return val 
+--        end
+--      end
       quickApp = selfv
       if _onInit then _onInit(selfv) end
     end
