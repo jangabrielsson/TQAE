@@ -84,11 +84,11 @@ function sha1.sha1(str)
 end
 
 function QuickApp:onInit()
-  
+
   -- self:setKey(self:getVariable("QA_Key"))
   local serialNumber = api.get("/settings/info").serialNumber
   self:setKey(sha1.sha1(serialNumber:rep(4))) -- Correct key - Key is sha1(serial number x 4)
-  
+
   _004() -- Ok
   _068() -- OK
   self:setKey("abcde") -- Wrong key

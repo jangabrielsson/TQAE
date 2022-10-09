@@ -1,14 +1,12 @@
 -- luacheck: globals ignore _debugFlags hc3_emulator QuickApp Util
 
 _=loadfile and loadfile("TQAE.lua"){
-  --refreshStates=true,
-  debug = { 
+  refreshStates=true,
+  debug = { color=false,
     onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true, qa=true-- timersSched=true
   },
-  --startTime="10:00:00 5/12/2020",
-  --speed = 48,
+  --startTime="18:10:00",
   --deploy=true,
-  --offline=true,
 }
 
 
@@ -50,32 +48,10 @@ function QuickApp:main()    -- EventScript version
   Util.defvars(HT)
   Util.reverseMapDef(HT)
 
---  Util.defTriggerVar("A",24)
-
---  fibaro.EM.SECTION = 'Home'  
---  rule("@@00:01:00 => log('Home profile active!')").disable()   
-
----- rule 2
---  r2 = rule("trueFor(00:00:10,A > 23) => log('[dagelijkeRules] Keuken temperatuur %s',99);again()").disable()
-
---  fibaro.EM.SECTION = 'Away'  
---  rule("@@00:01:00 => log('Away profile active!')").disable()  
-
---  rule("99:isOn => 88:off; log('[dagelijkseRules] testSwitch is uitgezet')").disable() 
-
---  fibaro.EM.SECTION = nil  
---  AwayProfile=fibaro.profileNameToId('Away')  
---  HomeProfile=fibaro.profileNameToId('Home')
-
-    rule("#foo => log('A')").start()
 --  rule("#profile{property='activeProfile', value=AwayProfile} => enable('Away',true)") 
 --  rule("#profile{property='activeProfile', value=HomeProfile} => enable('Home',true); r2.start()") 
 --  rule("post(#profile{property='activeProfile', value=HomeProfile})") 
 --  rule("wait(20); post(#profile{property='activeProfile', value=AwayProfile})")
---    Util.defTriggerVar('A',true)
---    a=rule("trueFor(00:00:05,A) => log('A')").start()
---    rule("wait(20); disable(a)")
---    rule("#ruleDisable => log('Disable:%s',a==env.event.rule)")
 --  alarms = 1
 --  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")
@@ -90,7 +66,13 @@ function QuickApp:main()    -- EventScript version
 --  rule("2:armed => log('2 armed')")
 --  rule("2:disarmed => log('2 disarmed')")
 --  rule("2:willArm => log('2 will arm')")
+
   rule("#se-start => log('START')")
+  rule("#DST_changed => plugin.restart()") -- Restart ER at DST change
+  
+  rule("log('L=%s',LOC('Luciana'))")
+  rule("log('U=%s',USER('Jan'))")
+  
 --  Phone = {2,107}
 --  lights={267,252,65,67,78,111,129,158,292,127,216,210,205,286,297,302,305,410,384,389,392,272,329,276} -- eller hämta värden från HomeTable
 --  rule("earthDates={2021/3/27/20:30,2022/3/26/20:30,2023/3/25/20:30}")

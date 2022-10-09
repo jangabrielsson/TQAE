@@ -11,11 +11,11 @@ local _=loadfile and loadfile("TQAE.lua"){
 
 --%%name = "iOSLocator"
 --%%type='com.fibaro.binarySensor'
---%%quickVars = {['HomeVar'] = 'iOSHome',['HomeName'] = 'Home',['AwayName'] = 'Away',}
+--%%quickVars = {['HomeVar'] = 'iOSHome',['HomeName'] = 'home',['AwayName'] = 'away',}
 --%%u1={label='version', text=''}
 --%%u2={label='home', text=''}
 --%%u3={label='user', text=''}
---%%proxy=true
+-- %%proxy=true
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 --FILE:jgabs_QAs/iOSLocatorEngine.lua,iOSLocator;

@@ -28,9 +28,9 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       }, 
-      { version = 0.86,
+      { version = 0.87,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.86"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.87"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "enable/disable events",
@@ -39,13 +39,13 @@ return {
         viewLayout = "generate",
         interfaces= {"quickApp"},
         quickAppVariables = {},
-      }, 
-      { version = 0.87,
+      },
+      { version = 0.88,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.87"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.88"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "enable/disable events",
+        descr = "Push options",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",

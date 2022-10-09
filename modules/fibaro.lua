@@ -36,10 +36,11 @@ function fibaro.alert( alertType , ids , notification , isCritical , subject )
   local actions = { 
     email = "sendGlobalEmailNotifications",
     push = "sendGlobalPushNotifications",
+    simplePush = "sendPush",
     sms = "sendGlobalSMSNotifications",
   }
   if actions[alertType] == nil then
-    error("Wrong parameter: '" .. alertType .. "'. Available parameters: email, push", 2) 
+    error("Wrong parameter: '" .. alertType .. "'. Available parameters: email, push, simplePush", 2) 
   end
   for _, id in ipairs(ids) do __assert_type(id, "number") end      
   for _, id in ipairs(ids) do 
