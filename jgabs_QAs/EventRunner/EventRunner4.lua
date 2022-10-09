@@ -23,15 +23,20 @@ _=loadfile and loadfile("TQAE.lua"){
 --FILE:jgabs_QAs/EventRunner/EventRunnerDoc.lua,Doc;
 
 ----------- Code -----------------------------------------------------------
-_debugFlags.trigger = true  -- log incoming triggers
-_debugFlags.trigger2 = true -- log incoming triggers
-_debugFlags.sourceTrigger = true
+_debugFlags.sourceTrigger = true  -- log incoming triggers
+_debugFlags._allRefreshStates = false -- log all incoming refrshState events
 _debugFlags.fcall=true     -- log fibaro.call
 _debugFlags.post = true    -- log internal posts
 _debugFlags.rule=true      -- log rules being invoked (true or false)
 _debugFlags.ruleTrue=true  -- log only rules that are true
-_debugFlags.pubsub=true    -- log only rules that are true
-_debugFlags.extendedErrors=true
+_debugFlags.pubsub=true    -- log pub/sub actions
+_debugFlags.extendedErrors=true -- Add extra error info for events/timers
+_debugFlags.trueFor=false   -- Log trueFor actions
+_debugFlags.onaction=true   -- Log onActions
+_debugFlags.uievent=true    -- Log uiEvents
+_debugFlags.json=true       -- Convert tables to json in log calls
+_debugFlags.html=true       -- Convert spaces to &nbsp in log output
+_debugFlags.logTrigger=false -- Enable log source triggers (when log text for UI changes)
 ------------- Put your rules inside QuickApp:main() -------------------
 
 function QuickApp:main()    -- EventScript version
@@ -68,11 +73,8 @@ function QuickApp:main()    -- EventScript version
 --  rule("2:willArm => log('2 will arm')")
 
   rule("#se-start => log('START')")
-  rule("#DST_changed => plugin.restart()") -- Restart ER at DST change
-  
-  rule("log('L=%s',LOC('Luciana'))")
-  rule("log('U=%s',USER('Jan'))")
-  
+  rule("#DST_changed => plugin.restart()") -- Restart ER when DST change
+
 --  Phone = {2,107}
 --  lights={267,252,65,67,78,111,129,158,292,127,216,210,205,286,297,302,305,410,384,389,392,272,329,276} -- eller hämta värden från HomeTable
 --  rule("earthDates={2021/3/27/20:30,2022/3/26/20:30,2023/3/25/20:30}")

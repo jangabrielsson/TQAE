@@ -35,7 +35,6 @@ local debugFlags,utils = fibaro.debugFlags or {},{}
 local toTime,copy,equal,member,remove,protectFun
 fibaro.debugFlags = debugFlags
 fibaro.utils = utils
-_debugFlags = debugFlags
 -------------------- Utilities ----------------------------------------------
 do
   if not setTimeout then
@@ -461,17 +460,19 @@ do
 end
 --------------------- Debug functions -----------------------------------------
 do
+  local function setDefault(v1,v2) if v1==nil then return v2 else return v1 end end
+  
   local fformat
   debugFlags.debugLevel=nil
   debugFlags.traceLevel=nil
-  debugFlags.notifyError=true
-  debugFlags.notifyWarning=true
-  debugFlags.onaction=true
-  debugFlags.uievent=true
-  debugFlags.json=true
-  debugFlags.html=true
-  debugFlags.reuseNotifies=true
-  debugFlags.logTrigger=true
+  debugFlags.notifyError=setDefault(debugFlags.notifyError,true)
+  debugFlags.notifyWarning=setDefault(debugFlags.notifyWarning,true)
+  debugFlags.onaction=setDefault(debugFlags.onaction,true)
+  debugFlags.uievent=setDefault(debugFlags.uievent,true)
+  debugFlags.json=setDefault(debugFlags.json,true)
+  debugFlags.html=setDefault(debugFlags.html,true)
+  debugFlags.reuseNotifies=setDefault(debugFlags.reuseNotifies,true)
+  debugFlags.logTrigger=setDefault(debugFlags.logTrigger,true)
 
 -- Add notification to notification center
   local cachedNots = {}

@@ -4,10 +4,15 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.88,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.89,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
-_debugFlags = {  fcall=true, triggers=true, post = true, rule=true  } 
+_debugFlags = fibaro.debugFlags or {}
+fibaro.debugFlags = _debugFlags
+_debugFlags.fcall=true
+_debugFlags.post = true
+_debugFlags.rule=true
+
 Util,Rule = nil,Rule or {}
 local isError, throwError, Debug
 local _assert, _assertf, tojson, _traceInstrs
