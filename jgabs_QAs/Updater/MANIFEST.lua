@@ -174,6 +174,18 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
+      { version= 1.23,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/TriggerQA_1.23"
+        },
+        descr = "Fix cron",
+        mainfile = "$base1/jgabs_QAs/TriggerQA.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
     }
   },
 
