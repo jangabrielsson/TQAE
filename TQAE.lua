@@ -251,7 +251,9 @@ function FB.__fibaroUseAsyncHandler(_) end -- TBD
 function FB.__fibaro_call(id,name,path,data)
   local args, D = data.args or {},Devices[id]
   if D then -- sim. call in another process/QA
-    setTimeout(function() D.env.onAction(id,{deviceId=id,actionName=name,args=args}) end,0,nil,D) 
+    setTimeout(function() 
+        D.env.onAction(id,{deviceId=id,actionName=name,args=args}) 
+      end,0,nil,D) 
     return {message="Accepted"},200
   elseif not cfg.offline then return HC3Request("POST",path,data) else return nil,404 end
 end
@@ -556,34 +558,34 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
   if env.QuickApp and env.QuickApp.onInit then
     DEBUG("qa","sys","Starting QA:%s - ID:%s",info.name,info.id)       -- Start QA by "creating instance"
     setTimeout(function() env.QuickApp(info.dev) end,0)
-    elseif env.ACTION then
-      EM.postEMEvent({type='sceneLoaded', info=info})     
-    end
+  elseif env.ACTION then
+    EM.postEMEvent({type='sceneLoaded', info=info})     
   end
+end
 
-  EM.runQA = runQA
+EM.runQA = runQA
 
-  loadModules(globalModules or {})        -- Load global modules
-  loadModules(EM.cfg.globalModules or {}) -- Load optional user specified modules into environment
+loadModules(globalModules or {})        -- Load global modules
+loadModules(EM.cfg.globalModules or {}) -- Load optional user specified modules into environment
 
-  print(fmt("---------------- Tiny QuickAppEmulator (TQAE) v%s -------------",version)) -- Get going...
-  if cfg.offline=="NOHC3" then LOG.warn("No connection to HC3")  end
-  if cfg.offline then LOG.sys("Running offline") end
-  if pfvs then LOG.sys("Using config file %s",EM.readConfigFile) end
+print(fmt("---------------- Tiny QuickAppEmulator (TQAE) v%s -------------",version)) -- Get going...
+if cfg.offline=="NOHC3" then LOG.warn("No connection to HC3")  end
+if cfg.offline then LOG.sys("Running offline") end
+if pfvs then LOG.sys("Using config file %s",EM.readConfigFile) end
 
-  function EM.startEmulator(cont)
-    EM.start(function() EM.postEMEvent{type='start'} 
-        if cont then cont() end
-      end)
+function EM.startEmulator(cont)
+  EM.start(function() EM.postEMEvent{type='start'} 
+      if cont then cont() end
+    end)
+end
+
+if embedded then                        -- Embedded call...
+  local file = debug.getinfo(2)         -- Find out what file that called us
+  if file and file.source then
+    if not file.source:sub(1,1)=='@' then error("Can't locate file:"..file.source) end
+    local fileName = file.source:sub(2)
+    EM.startEmulator(function() EM.installQA({file=fileName},nil) end)
   end
-
-  if embedded then                        -- Embedded call...
-    local file = debug.getinfo(2)         -- Find out what file that called us
-    if file and file.source then
-      if not file.source:sub(1,1)=='@' then error("Can't locate file:"..file.source) end
-      local fileName = file.source:sub(2)
-      EM.startEmulator(function() EM.installQA({file=fileName},nil) end)
-    end
-  else main(FB) end
-  LOG.sys("End - runtime %.2f min",(EM.osTime()-EM._info.started)/60)
-  os.exit()
+else main(FB) end
+LOG.sys("End - runtime %.2f min",(EM.osTime()-EM._info.started)/60)
+os.exit()

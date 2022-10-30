@@ -304,6 +304,8 @@ do
     end
   end
 
+  fibaro.dateTest = dateTest
+  
   do
     -- Alternative, several timers share a cron loop instance.
     local jobs,timer = {} -- {fun = {test=.., args={...}}}
@@ -461,7 +463,7 @@ end
 --------------------- Debug functions -----------------------------------------
 do
   local function setDefault(v1,v2) if v1==nil then return v2 else return v1 end end
-  
+
   local fformat
   debugFlags.debugLevel=nil
   debugFlags.traceLevel=nil
@@ -661,6 +663,12 @@ do
     return api.put("/scenes/"..sceneID, {mode = runConfig}) 
   end
 
+  function fibaro.getSceneByName(name) -- Not in fibaroExtra2
+    __assert_type(sceneID,"string" )
+    for _,s in ipairs(api.get("/scenes")) do
+      if s.name==name then return s end
+    end
+  end
 
 end -- Scene function
 
