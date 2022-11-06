@@ -4,7 +4,7 @@
 -- luacheck: globals ignore HueDeviceQA MotionSensorQA TempSensorQA LuxSensorQA SwitchQA HueTable HUEv2Engine
 -- luacheck: globals ignore LightOnOff LightDimmable LightTemperature LightColor
 
-local VERSION = 0.14
+local VERSION = 0.15
 local SERIAL = "UPD896781234567895" 
 
 local debug

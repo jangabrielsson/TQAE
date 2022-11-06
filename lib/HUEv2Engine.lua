@@ -14,7 +14,7 @@
 -- luacheck: globals ignore behavior_instance geolocation geolocation_client
 -- luacheck: ignore 212/self
 
-local version = 0.4
+local version = 0.45
 
 HUEv2Engine = HUEv2Engine or {}
 HUEv2Engine.version = version
@@ -467,7 +467,7 @@ local function main()
     if self.rsrc.relative_rotary then return self.rsrc.relative_rotary.last_event.rotation.steps,self.rsrc.relative_rotary.last_event.rotation.direction end
   end
   function relative_rotary:__tostring()
-    return fmt("[rotary:%s,%s,value:%s]",self.id,self:getName("ROT"),self:relative_rotary_state())
+    return fmt("[rotary:%s,%s,value:%s]",self.id,self:getName("ROT"),tostring(self:relative_rotary_state()))
   end
 
   props.temperature = {
