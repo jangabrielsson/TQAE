@@ -40,12 +40,12 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.88,
+      { version = 0.89,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.88"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.89"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "Push options",
+        descr = "Better debug flags",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",
@@ -54,10 +54,10 @@ return {
       },
       { version = 0.89,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.89"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.90"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "Better debug flags",
+        descr = "kill wait",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",

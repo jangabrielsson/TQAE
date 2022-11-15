@@ -7,6 +7,7 @@ _=loadfile and loadfile("TQAE.lua"){
   },
   --startTime="18:10:00",
   --deploy=true,
+  --offline=true
 }
 
 
@@ -23,8 +24,8 @@ _=loadfile and loadfile("TQAE.lua"){
 --FILE:jgabs_QAs/EventRunner/EventRunnerDoc.lua,Doc;
 
 ----------- Code -----------------------------------------------------------
-_debugFlags.sourceTrigger = true  -- log incoming triggers
-_debugFlags._allRefreshStates = false -- log all incoming refrshState events
+_debugFlags.sourceTrigger = false  -- log incoming triggers
+_debugFlags._allRefreshStates = true -- log all incoming refrshState events
 _debugFlags.fcall=true     -- log fibaro.call
 _debugFlags.post = true    -- log internal posts
 _debugFlags.rule=true      -- log rules being invoked (true or false)
@@ -42,7 +43,6 @@ _debugFlags.logTrigger=false -- Enable log source triggers (when log text for UI
 function QuickApp:main()    -- EventScript version
   local rule = function(...) return self:evalScript(...) end          -- old rule function
   self:enableTriggerType({"device","global-variable","custom-event","profile","alarm","location","quickvar","user"}) -- types of events we want
-  fibaro.debugFlags.sourceTrigger=true 
   local HT = { 
     keyfob = 26, 
     motion= 21,
@@ -75,6 +75,9 @@ function QuickApp:main()    -- EventScript version
   rule("#se-start => log('START')")
   rule("#DST_changed => plugin.restart()") -- Restart ER when DST change
 
+  apa = rule("#foo => kill(apa); log('A'); wait(1); log('B'); wait(5); log('C')")
+  rule("post(#foo); wait(2); post(#foo)")
+  
 --  Phone = {2,107}
 --  lights={267,252,65,67,78,111,129,158,292,127,216,210,205,286,297,302,305,410,384,389,392,272,329,276} -- eller hämta värden från HomeTable
 --  rule("earthDates={2021/3/27/20:30,2022/3/26/20:30,2023/3/25/20:30}")

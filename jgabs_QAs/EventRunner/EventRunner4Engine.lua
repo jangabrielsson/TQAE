@@ -4,11 +4,10 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.89,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.90,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
-_debugFlags = fibaro.debugFlags or {}
-fibaro.debugFlags = _debugFlags
+_debugFlags = _debugFlags or {}
 _debugFlags.fcall=true
 _debugFlags.post = true
 _debugFlags.rule=true
@@ -174,7 +173,7 @@ function Module.utilities.init()
   Module.utilities.inited = true
 
   local self,utils = {},fibaro.utils
-  local midnight,hm2sec,transform,copy,equal=fibaro.midnight,utils.hm2sec,utils.transform,utils.copy,utils.equal
+  local midnight,hm2sec,transform,copy,equal=fibaro.midnight,utils.hm2sec,utils.transform,table.copy,table.equal
   local toTime,gensym,notify = utils.toTime,utils.gensym,utils.notify
 
   function self.findEqual(tab,obj)
@@ -373,273 +372,18 @@ function Module.utilities.init()
       cbr[tag]=nil
     end
 
-    local gKeys = {type=1,id=2,value=3,val=4,key=5,arg=6,event=7,events=8,msg=9,res=10}
-    local gKeysNext = 10
-    local function keyCompare(a,b)
-      local av,bv = gKeys[a], gKeys[b]
-      if av == nil then gKeysNext = gKeysNext+1 gKeys[a] = gKeysNext av = gKeysNext end
-      if bv == nil then gKeysNext = gKeysNext+1 gKeys[b] = gKeysNext bv = gKeysNext end
-      return av < bv
-    end
-    function self.prettyJson(e0) -- our own json encode, as we don't have 'pure' json structs, and sorts keys in order
-      local res,seen = {},{}
-      local function pretty(e)
-        local t = type(e)
-        if t == 'string' then res[#res+1] = '"' res[#res+1] = e res[#res+1] = '"' 
-        elseif t == 'number' then res[#res+1] = e
-        elseif t == 'boolean' or t == 'function' or t=='thread' then res[#res+1] = tostring(e)
-        elseif t == 'table' then
-          if next(e)==nil then res[#res+1]='{}'
-          elseif seen[e] then res[#res+1]="..rec.."
-          elseif e[1] or #e>0 then
-            seen[e]=true
-            res[#res+1] = "[" pretty(e[1])
-            for i=2,#e do res[#res+1] = "," pretty(e[i]) end
-            res[#res+1] = "]"
-          else
-            seen[e]=true
-            if e._var_  then res[#res+1] = format('"%s"',e._str) return end
-            local k = {} for key,_ in pairs(e) do k[#k+1] = key end 
-            table.sort(k,keyCompare)
-            if #k == 0 then res[#res+1] = "[]" return end
-            res[#res+1] = '{'; res[#res+1] = '"' res[#res+1] = k[1]; res[#res+1] = '":' t = k[1] pretty(e[t])
-            for i=2,#k do 
-              res[#res+1] = ',"' res[#res+1] = k[i]; res[#res+1] = '":' t = k[i] pretty(e[t]) 
-            end
-            res[#res+1] = '}'
-          end
-        elseif e == nil then res[#res+1]='null'
-        else error("bad json expr:"..tostring(e)) end
-      end
-      pretty(e0)
-      return table.concat(res)
-    end
-
     self.S1 = {click = "16", double = "14", tripple = "15", hold = "12", release = "13"}
     self.S2 = {click = "26", double = "24", tripple = "25", hold = "22", release = "23"} 
 
-    self.netSync = { HTTPClient = function (log)   
-        local selfM,queue,HTTP,key = {},{},net.HTTPClient(),0
-        local _request
-        local function dequeue()
-          table.remove(queue,1)
-          local v = queue[1]
-          if v then 
-            Debug(_debugFlags.netSync,"netSync:Pop %s (%s)",v[3],#queue)
-            --setTimeout(function() _request(table.unpack(v)) end,1)
-            _request(table.unpack(v))
-          end
-        end
-        _request = function(url,params,key)
-          params = copy(params)
-          local uerr,usucc = params.error,params.success
-          params.error = function(status)
-            Debug(_debugFlags.netSync,"netSync:Error %s %s",key,status)
-            dequeue()
-            if params._logErr then quickApp:errorf(" %s:%s",log or "netSync:",tojson(status)) end
-            if uerr then uerr(status) end
-          end
-          params.success = function(status)
-            Debug(_debugFlags.netSync,"netSync:Success %s",key)
-            dequeue()
-            if usucc then usucc(status) end
-          end
-          Debug(_debugFlags.netSync,"netSync:Calling %s",key)
-          HTTP:request(url,params)
-        end
-        function selfM:request(url,parameters)
-          key = key+1
-          if next(queue) == nil then
-            queue[1]='RUN'
-            _request(url,parameters,key)
-          else 
-            Debug(_debugFlags.netSync,"netSync:Push %s",key)
-            queue[#queue+1]={url,parameters,key} 
-          end
-        end
-        return selfM
-      end}
-
+    self.netSync = netSync
     self.getWeekNumber = function(tm) return tonumber(os.date("%V",tm)) end
 
-    function self.dateTest(dateStr0)
-      local days = {sun=1,mon=2,tue=3,wed=4,thu=5,fri=6,sat=7}
-      local months = {jan=1,feb=2,mar=3,apr=4,may=5,jun=6,jul=7,aug=8,sep=9,oct=10,nov=11,dec=12}
-      local last,month = {31,28,31,30,31,30,31,31,30,31,30,31},nil
-
-      local function seq2map(seq) local s = {} for _,v in ipairs(seq) do s[v] = true end return s; end
-
-      local function flatten(seq,res) -- flattens a table of tables
-        res = res or {}
-        if type(seq) == 'table' then for _,v1 in ipairs(seq) do flatten(v1,res) end else res[#res+1] = seq end
-        return res
-      end
-
-      local function expandDate(w1,md)
-        local function resolve(id)
-          local res
-          if id == 'last' then month = md res=last[md] 
-          elseif id == 'lastw' then month = md res=last[md]-6 
-          else res= type(id) == 'number' and id or days[id] or months[id] or tonumber(id) end
-          _assert(res,"Bad date specifier '%s'",id) return res
-        end
-        local w,m,step= w1[1],w1[2],1
-        local start,stop = w:match("(%w+)%p(%w+)")
-        if (start == nil) then return resolve(w) end
-        start,stop = resolve(start), resolve(stop)
-        local res,res2 = {},{}
-        if w:find("/") then
-          if not w:find("-") then -- 10/2
-            step=stop; stop = m.max
-          else step=w:match("/(%d+)") end
-        end
-        step = tonumber(step)
-        _assert(start>=m.min and start<=m.max and stop>=m.min and stop<=m.max,"illegal date intervall")
-        while (start ~= stop) do -- 10-2
-          res[#res+1] = start
-          start = start+1; if start>m.max then start=m.min end  
-        end
-        res[#res+1] = stop
-        if step > 1 then for i=1,#res,step do res2[#res2+1]=res[i] end; res=res2 end
-        return res
-      end
-
-      local function parseDateStr(dateStr,last)
-        local map = Util.map
-        local seq = string.split(dateStr," ")   -- min,hour,day,month,wday
-        local lim = {{min=0,max=59},{min=0,max=23},{min=1,max=31},{min=1,max=12},{min=1,max=7}}
-        for i=1,5 do if seq[i]=='*' or seq[i]==nil then seq[i]=tostring(lim[i].min).."-"..lim[i].max end end
-        seq = map(function(w) return string.split(w,",") end, seq)   -- split sequences "3,4"
-        local month0 = os.date("*t",os.time()).month
-        seq = map(function(t) local m = table.remove(lim,1);
-            return flatten(map(function (g) return expandDate({g,m},month0) end, t))
-          end, seq) -- expand intervalls "3-5"
-        return map(seq2map,seq)
-      end
-      local sun,offs,day,sunPatch = dateStr0:match("^(sun%a+) ([%+%-]?%d+)")
-      if sun then
-        sun = sun.."Hour"
-        dateStr0=dateStr0:gsub("sun%a+ [%+%-]?%d+","0 0")
-        sunPatch=function(dateSeq)
-          local h,m = (fibaro:getValue(1,sun)):match("(%d%d):(%d%d)")
-          dateSeq[1]={[(tonumber(h)*60+tonumber(m)+tonumber(offs))%60]=true}
-          dateSeq[2]={[math.floor((tonumber(h)*60+tonumber(m)+tonumber(offs))/60)]=true}
-        end
-      end
-      local dateSeq = parseDateStr(dateStr0)
-      return function() -- Pretty efficient way of testing dates...
-        local t = os.date("*t",os.time())
-        if month and month~=t.month then parseDateStr(dateStr0) end -- Recalculate 'last' every month
-        if sunPatch and (month and month~=t.month or day~=t.day) then sunPatch(dateSeq) day=t.day end -- Recalculate 'last' every month
-        return
-        dateSeq[1][t.min] and    -- min     0-59
-        dateSeq[2][t.hour] and   -- hour    0-23
-        dateSeq[3][t.day] and    -- day     1-31
-        dateSeq[4][t.month] and  -- month   1-12
-        dateSeq[5][t.wday] or false      -- weekday 1-7, 1=sun, 7=sat
-      end
-    end
-
----- SunCalc -----
-
-    local function sunturnTime(date, rising, latitude, longitude, zenith, local_offset)
-      local rad,deg,floor = math.rad,math.deg,math.floor
-      local frac = function(n) return n - floor(n) end
-      local cos = function(d) return math.cos(rad(d)) end
-      local acos = function(d) return deg(math.acos(d)) end
-      local sin = function(d) return math.sin(rad(d)) end
-      local asin = function(d) return deg(math.asin(d)) end
-      local tan = function(d) return math.tan(rad(d)) end
-      local atan = function(d) return deg(math.atan(d)) end
-
-      local function day_of_year(date)
-        local n1 = floor(275 * date.month / 9)
-        local n2 = floor((date.month + 9) / 12)
-        local n3 = (1 + floor((date.year - 4 * floor(date.year / 4) + 2) / 3))
-        return n1 - (n2 * n3) + date.day - 30
-      end
-
-      local function fit_into_range(val, min, max)
-        local range,count = max - min
-        if val < min then count = floor((min - val) / range) + 1; return val + count * range
-        elseif val >= max then count = floor((val - max) / range) + 1; return val - count * range
-        else return val end
-      end
-
-      -- Convert the longitude to hour value and calculate an approximate time
-      local n,lng_hour,t =  day_of_year(date), longitude / 15
-      if rising then t = n + ((6 - lng_hour) / 24) -- Rising time is desired
-      else t = n + ((18 - lng_hour) / 24) end -- Setting time is desired
-      local M = (0.9856 * t) - 3.289 -- Calculate the Sun^s mean anomaly
-      -- Calculate the Sun^s true longitude
-      local L = fit_into_range(M + (1.916 * sin(M)) + (0.020 * sin(2 * M)) + 282.634, 0, 360)
-      -- Calculate the Sun^s right ascension
-      local RA = fit_into_range(atan(0.91764 * tan(L)), 0, 360)
-      -- Right ascension value needs to be in the same quadrant as L
-      local Lquadrant = floor(L / 90) * 90
-      local RAquadrant = floor(RA / 90) * 90
-      RA = RA + Lquadrant - RAquadrant; RA = RA / 15 -- Right ascension value needs to be converted into hours
-      local sinDec = 0.39782 * sin(L) -- Calculate the Sun's declination
-      local cosDec = cos(asin(sinDec))
-      local cosH = (cos(zenith) - (sinDec * sin(latitude))) / (cosDec * cos(latitude)) -- Calculate the Sun^s local hour angle
-      if rising and cosH > 1 then return "N/R" -- The sun never rises on this location on the specified date
-      elseif cosH < -1 then return "N/S" end -- The sun never sets on this location on the specified date
-
-      local H -- Finish calculating H and convert into hours
-      if rising then H = 360 - acos(cosH)
-      else H = acos(cosH) end
-      H = H / 15
-      local T = H + RA - (0.06571 * t) - 6.622 -- Calculate local mean time of rising/setting
-      local UT = fit_into_range(T - lng_hour, 0, 24) -- Adjust back to UTC
-      local LT = UT + local_offset -- Convert UT value to local time zone of latitude/longitude
-      return os.time({day = date.day,month = date.month,year = date.year,hour = floor(LT),min = math.modf(frac(LT) * 60)})
-    end
-
-    local function getTimezone() local now = os.time() return os.difftime(now, os.time(os.date("!*t", now))) end
-
-    function self.sunCalc(time)
-      local hc2Info = api.get("/settings/location") or {}
-      local lat = hc2Info.latitude
-      local lon = hc2Info.longitude
-      local utc = getTimezone() / 3600
-      local zenith,zenith_twilight = 90.83, 96.0 -- sunset/sunrise 90°50′, civil twilight 96°0′
-
-      local date = os.date("*t",time or os.time())
-      if date.isdst then utc = utc + 1 end
-      local rise_time = os.date("*t", sunturnTime(date, true, lat, lon, zenith, utc))
-      local set_time = os.date("*t", sunturnTime(date, false, lat, lon, zenith, utc))
-      local rise_time_t,set_time_t = rise_time,set_time
-      pcall(function()
-          rise_time_t = os.date("*t", sunturnTime(date, true, lat, lon, zenith_twilight, utc))
-          set_time_t = os.date("*t", sunturnTime(date, false, lat, lon, zenith_twilight, utc))
-        end)
-      local sunrise = format("%.2d:%.2d", rise_time.hour, rise_time.min)
-      local sunset = format("%.2d:%.2d", set_time.hour, set_time.min)
-      local sunrise_t = format("%.2d:%.2d", rise_time_t.hour, rise_time_t.min)
-      local sunset_t = format("%.2d:%.2d", set_time_t.hour, set_time_t.min)
-      return sunrise, sunset, sunrise_t, sunset_t
-    end
-
-    if not hc3_emulator then
-      local _IPADDRESS
-      function self.getIPaddress()
-        if _IPADDRESS then return _IPADDRESS end
-        local nets = api.get("/settings/network").networkConfig or {}
-        if nets.wlan0.enabled then
-          _IPADDRESS =  nets.wlan0.ipConfig.ip
-        elseif nets.eth0.enabled then
-          _IPADDRESS =  nets.eth0.ipConfig.ip
-        else
-          error("Can't find IP address")
-        end
-        return _IPADDRESS
-      end
-    else 
-      self.getIPaddress = hc3_emulator.getIPaddress 
-    end
+    self.dateTest = fibaro.utils.dateTest
+    self.sunCalc = fibaro.utils.sunCalc
+    self.getIPaddress = fibaro.utils.getIPaddress
 
     self.equal,self.copy,self.transform,self.hm2sec,self.midnight  = equal,copy,transform,hm2sec,midnight
-    tojson,self.time2str,self.between,self.gensym,self.notify = self.prettyJson,time2str,between,gensym,notify
+    tojson,self.time2str,self.between,self.gensym,self.notify = json.encodeFast,time2str,between,gensym,notify
     self.toTime = toTime
     Util = self
     return self
@@ -1387,13 +1131,17 @@ function Module.utilities.init()
       instr['yield'] = function(s,n,_,_) local r = s.lift(n); s.push(nil); return 'suspended',r end
       instr['return'] = function(s,n,_,_) return 'dead',s.lift(n) end
       instr['wait'] = function(s,_,e,_) local t,co=s.pop(),e.co; t=t < os.time() and t or t-os.time(); s.push(t);
-        setTimeout(function() 
+        e.rule.wait = setTimeout(function()
+            e.rule.wait = nil
             local stat,res = pcall(resume,co,e)
             if not stat then
               quickApp:errorf("'%s' - %s",e.src or "",trimError(res) or "") 
             end
           end,t*1000);
         return 'suspended',{}
+      end
+      instr['kill'] = function(s,_,e,_) local ep=s.pop() 
+        if ep and ep.wait then clearTimeout(ep.wait) end 
       end
       instr['%not'] = function(s,_) s.push(not s.pop()) end
       instr['%neg'] = function(s,_) s.push(-tonumber(s.pop())) end
@@ -2288,7 +2036,8 @@ QuickApp._SILENT = true
 function QuickApp:onInit()
   setVersion("EventRunner4",self.E_SERIAL,self.E_VERSION)
   self:debugf("%s, deviceId:%s, version:%s",self.name,self.id,self.E_VERSION)
-  fibaro.initEvents()
+  for f,v in pairs(_debugFlags) do fibaro.debugFlags[f]=v end
+  _debugFlags = fibaro.debugFlags
   for _,name in ipairs(modules) do
     local res = Module[name].init(self)
   end
