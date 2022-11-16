@@ -38,7 +38,7 @@ local rsrc = {
   ['panels/sprinklers'] = {},
   ['panels/humidity'] = {},
   ['panels/favoriteColors'] = {},
-  diagnostics = {},
+  diagnostics = { cpuLoad  = {{}} },
   sortOrder = {},
   loginStatus = {},
   RGBprograms = {},
@@ -235,6 +235,7 @@ local function setup()
   EM.addAPI("GET/profiles/#id",profileInfo)
   EM.addAPI("POST/profiles/activeProfile/#id",profileSet)
   EM.addAPI("GET/weather",function() return rsrc.weather,200 end)
+  EM.addAPI("GET/diagnostics",function() return rsrc.diagnostics,200 end)
   EM.addAPI("GET/debugMessages",function() return rsrc.debugMessages,200 end)
   EM.addAPI("GET/home",function() return rsrc.home,200 end)
   EM.addAPI("GET/icons",function() return map2arr(rsrc.icons),200 end)

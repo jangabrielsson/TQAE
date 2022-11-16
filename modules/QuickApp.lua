@@ -12,6 +12,7 @@ function plugin.createChildDevice(props) return api.post("/plugins/createChildDe
 class 'QuickAppBase'
 
 function QuickAppBase:__init(dev)
+  self._TYPE='userdata'
   self.id         = dev.id
   self.name       = dev.name
   self.type       = dev.type

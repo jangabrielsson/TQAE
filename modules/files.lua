@@ -123,7 +123,7 @@ end
 local function loadLua(fileName) return loadSource(readFile(fileName),fileName) end
 local function findFirstCodeLine(code,name)  -- Try to find first code line
   local n,first,init = 1
-  for line in string.gmatch(code,"([^\r\n]*)[\r\n]?") do
+  for line in string.gmatch(code,"([^\r\n]*\r?\n?)") do
     if not (line=="" or line:match("^[%-%s]+")) then 
       if not first then first = n end
     end
