@@ -44,13 +44,17 @@ local function createTemp(name,content) -- Storing code fragments on disk will h
   local crc = crc16(content)
   local fname = EM.cfg.temp..name.."_"..crc..".lua" 
   local f,res; f = io.open(fname,"r") 
-  if f then f:close() return fname end -- If it exists, don't store it again
+  if f then -- If it exists, don't store it again
+    content = f:read("*all")
+    f:close() 
+    return fname,content 
+  end 
   f,res = io.open(fname,"w+")
   if not f then LOG.error("Warning - couldn't create temp files in %s - %s",EM.cfg.temp,res) return 
   else DEBUG("files","sys","Created temp file %s",fname) end
   f:write(content) 
   f:close()
-  return fname
+  return fname,content
 end
 
 local deviceTemplates,sortedDeviceTemplates
@@ -138,7 +142,9 @@ end
 local function loadFQA(fqa,args)  -- Load FQA
   local files,main = {}
   for _,f in ipairs(fqa.files) do
-    local fname = createTemp(f.name,f.content) or f.name..crc16(f.content) -- Create temp files for fqa files, easier to debug
+    local fname,content = createTemp(f.name,f.content)
+    if fname==nil then fname=f.name..crc16(f.content) content = f.content end -- Create temp files for fqa files, easier to debug
+    f.content = content
     if f.isMain then f.fname=fname main=f
     else files[#files+1] = {name=f.name,content=f.content,type='lua',isOpen=false,isMain=f.isMain,fname=fname} end
     local first,init = findFirstCodeLine(f.content,f.name)

@@ -305,7 +305,7 @@ do
   end
 
   fibaro.dateTest = dateTest
-  
+
   do
     -- Alternative, several timers share a cron loop instance.
     local jobs,timer = {} -- {fun = {test=.., args={...}}}
@@ -1831,7 +1831,18 @@ do
   setInterval, json.encode, json.decode
   local oldClearTimout,oldSetTimout
 
-  if not hc3_emulator then -- Patch short-sighthed setTimeout...
+  if  hc3_emulator then
+    setTimeout,oldSetTimout=function(f,...)
+      local t
+      local function nf(...)
+        if t._prehook then t._prehook() end
+        return f(...) 
+        --if t._posthook then t._posthook() end
+      end
+      t = oldSetTimout(nf,...)
+      return t
+    end,setTimeout
+  elseif not hc3_emulator then -- Patch short-sighthed setTimeout...
     local function timer2str(t)
       return format("[Timer:%d%s %s]",t.n,t.log or "",os.date('%T %D',t.expires or 0))
     end
@@ -1855,7 +1866,9 @@ do
         end
         NC = NC-1
         ref.expired = true
+        if ref._prehook then t._prehook() end
         local stat,res = pcall(f)
+        if ref._posthook then t._posthook() end
         if not stat then 
           fibaro.error(nil,res)
         end
@@ -2126,6 +2139,13 @@ do
   function fibaro.HTTPEvent(args) if not inited then initEvents() end; return fibaro.HTTPEvent(args) end
   function QuickApp:RECIEVE_EVENT(ev) if not inited then initEvents() end; return _RECIEVE_EVENT(self,ev) end
   function fibaro.initEvents() if not inited then initEvents() end end
+  local function transform(obj,tf)
+    if type(obj) == 'table' then
+      local res = {} for l,v in pairs(obj) do res[l] = transform(v,tf) end 
+      return res
+    else return tf(obj) end
+  end
+  utils.transform = transform
 
   function initEvents()
     local function DEBUG(...) if debugFlags.event then fibaro.debugf(nil,...) end end
@@ -2170,14 +2190,6 @@ do
 
 -- Cancel post in the future
     function fibaro.cancel(ref) clearTimeout(ref) end
-
-    local function transform(obj,tf)
-      if type(obj) == 'table' then
-        local res = {} for l,v in pairs(obj) do res[l] = transform(v,tf) end 
-        return res
-      else return tf(obj) end
-    end
-    utils.transform = transform
 
     local function coerce(x,y) local x1 = tonumber(x) if x1 then return x1,tonumber(y) else return x,y end end
     local constraints = {}

@@ -72,11 +72,11 @@ function QuickApp:main()    -- EventScript version
 --  rule("2:disarmed => log('2 disarmed')")
 --  rule("2:willArm => log('2 will arm')")
 
+--  rule("#foo=>kill(); log('A');wait(2);log('B')")
+--  rule("post(#foo); wait(1); post(#foo)")
+  
   rule("#se-start => log('START')")
   rule("#DST_changed => plugin.restart()") -- Restart ER when DST change
-
-  apa = rule("#foo => kill(apa); log('A'); wait(1); log('B'); wait(5); log('C')")
-  rule("post(#foo); wait(2); post(#foo)")
   
 --  Phone = {2,107}
 --  lights={267,252,65,67,78,111,129,158,292,127,216,210,205,286,297,302,305,410,384,389,392,272,329,276} -- eller hämta värden från HomeTable
