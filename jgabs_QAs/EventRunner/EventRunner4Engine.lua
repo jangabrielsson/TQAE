@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.90,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.92,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = _debugFlags or {}
@@ -380,7 +380,7 @@ function Module.utilities.init()
   self.netSync = netSync
   self.getWeekNumber = function(tm) return tonumber(os.date("%V",tm)) end
 
-  self.dateTest = fibaro.utils.dateTest
+  self.dateTest = fibaro.dateTest
   self.sunCalc = fibaro.utils.sunCalc
   self.getIPaddress = fibaro.utils.getIPaddress
 

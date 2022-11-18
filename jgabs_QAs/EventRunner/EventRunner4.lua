@@ -52,7 +52,7 @@ function QuickApp:main()    -- EventScript version
 
   Util.defvars(HT)
   Util.reverseMapDef(HT)
-
+  rule("wday('thu')")
 --  rule("#profile{property='activeProfile', value=AwayProfile} => enable('Away',true)") 
 --  rule("#profile{property='activeProfile', value=HomeProfile} => enable('Home',true); r2.start()") 
 --  rule("post(#profile{property='activeProfile', value=HomeProfile})") 

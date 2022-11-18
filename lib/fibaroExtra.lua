@@ -1866,9 +1866,9 @@ do
         end
         NC = NC-1
         ref.expired = true
-        if ref._prehook then t._prehook() end
+        if ref._prehook then ref._prehook() end
         local stat,res = pcall(f)
-        if ref._posthook then t._posthook() end
+        if ref._posthook then ref._posthook() end
         if not stat then 
           fibaro.error(nil,res)
         end
