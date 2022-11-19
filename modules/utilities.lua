@@ -40,20 +40,20 @@ end
 
 local ZBCOLORMAP = {
   black="\027[30m",brown="\027[31m",green="\027[32m",orange="\027[33m",
-  navy="\027[34m",purple="\027[35m",teal="\027[36m",grey="\027[37m",
+  navy="\027[34m",purple="\027[35m",teal="\027[36m",grey="\027[37m", gray="\027[37m",
   red="\027[31;1m",tomato="\027[31;1m",neon="\027[32;1m",yellow="\027[33;1m",
   blue="\027[34;1m",magenta="\027[35;1m",cyan="\027[36;1m",white="\027[37;1m",
   darkgrey="\027[30;1m",
 }
 
-local function html2color(str,startColor)
-  local st,p = {startColor or '\027[0m'},1
+local function html2color(str,startColor,dflTxt)
+  local st,p = {startColor or ZBCOLORMAP[dflTxt] or '\027[0m'},1
   return str:gsub("(</?font.->)",function(s)
       if s=="</font>" then
         p=p-1; return st[p]
       else
-        local color = s:match("color=(%w+)")
-        color=ZBCOLORMAP[color] or ZBCOLORMAP['black']
+        local color = s:match("color=([#%w]+)")
+        color=ZBCOLORMAP[color] or (utils.colorMap[color] and ZBCOLORMAP[utils.colorMap[color] or dflTxt]) or ZBCOLORMAP['black']
         p=p+1; st[p]=color
         return color
       end

@@ -127,6 +127,7 @@ debugFlags.html  = DEF(debugFlags.html,true)
 debugFlags.color = DEF(debugFlags.color,true)
 local fibColors  = DEF(cfg.fibColors,{ ["DEBUG"] = 'green', ["TRACE"] = 'blue', ["WARNING"] = 'orange', ["ERROR"] = 'red' })
 local logColors  = DEF(cfg.logColors,{ ["SYS"] = 'brown', ["ERROR"]='red', ["WARN"] = 'orange', ["TRACE"] = 'blue' })
+EM.utilities.colorMap = DEF(cfg.colorMap,{})
 
 local globalModules = { -- default global modules loaded once into emulator environment
   "net.lua","json.lua","files.lua", "webserver.lua", "api.lua", "proxy.lua", "ui.lua", "offline.lua", "time.lua",
@@ -271,7 +272,7 @@ local html2color,ANSICOLORS,ANSIEND = Utils.html2color,Utils.ZBCOLORMAP,Utils.ZB
 function FB.__fibaro_add_debug_message(tag,str,typ)
   assert(str,"Missing tag for debug")
   typ=typ:upper()
-  str = debugFlags.html and html2color(str) or str:gsub("(</?font.->)","") -- Remove color tags
+  str = debugFlags.html and html2color(str,nil,fibColors['TEXT']) or str:gsub("(</?font.->)","") -- Remove color tags
   typ = debugFlags.color and (ANSICOLORS[(fibColors[typ] or "black")]..typ..ANSIEND) or typ
   str = str:gsub("(&nbsp;)"," ")      -- remove html space
   if debugFlags.color then
