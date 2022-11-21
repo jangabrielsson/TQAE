@@ -49,6 +49,9 @@ function QuickApp:main()    -- EventScript version
     lux = 23,
   }
   
+  s1 = hc3_emulator.create.binarySensor(77)
+  s2 = hc3_emulator.create.binarySensor(88)
+  
   Util.defvars(HT)
   Util.reverseMapDef(HT)
 --  rule("#profile{property='activeProfile', value=AwayProfile} => enable('Away',true)") 
@@ -72,7 +75,7 @@ function QuickApp:main()    -- EventScript version
 
 --  rule("#foo=>kill(); log('A');wait(2);log('B')")
 --  rule("post(#foo); wait(1); post(#foo)")
-
+  
   rule("#se-start => log('HC3 restarted')")
   rule("#DST_changed => plugin.restart()") -- Restart ER when DST change
 

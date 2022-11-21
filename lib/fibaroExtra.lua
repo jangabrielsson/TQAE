@@ -220,8 +220,8 @@ _MODULES.utilities={ author = "jan@gabrielsson.com", version = '0.4', init = fun
       else return t end
     end
 
-    function table.mapAnd(f,l) for _,e in ipairs(l) do if f(e) then return false end end return true end
-    function table.mapOr(f,l) for i,e in ipairs(l) do if f(e) then return i end end end
+    function table.mapAnd(f,l,s) s = s or 1; local e=true for i=s,table.maxn(l) do e = f(l[i]) if not e then return false end end return e end 
+    function table.mapOr(f,l,s) s = s or 1; for i=s,table.maxn(l) do local e = f(l[i]) if e then return e end end return false end
     function table.reduce(f,l) local r = {}; for _,e in ipairs(l) do if f(e) then r[#r+1]=e end end; return r end
     function table.mapk(f,l) local r={}; for k,v in pairs(l) do r[k]=f(v) end; return r end
     function table.mapkv(f,l) local r={}; for k,v in pairs(l) do k,v=f(k,v) r[k]=v end; return r end

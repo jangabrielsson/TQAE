@@ -28,12 +28,12 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.94,
+      { version = 0.95,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.94"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.95"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "nil .timers bugfix",
+        descr = "fixed mapAnd bug",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",
