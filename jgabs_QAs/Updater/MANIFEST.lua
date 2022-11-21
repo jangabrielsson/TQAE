@@ -28,9 +28,9 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.93,
+      { version = 0.94,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.93"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.94"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "nil .timers bugfix",
