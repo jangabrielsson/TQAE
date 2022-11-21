@@ -1,10 +1,10 @@
 --luacheck: globals ignore _debugFlags hc3_emulator Util Rule utils
---luacheck: globals ignore QuickApp QuickAppChild quickApp fibaro json __TAG net api class
---luacheck: globals ignore __fibaro_get_device setTimeout clearTimeout setInterval clearInterval __fibaro_get_device_property
+--luacheck: globals ignore QuickApp QuickAppChild quickApp fibaro json __TAG net api class __print netSync Nodered
+--luacheck: globals ignore __fibaro_get_device setTimeout clearTimeout setInterval clearInterval __fibaro_get_device_property table
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.92,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.93,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = _debugFlags or {}
@@ -16,101 +16,6 @@ Util,Rule = nil,Rule or {}
 local isError, throwError, Debug
 local _assert, _assertf, tojson, _traceInstrs
 local _RULELOGLENGTH, _MIDNIGHTADJUST = nil,nil
-
---[[ Supported events:
-
-Supported events:
-{type='alarm', property='armed', id=<id>, value=<value>}
-{type='alarm', property='breached', id=<id>, value=<value>}
-{type='alarm', property='homeArmed', value=<value>}
-{type='alarm', property='homeBreached', value=<value>}
-{type='weather', property=<prop>, value=<value>, old=<value>}
-{type='global-variable', property=<name>, value=<value>, old=<value>}
-{type='device', id=<id>, property=<property>, value=<value>, old=<value>}
-{type='device', id=<id>, property='centralSceneEvent', value={keyId=<value>, keyAttribute=<value>}}
-{type='device', id=<id>, property='accessControlEvent', value=<value>}
-{type='device', id=<id>, property='sceneACtivationEvent', value=<value>}
-{type='profile', property='activeProfile', value=<value>, old=<value>}
-{type='custom-event', name=<name>}
-{type='updateReadyEvent', value=_}
-{type='deviceEvent', id=<id>, value='removed'}
-{type='deviceEvent', id=<id>, value='changedRoom'}
-{type='deviceEvent', id=<id>, value='created'}
-{type='deviceEvent', id=<id>, value='modified'}
-{type='deviceEvent', id=<id>, value='crashed', error=<string>}
-{type='sceneEvent',  id=<id>, value='started'}
-{type='sceneEvent',  id=<id>, value='finished'}
-{type='sceneEvent',  id=<id>, value='instance', instance=d}
-{type='sceneEvent',  id=<id>, value='removed'}
-{type='onlineEvent', value=<bool>}
-
-Missing
-{type='location', property='id', id=<number>, value=<string>}
-{type='se-start', property='start', value='true'}
-{type='climate', ...}
-
-    New functions:
-    self:profileId(name)                      -- returns id of profile with name
-    self:profileName(id)                      -- returns name of profile with id
-    self:activeProfile([id])                  -- activates profile id. If id==nil return active profile.
-    self:getCustomEvent(name)                 -- return userDescription field of customEvent
-    self:postCustomEvent(name[,descr])        -- post existing customEvent (descr==nil), or creates and post customEvent (descr~=nil)
-    http.get(url,options)                     -- syncronous versions of http commands, only inside eventscript
-    http.put(url,options,data)                --
-    http.post(url,options,data)               --
-    http.delete(url,options)
---]]
-
---function QuickApp:main()    -- EventScript version
---  local rule = function(...) return self:evalScript(...) end          -- old rule function
---  self:enableTriggerType({"device","global-variable","custom-event"}) -- types of events we want
-
---  HT = {
---    keyfob = 26,
---    motion= 21,
---    temp = 22,
---    lux = 23,
---  }
-
---  Util.defvars(HT)
---  Util.reverseMapDef(HT)
-
---  rule("@@00:00:05 => log(now % 2 == 1 & 'Tick' | 'Tock')")
-
---  rule("keyfob:central => log('Key:%s',env.event.value.keyId)")
---  rule("motion:value => log('Motion:%s',motion:value)")
---  rule("temp:temp => log('Temp:%s',temp:temp)")
---  rule("lux:lux => log('Lux:%s',lux:lux)")
-
---  rule("wait(3); log('Res:%s',http.get('https://jsonplaceholder.typicode.com/todos/1').data)")
-
---  Nodered.connect("http://192.168.1.50:1880/ER_HC3")
---  rule("Nodered.post({type='echo1',value=42})")
---  rule("#echo1 => log('ECHO:%s',env.event.value)")
-
---  rule("log('Synchronous call:%s',Nodered.post({type='echo1',value=42},true))")
-
---  rule("#alarm{property='armed', value=true, id='$id'} => log('Zone %d armed',id)")
---  rule("#alarm{property='armed', value=false, id='$id'} => log('Zone %d disarmed',id)")
---  rule("#alarm{property='homeArmed', value=true} => log('Home armed')")
---  rule("#alarm{property='homeArmed', value=false} => log('Home disarmed')")
---  rule("#alarm{property='homeBreached', value=true} => log('Home breached')")
---  rule("#alarm{property='homeBreached', value=false} => log('Home safe')")
-
---  rule("#weather{property='$prop', value='$val'} => log('%s = %s',prop,val)")
-
---  rule("#profile{property='activeProfile', value='$val'} => log('New profile:%s',profile.name(val))")
---  rule("log('Current profile:%s',QA:profileName(QA:activeProfile()))")
-
---  rule("#customevent{name='$name'} => log('Custom event:%s',name)")
---  rule("#myBroadcast{value='$value'} => log('My broadcast:%s',value)")
---  rule("wait(5); QA:postCustomEvent('myEvent','this is a test')")
---  rule("wait(7); broadcast({type='myBroadcast',value=42})")
---  rule("#deviceEvent{id='$id',value='$value'} => log('Device %s %s',id,value)")
---  rule("#sceneEvent{id='$id',value='$value'} => log('Scene %s %s',id,value)")
-
---    dofile("verifyHC3scripts.lua")
---end
 
 ------------------- EventSupport - Don't change! --------------------
 local Toolbox_Module  = {}
@@ -172,37 +77,12 @@ function Module.utilities.init()
   if Module.utilities.inited then return Module.utilities.inited end
   Module.utilities.inited = true
 
-  local self,utils = {},fibaro.utils
-  local midnight,hm2sec,transform,copy,equal=fibaro.midnight,utils.hm2sec,utils.transform,table.copy,table.equal
-  local toTime,gensym,notify = utils.toTime,utils.gensym,utils.notify
-  self.transform = transform
+  local self = {}
+  local equal=table.equal
   
   function self.findEqual(tab,obj)
     for _,o in ipairs(tab) do if equal(o,obj) then return true end end
   end
-
-  if not table.maxn then 
-    function table.maxn(tbl)
-      local c=0
-      for _ in pairs(tbl) do c=c+1 end
-      return c
-    end
-  end
-
-  function self.map(f,l,s) 
-    s = s or 1; local r,m={},table.maxn(l) 
-    for i=s,m do 
-      r[#r+1] = f(l[i]) 
-    end 
-    return r 
-  end
-  function self.mapAnd(f,l,s) s = s or 1; local e=true for i=s,table.maxn(l) do e = f(l[i]) if not e then return false end end return e end 
-  function self.mapOr(f,l,s) s = s or 1; for i=s,table.maxn(l) do local e = f(l[i]) if e then return e end end return false end
-  function self.mapF(f,l,s) s = s or 1; local e=true for i=s,table.maxn(l) do e = f(l[i]) end return e end
-  function self.mapkl(f,l) local r={} for i,j in pairs(l) do r[#r+1]=f(i,j) end return r end
-  function self.mapkk(f,l) local r={} for k,v in pairs(l) do r[k]=f(v) end return r end
-  function self.member(v,tab) for _,e in ipairs(tab) do if v==e then return e end end return nil end
-  function self.append(t1,t2) for _,e in ipairs(t2) do t1[#t1+1]=e end return t1 end
 
   function isError(e) return type(e)=='table' and e.ERR end
   function throwError(args) args.ERR=true; error(args,args.level) end
@@ -341,16 +221,9 @@ function Module.utilities.init()
   function _assert(test,msg,...) if not test then error(string.format(msg,...),3) end end
   function _assertf(test,msg,fun) if not test then error(string.format(msg,fun and fun() or ""),3) end end
 
-  local function time2str(t) return format("%02d:%02d:%02d",math.floor(t/3600),math.floor((t%3600)/60),t%60) end
-  local function between(t11,t22)
-    local t1,t2,tn = midnight()+hm2sec(t11),midnight()+hm2sec(t22),os.time()
-    if t1 <= t2 then return t1 <= tn and tn <= t2 else return tn <= t1 or tn >= t2 end 
-  end
-
-
   local cbr = {}
   function self.asyncCall(errstr,timeout)
-    local tag = gensym("CBR")
+    local tag = fibaro.utils.gensym("CBR")
     cbr[tag]={nil,nil,errstr}
     cbr[tag][1]=setTimeout(function() 
         cbr[tag]=nil 
@@ -377,16 +250,7 @@ function Module.utilities.init()
   self.S1 = {click = "16", double = "14", tripple = "15", hold = "12", release = "13"}
   self.S2 = {click = "26", double = "24", tripple = "25", hold = "22", release = "23"} 
 
-  self.netSync = netSync
-  self.getWeekNumber = function(tm) return tonumber(os.date("%V",tm)) end
-
-  self.dateTest = fibaro.dateTest
-  self.sunCalc = fibaro.utils.sunCalc
-  self.getIPaddress = fibaro.utils.getIPaddress
-
-  self.equal,self.copy,self.transform,self.hm2sec,self.midnight  = equal,copy,transform,hm2sec,midnight
-  tojson,self.time2str,self.between,self.gensym,self.notify = json.encodeFast,time2str,between,gensym,notify
-  self.toTime = toTime
+  tojson = json.encodeFast
   Util = self
   return self
 end -- Utils
@@ -419,14 +283,12 @@ function Module.autopatch.init(self)
     end
   end
 
-  function Util.updateFile(file)
+  function Util.updateFile(_)
     if UpdaterID and UpdateVersion then
       fibaro.call(UpdaterID,"updateMe",self.id,UpdateVersion)
     end
   end
 
-  function DOWNLOADSOURCE()
-  end
 end
 
 ----------------- Module Extras -------------------------------
@@ -437,13 +299,13 @@ function Module.extras.init(self)
   -- Sunset/sunrise patch -- first time in the day someone asks for sunsethours we calculate and cache
   local _SUNTIMEDAY = nil
   local _SUNTIMEVALUES = {sunsetHour="00:00",sunriseHour="00:00",dawnHour="00:00",duskHour="00:00"}
-  Util.defineVirtualDevice(1,nil,function(_,prop,...)
+  Util.defineVirtualDevice(1,nil,function(_,prop)
       if not _SUNTIMEVALUES[prop] then return nil end
       local s = _SUNTIMEVALUES
       local day = os.date("*t").day
       if day ~= _SUNTIMEDAY then
         _SUNTIMEDAY = day
-        s.sunriseHour,s.sunsetHour,s.dawnHour,s.duskHour=Util.sunCalc()
+        s.sunriseHour,s.sunsetHour,s.dawnHour,s.duskHour=fibaro.utils.sunCalc()
       end
       return true,{_SUNTIMEVALUES[prop],os.time()}
     end)
@@ -503,7 +365,7 @@ function Module.extras.init(self)
     end)
 
   local function httpCall(url,options,data) 
-    local opts = Util.copy(options)
+    local opts = table.copy(options)
     opts.headers = opts.headers or {}
     if opts.type then
       opts.headers["content-type"]=opts.type
@@ -552,7 +414,6 @@ function Module.extras.init(self)
     local f = curve and equations[curve] or equations['linear']
     dir,step = dir == 'down' and -1 or 1, step or 1
     start,stop = start or 0,stop or 99
-    local t = dir == 1 and 0 or sec
     self:post({type='%dimLight',id=id,sec=sec,dir=dir,fun=f,t=dir == 1 and 0 or sec,start=start,stop=stop,step=step,_sh=true})
   end
 
@@ -604,7 +465,7 @@ function Module.eventScript.init()
 
   local function makeEventScriptParser()
     local source, tokens, cursor
-    local mkStack,mkStream,toTime,map,mapkk,gensym=Util.mkStack,Util.mkStream,Util.toTime,Util.map,Util.mapkk,Util.gensym
+    local mkStack,mkStream,toTime,map,mapk,gensym=Util.mkStack,Util.mkStream,fibaro.toTime,table.map,table.mapk,fibaro.utils.gensym
     local patterns,self = {},{}
     local opers = {['%neg']={14,1},['t/']={14,1,'%today'},['n/']={14,1,'%nexttime'},['+/']={14,1,'%plustime'},['$']={14,1,'%vglob'},
       ['$$']={14,1,'%vquick'},
@@ -768,7 +629,7 @@ function Module.eventScript.init()
       else error("Illegal assignment") end
     end
     postP['%betwo'] = function(e) 
-      local t = Util.gensym("TODAY")
+      local t = fibaro.utils.gensym("TODAY")
       return {'%and',{'%betw', e[2],e[3]},{'%and',{'~=',{'%var',t,'script'},{'%var','dayname','script'}},{'%set','%var',t,'script',{'%var','dayname','script'}}}}
     end 
     postP['if'] = function(e) local c = {'%and',e[2],{'%always',e[3]}} return self.postParse(#e==3 and c or {'%or',c,e[4]}) end
@@ -795,7 +656,7 @@ function Module.eventScript.init()
         if opers[e[1]] then 
           e[1]=opers[e[1]][3] or e[1]
         end
-        local pc = mapkk(traverse,e); return postP[pc[1]] and postP[pc[1]](pc) or pc
+        local pc = mapk(traverse,e); return postP[pc[1]] and postP[pc[1]](pc) or pc
       end
       return traverse(e0)
     end
@@ -905,7 +766,7 @@ function Module.eventScript.init()
 
 ---------- Event Script Compiler --------------------------------------
   local function makeEventScriptCompiler(parser)
-    local self,comp,gensym,isVar,isGlob={ parser=parser },{},Util.gensym,Util.isVar,Util.isGlob
+    local self,comp,gensym={ parser=parser },{},fibaro.utils.gensym
     local function mkOp(o) return o end
     local POP = {mkOp('%pop'),0}
 
@@ -976,10 +837,11 @@ function Module.eventScript.init()
       ops[#ops+1]={mkOp('%local'),#e[3],e[2]}
     end
     comp['%while'] = function(e,ops) -- lbl1, test, infskip lbl2, body, jmp lbl1, lbl2
-      local test,body,lbl1,cp=e[2],e[3],gensym('LBL1')
+      local test,body,lbl1=e[2],e[3],gensym('LBL1')
       local jmp={mkOp('%ifnskip'),0,nil,true}
       ops[#ops+1] = {'%addr',0,lbl1}; ops[#ops+1] = POP
-      compT(test,ops); ops[#ops+1]=jmp; cp=#ops
+      compT(test,ops); ops[#ops+1]=jmp; 
+      local cp=#ops
       compT(body,ops); ops[#ops+1]=POP; ops[#ops+1]={mkOp('%jmp'),0,lbl1}
       jmp[3]=#ops+1-cp
     end
@@ -1005,7 +867,7 @@ function Module.eventScript.init()
     local self,instr={},{}
     local coroutine = Util.coroutine
     local function safeEncode(e) local stat,res = pcall(function() return tojson(e) end) return stat and res or tostring(e) end
-    local toTime,midnight,map,mkStack,copy,coerce,isEvent=Util.toTime,fibaro.midnight,Util.map,Util.mkStack,Util.copy,fibaro.EM.coerce,fibaro.EM.isEvent
+    local toTime,midnight,map,mkStack,copy,coerce,isEvent=fibaro.toTime,fibaro.midnight,table.map,Util.mkStack,table.copy,fibaro.EM.coerce,fibaro.EM.isEvent
     local _vars,triggerVar = Util._vars,Util.triggerVar
 
     local oldFormat
@@ -1096,7 +958,7 @@ function Module.eventScript.init()
     instr['%var'] = function(s,_,e,i) s.push(getVarFs[i[4]](i[3],e)) end
     instr['%setvar'] = function(s,n,e,i) if n==1 then setVarFs[i[4]](i[3],s.peek(),e) else s.push(setVarFs[i[4]](i[3],i[5],e)) end end
     instr['%local'] = function(s,n,e,i) local vn,ve = i[3],s.lift(n); e.locals = e.locals or {}
-      local i,x=1; for _,v in ipairs(vn) do x=ve[i]; e.locals[v]={ve[i]}; i=i+1 end
+      local j,x=1; for _,v in ipairs(vn) do x=ve[j]; e.locals[v]={ve[j]}; j=j+1 end
       s.push(x) 
     end
     instr['%setlist'] = function(s,_,e,i) 
@@ -1284,7 +1146,7 @@ function Module.eventScript.init()
         e=e.event; return e.type=='device' and e.property=='sceneActivationEvent' and e.id==id and e.value.sceneId 
       end
       local function setProfile(id,_,val) if val then fibaro.profile("activateProfile",id) end return val end
-      local function setState(id,cmd,val) fibaro.call(id,"updateProperty","state",val); return val end
+      local function setState(id,_,val) fibaro.call(id,"updateProperty","state",val); return val end
       local function setProps(id,cmd,val) fibaro.call(id,"updateProperty",cmd,val); return val end
       local function profile(id,_) return api.get("/profiles/"..id.."?showHidden=true") end
       local function call(id,cmd) fibaro.call(id,cmd); return true end
@@ -1292,7 +1154,7 @@ function Module.eventScript.init()
       local function pushMsg(id,cmd,val) fibaro.alert(cmd,{id},val,false,''); return val end
       local function set2(id,cmd,val) fibaro.call(id,cmd,table.unpack(val)); return val end
       local function dim2(id,_,val) Util.dimLight(id,table.unpack(val)) end --sec,dir,step,curve,start,stop)
-      local mapOr,mapAnd,mapF=Util.mapOr,Util.mapAnd,function(f,l,s) Util.mapF(f,l,s); return true end
+      local mapOr,mapAnd,mapF=table.mapOr,table.mapAnd,function(f,l,s) table.mapf(f,l,s); return true end
       local function child(id,_) for _,c in pairs(quickApp.childDevices) do if c.eid==id then return c end end return nil end
 
       getFuns={}
@@ -1419,7 +1281,7 @@ function Module.eventScript.init()
       setFuns.msg={pushMsg,fibaro._pushMethod}
       setFuns.defemail={set,'sendDefinedEmailNotification'}
       setFuns.btn={set,'pressButton'} -- ToDo: click button on QA?
-      setFuns.email={function(id,_,val) local h,m = val:match("(.-):(.*)"); fibaro.alert('email',{id},val) return val end,""}
+      setFuns.email={function(id,_,val) local _,_ = val:match("(.-):(.*)"); fibaro.alert('email',{id},val) return val end,""}
       setFuns.start={function(id,_,val) 
           if isEvent(val) then quickApp:postRemote(id,val) else fibaro.scene("execute",{id},val) return true end 
         end,""}
@@ -1447,7 +1309,7 @@ function Module.eventScript.init()
       local f = setFuns[prop] _assert(f,"bad property '%s'",prop or "") 
       local vp = 0
       local vf = prop=="value" and type(val) == 'table' and type(id)=='table' and val[1]~=nil and function() vp=vp+1 return val[vp] end or function() return val end 
-      if type(id)=='table' then Util.mapF(function(id0) f[1](ID(id0,i,e._lastR),f[2],vf(),e) end,id); s.push(true)
+      if type(id)=='table' then table.mapf(function(id0) f[1](ID(id0,i,e._lastR),f[2],vf(),e) end,id); s.push(true)
       else s.push(f[1](ID(id,i,e._lastR),f[2],val,e)) end
     end
 
@@ -1468,7 +1330,7 @@ function Module.eventScript.init()
     instr['dawn']=function(s,_,_,_) s.push(toTime(fibaro.getValue(1,'dawnHour'))) end
     instr['dusk']=function(s,_,_,_) s.push(toTime(fibaro.getValue(1,'duskHour'))) end
     instr['now']=function(s,_,_,_) s.push(os.time()-midnight()) end
-    instr['wnum']=function(s,_,_,_) s.push(Util.getWeekNumber(os.time())) end
+    instr['wnum']=function(s,_,_,_) s.push(fibaro.getWeekNumber(os.time())) end
     instr['%today']=function(s,_,_,_) s.push(midnight()+s.pop()) end
     instr['%nexttime']=function(s,_,_,_) local t=s.pop()+midnight(); s.push(t >= os.time() and t or t+24*3600) end
     instr['%plustime']=function(s,_,_,_) s.push(os.time()+s.pop()) end
@@ -1662,7 +1524,7 @@ function Module.eventScript.init()
     local function makeDateInstr(f)
       return function(s,_,_,i)
         local ts = s.pop()
-        if ts ~= i[5] then i[6] = Util.dateTest(f(ts)); i[5] = ts end -- cache fun
+        if ts ~= i[5] then i[6] = fibaro.dateTest(f(ts)); i[5] = ts end -- cache fun
         s.push(i[6]())
       end
     end
@@ -1679,8 +1541,8 @@ function Module.eventScript.init()
   local function makeEventScriptRuleCompiler()
     local self = {}
     local HOURS24,CATCHUP,RULEFORMAT = 24*60*60,math.huge,"Rule:%s[%s]"
-    local map,mapkl,getFuns,midnight,time2str=Util.map,Util.mapkl,ScriptEngine.getFuns,Util.midnight,Util.time2str
-    local transform,isGlob,isVar,triggerVar = Util.transform,Util.isGlob,Util.isVar,Util.triggerVar
+    local map,mapkl,getFuns,midnight,time2str=table.map,table.mapkl,ScriptEngine.getFuns,fibaro.midnight,fibaro.time2str
+    local transform,isGlob,isVar,triggerVar = fibaro.utils.transform,Util.isGlob,Util.isVar,Util.triggerVar
     local _macros,dailysTab,rCounter= {},{},0
 --    local lblF=function(id,e) return {type='device', id=id, property=format("ui.%s.value",e[3])} end
     local triggFuns={}
@@ -1726,7 +1588,7 @@ function Module.eventScript.init()
           local ce = e[3]
           s.triggs[tojson(ce)] = ce  
         else
-          Util.mapkk(traverse,e)
+          table.mapk(traverse,e)
           if gtFuns[e[1]] then gtFuns[e[1]](e,s)
           elseif triggFuns[e[1]] then
             local cv = ScriptCompiler.compile2(e[2])
@@ -1786,7 +1648,7 @@ function Module.eventScript.init()
     end
 
     function self.compRule(e,env)
-      local head,body,log,res,events,src,triggers2,sdaily = e[2],e[3],e[4],{},{},env.src or "<no src>",{}
+      local head,body,_,res,events,src,triggers2,sdaily = e[2],e[3],e[4],{},{},env.src or "<no src>",{}
       src=format(RULEFORMAT,rCounter+1,trimRule(src))
       remapEvents(head)  -- #event -> eventmatch
       local triggers,dailys,reps,dailyFlag = getTriggers(head)
@@ -1795,20 +1657,20 @@ function Module.eventScript.init()
       local code = ScriptCompiler.compile({'%and',(_debugFlags.rule or _debugFlags.ruleTrue) and {'%logRule',head,src} or head,body},env.log)
       local action = compileAction(code,src,env.log)
       if #reps>0 then -- @@interval rules
-        local event,env={type=Util.gensym("INTERV")},{code=reps[1]}
+        local event,env2={type=fibaro.utils.gensym("INTERV")},{code=reps[1]}
         events[#events+1] = quickApp:event(event,action,src)
         event._sh=true
-        local timeVal,skip = os.time(),ScriptEngine.eval2(env)
+        local timeVal,skip = os.time(),ScriptEngine.eval2(env2)
         local function interval()
           --timeVal = timeVal or os.time()
           quickApp:post(event)
-          timeVal = timeVal+math.abs(ScriptEngine.eval2(env))
+          timeVal = timeVal+math.abs(ScriptEngine.eval2(env2))
           setTimeout(interval,1000*(timeVal-os.time()))
         end
         setTimeout(interval,1000*(skip < 0 and -skip or 0))
       else
         if #dailys > 0 then -- daily rules
-          local event,timers={type=Util.gensym("DAILY"),_sh=true},{}
+          local event,timers={type=fibaro.utils.gensym("DAILY"),_sh=true},{}
           sdaily={dailys=dailys,event=event,timers=timers}
           dailysTab[#dailysTab+1] = sdaily
           events[#events+1]=quickApp:event(event,action,src)
@@ -1828,11 +1690,12 @@ function Module.eventScript.init()
       res.dailys = sdaily
       if sdaily then sdaily.rule=res end
       res.print = function()
-        Util.map(function(r) quickApp:debugf("Interval(%s) =>...",time2str(r)) end,compTimes(reps)) 
-        Util.map(function(d) quickApp:debugf("Daily(%s) =>...",d==CATCHUP and "catchup" or time2str(d)) end,compTimes(dailys)) 
-        Util.map(function(tr) quickApp:debugf("Trigger(%s) =>...",tojson(tr)) end,triggers2)
+        table.map(function(r) quickApp:debugf("Interval(%s) =>...",time2str(r)) end,compTimes(reps)) 
+        table.map(function(d) quickApp:debugf("Daily(%s) =>...",d==CATCHUP and "catchup" or time2str(d)) end,compTimes(dailys)) 
+        table.map(function(tr) quickApp:debugf("Trigger(%s) =>...",tojson(tr)) end,triggers2)
       end
       res.timers={}
+      for _,r in ipairs(res.subs or {}) do r.timers = {} end
       rCounter=rCounter+1
       return res
     end
@@ -1842,7 +1705,7 @@ function Module.eventScript.init()
       assert(type(escript)=='string',"rule must be of type 'string' to eval(rule)")
       if log == nil then log = {} elseif log==true then log={print=true} end
       if log.print==nil then log.print=true end
-      local status,res,ctx
+      local status,res
       status, res = pcall(function() 
           local expr = self.macroSubs(escript)
           if not log.cont then 
@@ -1859,14 +1722,14 @@ function Module.eventScript.init()
           return f({log=log,rule={cache={}, timers={}}})
         end)
       if not status then 
-        if not isError(res) then res={ERR=true,ctx=ctx,src=escript,err=res} end
+        if not isError(res) then res={ERR=true,ctx=res.ctx,src=escript,err=res} end
         quickApp:errorf("Error in '%s': %s",res and res.src or "rule",trimError(res.err))
         if res.ctx then quickApp:errorf("\n%s",res.ctx) end
         error(res.err or "error eval")
       else return res end
     end
 
-    function self.load(rules,log)
+    function self.load(rules2,log)
       local function splitRules(rules)
         local lines,cl,pb,cline = {},math.huge,false,""
         if not rules:match("([^%c]*)\r?\n") then return {rules} end
@@ -1881,7 +1744,7 @@ function Module.eventScript.init()
         lines[#lines+1]=cline
         return lines
       end
-      map(function(r) self.eval(r,log) end,splitRules(rules))
+      map(function(r) self.eval(r,log) end,splitRules(rules2))
     end
 
     function self.macro(name,str) _macros['%$'..name..'%$'] = str end
@@ -1908,12 +1771,13 @@ function Module.eventScript.init()
       local dailys,newTimers,oldTimers,max = r.dailys,{},r.dailys.timers,math.max
       for _,t in ipairs(oldTimers) do quickApp:cancel(t[2]) end
       dailys.timers = newTimers
-      local times,m,ot,catchup1,catchup2 = compTimes(dailys.dailys),midnight(),os.time()
+      local tf,times,m,ot,catchup1,catchup2 = false,compTimes(dailys.dailys),midnight(),os.time()
       for i,t in ipairs(times) do _assert(tonumber(t),"@time not a number:%s",t)
         t = math.floor(t+0.5)
         if t <= 3600*24 or t == math.huge then 
           local oldT = oldTimers[i] and oldTimers[i][1]
           if t ~= CATCHUP then
+            tf = true
             if _MIDNIGHTADJUST and t==HOURS24 then t=t-1 end
             if t+m >= ot then 
               Debug(oldT ~= t and _debugFlags.dailys,"Rescheduling daily %s for %s",r.src or "",os.date("%c",t+m)); 
@@ -1922,6 +1786,7 @@ function Module.eventScript.init()
           else catchup2 = true end
         end
       end
+      if not tf then quickApp:errorf("No time in @<expr> for %s",r.src) end
       if catch and catchup2 and catchup1 then quickApp:tracef("Catching up:%s",r.src); quickApp:post(dailys.event) end
       return r
     end
@@ -1978,7 +1843,7 @@ function Module.nodered.init(self)
   local nr = { _nrr = {}, _timeout = 4000, _last=nil }
   local isEvent,asyncCall,receiveAsync = fibaro.EM.isEvent,Util.asyncCall,Util.receiveAsync
   function nr.connect(url) 
-    local self2 = { _url = url, _http=Util.netSync.HTTPClient("Nodered") }
+    local self2 = { _url = url, _http=netSync.HTTPClient("Nodered") }
     function self2.post(event,sync)
       _assert(isEvent(event),"Arg to nodered.post is not an event")
       local tag, res
@@ -2016,17 +1881,6 @@ function Module.nodered.init(self)
   return nr
 end
 
-local function setVersion(model,serial,version)
-  local m = model..":"..serial.."/"..version
-  if __fibaro_get_device_property(quickApp.id,'model') ~= m then
-    quickApp:updateProperty('model',m) 
-  end
-end
-
-local modules = {
-  "utilities","autopatch","device","extras","eventScript","nodered",--"doc"
-}
-
 local currDST,nextDST = os.date("*t").isdst
 local function checkForDST()
   local dst = os.date("*t").isdst
@@ -2039,6 +1893,10 @@ local function checkForDST()
   setTimeout(checkForDST,1000*(nextDST-os.time()))
 end
 
+local modules = {
+  "utilities","autopatch","device","extras","eventScript","nodered",--"doc"
+}
+
 ----------------- Main ----------------------------------------
 local _version = "v"..QuickApp.E_VERSION.." "..QuickApp.E_FIX
 
@@ -2046,12 +1904,12 @@ function QuickApp:enableTriggerType(triggers) fibaro.enableSourceTriggers(trigge
 
 QuickApp._SILENT = true
 function QuickApp:onInit()
-  setVersion("EventRunner4",self.E_SERIAL,self.E_VERSION)
+  self:setVersion("EventRunner4",self.E_SERIAL,self.E_VERSION)
   self:debugf("%s, deviceId:%s, version:%s",self.name,self.id,self.E_VERSION)
   for f,v in pairs(_debugFlags) do fibaro.debugFlags[f]=v end
   _debugFlags = fibaro.debugFlags
   for _,name in ipairs(modules) do
-    local res = Module[name].init(self)
+    if not Module[name].inited then Module[name].init(self) end
   end
   Util.defvar("E_VERSION",QuickApp.E_VERSION)
   Util.defvar("E_FIX",QuickApp.E_FIX)
@@ -2066,7 +1924,7 @@ function QuickApp:onInit()
   local _IPADDRESS = fibaro.getIPaddress()
   self:debug("IP:",_IPADDRESS)
   self.main = function(self)
-    Util.notify("info","Started "..os.date("%c"),true)
+    fibaro.utils.notify("info","Started "..os.date("%c"),true)
     self:tracef("Sunrise:%s,  Sunset:%s",(fibaro.get(1,"sunriseHour")),(fibaro.get(1,"sunsetHour")))
     local uptime = api.get("/settings/info").serverStatus or os.time()
     self:tracef("HC3 running since %s",os.date("%c",uptime))

@@ -2,11 +2,10 @@
 
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
-  debug = { color=false,
+  debug = { --color=false,
     onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true, qa=true-- timersSched=true
   },
   --startTime="18:10:00",
-  --deploy=true,
   --offline=true
 }
 
@@ -24,8 +23,8 @@ _=loadfile and loadfile("TQAE.lua"){
 --FILE:jgabs_QAs/EventRunner/EventRunnerDoc.lua,Doc;
 
 ----------- Code -----------------------------------------------------------
-_debugFlags.sourceTrigger = false  -- log incoming triggers
-_debugFlags._allRefreshStates = true -- log all incoming refrshState events
+_debugFlags.sourceTrigger = true  -- log incoming triggers
+_debugFlags._allRefreshStates = false -- log all incoming refrshState events
 _debugFlags.fcall=true     -- log fibaro.call
 _debugFlags.post = true    -- log internal posts
 _debugFlags.rule=true      -- log rules being invoked (true or false)
@@ -49,10 +48,9 @@ function QuickApp:main()    -- EventScript version
     temp = 22,
     lux = 23,
   }
-
+  
   Util.defvars(HT)
   Util.reverseMapDef(HT)
-  rule("wday('thu')")
 --  rule("#profile{property='activeProfile', value=AwayProfile} => enable('Away',true)") 
 --  rule("#profile{property='activeProfile', value=HomeProfile} => enable('Home',true); r2.start()") 
 --  rule("post(#profile{property='activeProfile', value=HomeProfile})") 
@@ -74,10 +72,10 @@ function QuickApp:main()    -- EventScript version
 
 --  rule("#foo=>kill(); log('A');wait(2);log('B')")
 --  rule("post(#foo); wait(1); post(#foo)")
-  
-  rule("#se-start => log('START')")
+
+  rule("#se-start => log('HC3 restarted')")
   rule("#DST_changed => plugin.restart()") -- Restart ER when DST change
-  
+
 --  Phone = {2,107}
 --  lights={267,252,65,67,78,111,129,158,292,127,216,210,205,286,297,302,305,410,384,389,392,272,329,276} -- eller hämta värden från HomeTable
 --  rule("earthDates={2021/3/27/20:30,2022/3/26/20:30,2023/3/25/20:30}")
@@ -132,5 +130,5 @@ function QuickApp:main()    -- EventScript version
 --  rule("#deviceEvent{id='$id',value='$value'} => log('Device %s %s',id,value)")
 --  rule("#sceneEvent{id='$id',value='$value'} => log('Scene %s %s',id,value)")
 
---    dofile("verifyHC3scripts.lua")
+--  dofile("verifyHC3scripts.lua")
 end

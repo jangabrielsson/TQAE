@@ -16,42 +16,6 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.69,
-        vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.69"
-        },
-        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "New version of EventRunner4",
-        files = "generate",
-        keep= { "main" },
-        viewLayout = "generate",
-        interfaces= {"quickApp"},
-        quickAppVariables = {},
-      }, 
-      { version = 0.87,
-        vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.87"
-        },
-        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "enable/disable events",
-        files = "generate",
-        keep= { "main" },
-        viewLayout = "generate",
-        interfaces= {"quickApp"},
-        quickAppVariables = {},
-      },
-      { version = 0.89,
-        vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.89"
-        },
-        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "Better debug flags",
-        files = "generate",
-        keep= { "main" },
-        viewLayout = "generate",
-        interfaces= {"quickApp"},
-        quickAppVariables = {},
-      },
       { version = 0.91,
         vars= {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.91"
@@ -64,12 +28,12 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.92,
+      { version = 0.93,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.92"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.93"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "post bugfix and wday",
+        descr = "nil .timers bugfix",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",
