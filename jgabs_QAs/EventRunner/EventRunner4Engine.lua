@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.95,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.96,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = _debugFlags or {}
@@ -1704,7 +1704,7 @@ function Module.eventScript.init()
     function self.eval(escript2,log)
       assert(type(escript2)=='string',"rule must be of type 'string' to eval(rule)")
       local escript = escript2:gsub("(\xC2\xA0)"," ")
-      if escript2 ~= escript then quickApp:warnf("String contains illegal chars: %s",escript2) end
+      if escript2 ~= escript and not _debugFlags.ignoreInvisibleChars then quickApp:warningf("String contains illegal chars: %s",escript2) end
       if log == nil then log = {} elseif log==true then log={print=true} end
       if log.print==nil then log.print=true end
       local status,res
