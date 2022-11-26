@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.96,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.97,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = _debugFlags or {}
@@ -602,7 +602,8 @@ function Module.eventScript.init()
     token("%-%-.*")  
     token("===",function (op) return {type="operator", sw=SW[op] or 'op', value=op} end)    
     token("%.%.%.",function (op) return {type="operator", sw=SW[op] or 'op', value=op} end)
-    token("[@%$=<>!+%.%-*&|/%^~;:][%$+@=<>&|;:%.]?", function (op) return {type="operator", sw=SW[op] or 'op', value=op} end)
+    token("[%$%$]", function (op) return {type="operator", sw=SW[op] or 'op', value=op} end)
+    token("[@%$=<>!+%.%-*&|/%^~;:][%+@=<>&|;:%.]?", function (op) return {type="operator", sw=SW[op] or 'op', value=op} end)
     token("[{}%(%),%[%]#%%]", function (op) return {type="operator", sw=SW[op] or 'op', value=op} end)
 
 
@@ -1703,8 +1704,10 @@ function Module.eventScript.init()
 -- context = {log=<bool>, level=<int>, line=<int>, doc=<str>, trigg=<bool>, enable=<bool>}
     function self.eval(escript2,log)
       assert(type(escript2)=='string',"rule must be of type 'string' to eval(rule)")
-      local escript = escript2:gsub("(\xC2\xA0)"," ")
-      if escript2 ~= escript and not _debugFlags.ignoreInvisibleChars then quickApp:warningf("String contains illegal chars: %s",escript2) end
+      local escript = escript2:gsub("(\xC2\xA0)","")
+      if escript2 ~= escript and not _debugFlags.ignoreInvisibleChars then 
+        quickApp:warningf("String contains illegal chars: %s",escript2:gsub("(\xC2\xA0)","<*>")) 
+      end
       if log == nil then log = {} elseif log==true then log={print=true} end
       if log.print==nil then log.print=true end
       local status,res
@@ -1776,10 +1779,10 @@ function Module.eventScript.init()
       local tf,times,m,ot,catchup1,catchup2 = false,compTimes(dailys.dailys),midnight(),os.time()
       for i,t in ipairs(times) do _assert(tonumber(t),"@time not a number:%s",t)
         t = math.floor(t+0.5)
-        if t <= 3600*24 or t == math.huge then 
+        if t~=CATCHUP then tf=true end
+        if t <= 3600*24 or t == CATCHUP then 
           local oldT = oldTimers[i] and oldTimers[i][1]
           if t ~= CATCHUP then
-            tf = true
             if _MIDNIGHTADJUST and t==HOURS24 then t=t-1 end
             if t+m >= ot then 
               Debug(oldT ~= t and _debugFlags.dailys,"Rescheduling daily %s for %s",r.src or "",os.date("%c",t+m)); 

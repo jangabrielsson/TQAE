@@ -52,6 +52,18 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
+      { version = 0.97,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.97"
+        },
+        mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
+        descr = "fixed @<daily> bug",
+        files = "generate",
+        keep= { "main" },
+        viewLayout = "generate",
+        interfaces= {"quickApp"},
+        quickAppVariables = {},
+      },
 --      { version = 0.x,
 --        vars = {
 --          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.XX"
