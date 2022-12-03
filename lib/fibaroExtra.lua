@@ -19,7 +19,7 @@ Email: jan@gabrielsson.com
 -------------------- Base ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    fibaro.FIBARO_EXTRA = "v0.952"
+    fibaro.FIBARO_EXTRA = "v0.953"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -224,7 +224,7 @@ _MODULES.utilities={ author = "jan@gabrielsson.com", version = '0.4', init = fun
     function table.mapOr(f,l,s) s = s or 1; for i=s,table.maxn(l) do local e = f(l[i]) if e then return e end end return false end
     function table.reduce(f,l) local r = {}; for _,e in ipairs(l) do if f(e) then r[#r+1]=e end end; return r end
     function table.mapk(f,l) local r={}; for k,v in pairs(l) do r[k]=f(v) end; return r end
-    function table.mapkv(f,l) local r={}; for k,v in pairs(l) do k,v=f(k,v) r[k]=v end; return r end
+    function table.mapkv(f,l) local r={}; for k,v in pairs(l) do k,v=f(k,v) if k then r[k]=v end end; return r end
     function table.mapkl(f,l) local r={} for i,j in pairs(l) do r[#r+1]=f(i,j) end return r end
     function table.size(l) local n=0; for _,_ in pairs(l) do n=n+1 end return n end 
 
@@ -292,7 +292,7 @@ _MODULES.utilities={ author = "jan@gabrielsson.com", version = '0.4', init = fun
             else
               seen[e]=true
               if e._var_  then res[#res+1] = format('"%s"',e._str) return end
-              local k = {} for key,_ in pairs(e) do k[#k+1] = key end
+              local k = {} for key,_ in pairs(e) do k[#k+1] = tostring(key) end
               table.sort(k,keyCompare)
               if #k == 0 then res[#res+1] = "[]" return end
               res[#res+1] = '{'; res[#res+1] = '"' res[#res+1] = k[1]; res[#res+1] = '":' t = k[1] pretty(e[t])
@@ -366,11 +366,12 @@ _MODULES.utilities={ author = "jan@gabrielsson.com", version = '0.4', init = fun
       json.encodeFormated = prettyJsonStruct
     end
 
-    function utils.printBuffer() 
-      local self2,buff = {},{}
+    function utils.printBuffer(pre) 
+      local self2,buff = {},pre and {pre} or {}
       function self2.printf(_,fmt,...) buff[#buff+1]=format(fmt,...) end --ignore 212/self
       function self2.add(_,str) buff[#buff+1]=tostring(str) end
       function self2.trim(_,n) for _=1,#buff-n do table.remove(buff,#buff) end end
+      self2.buffer = buff
       function self2.tostring(_,space) return table.concat(buff,space) end
       return self2
     end
@@ -858,8 +859,16 @@ _MODULES.debug={ author = "jan@gabrielsson.com", version = '0.4', init = functio
       return (debugFlags.html and not hc3_emulator) and htmlTransform(table.concat(res,del)) or table.concat(res,del)
     end 
     fibaro.arr2str = arr2str
+    
+    fibaro.stringTrunc = { 100, 160, 1000 }
     local function print_debug(typ,tag,str)
       --__fibaro_add_debug_message(tag or __TAG,str or "",typ or "debug")
+      local m,s=str:match("^##(%d)(.*)") -- truncate output
+      if m then 
+        str=s
+        local sl,ml = str:len()-3,fibaro.stringTrunc[tonumber(m)]
+        if ml and sl > ml then str=str:sub(1,ml).."..." end
+      end
       api.post("/debugMessages",{message=str,messageType=typ or "debug",tag=tag or __TAG})
       if typ=='error' and debugFlags.eventError then
         fibaro.post({type='error',message=str,tag=tag})
@@ -1331,7 +1340,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = func
     function post(ev)
       if ENABLEDSOURCETRIGGERS[ev.type] then
         if #sourceTriggerCallbacks==0 then return end
-        if debugFlags.sourceTrigger then fibaro.debugf(nil,"Incoming sourceTrigger:%s",ev) end
+        if debugFlags.sourceTrigger then fibaro.debugf(nil,"##1SourceTrigger:%s",ev) end
         ev._trigger=true
         for _,cb in ipairs(sourceTriggerCallbacks) do
           setTimeout(function() cb(ev) end,0) 
@@ -1445,7 +1454,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = func
     function fibaro._postSourceTrigger(trigger) post(trigger) end
 
     function fibaro._postRefreshState(event)
-      if debugFlags._allRefreshStates then fibaro.debugf(nil,"RefreshState %s",event) end
+      if debugFlags._allRefreshStates then fibaro.debugf(nil,"##1RefreshState:%s",event) end
       if #refreshCallbacks>0 and not DISABLEDREFRESH[event.type] then
         for i=1,#refreshCallbacks do
           setTimeout(function() refreshCallbacks[i](event) end,0)
@@ -2106,6 +2115,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
 
     local em,handlers = { sections = {}, stats={tried=0,matched=0}},{}
     em.BREAK, em.TIMER, em.RULE = '%%BREAK%%', '%%TIMER%%', '%%RULE%%'
+    em._handlers = handlers
     local handleEvent,invokeHandler
     local function isEvent(e) return type(e)=='table' and e.type end
     local function isRule(e) return type(e)=='table' and e[em.RULE] end
@@ -2216,6 +2226,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
         if type(res)=='string' and not debugFlags.extendedErrors then res = res:gsub("(%[.-%]:%d+:)","") end
         fibaro.errorf(nil,"in %s: %s",env.rule.doc,res)
         env.rule._disabled = true -- disable rule to not generate more errors
+        em.stats.errors=(em.stats.errors or 0)+1
       else return res end
     end
 

@@ -2,13 +2,12 @@
 
 _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
-  debug = { --color=false,
+  debug = { 
     onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true, qa=true-- timersSched=true
   },
   --startTime="18:10:00",
   --offline=true
 }
-
 
 --%%name="EventRunner4"
 --%%type="com.fibaro.genericDevice"
@@ -48,18 +47,26 @@ function QuickApp:main()    -- EventScript version
     temp = 22,
     lux = 23,
   }
+
+  self.color.banner='black'
+  self.color.rule='green'
+  self.color.info='purple'
   
-  s1 = hc3_emulator.create.binarySensor(77)
-  s2 = hc3_emulator.create.binarySensor(88)
-  
+  if hc3_emulator then
+    s1 = hc3_emulator.create.binarySensor(77)
+    s2 = hc3_emulator.create.binarySensor(88)
+    s2 = hc3_emulator.create.globalVariables{name="Test",value="10:00"}
+  end
+
   Util.defvars(HT)
   Util.reverseMapDef(HT)
+
 --  rule("#profile{property='activeProfile', value=AwayProfile} => enable('Away',true)") 
 --  rule("#profile{property='activeProfile', value=HomeProfile} => enable('Home',true); r2.start()") 
 --  rule("post(#profile{property='activeProfile', value=HomeProfile})") 
 --  rule("wait(20); post(#profile{property='activeProfile', value=AwayProfile})")
---  alarms = 1
---  rule("alarms:armed => log('Some alarm armed')")
+  alarms = 1
+  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")
 --  rule("alarms:disarmed => log('All disarmed')")
 --  rule("alarms:anyDisarmed => log('Any disarmed')")
@@ -75,9 +82,9 @@ function QuickApp:main()    -- EventScript version
 
 --  rule("#foo=>kill(); log('A');wait(2);log('B')")
 --  rule("post(#foo); wait(1); post(#foo)")
-  
-  rule("#se-start => log('HC3 restarted')")
-  rule("#DST_changed => plugin.restart()") -- Restart ER when DST change
+
+--  rule("#se-start => log('HC3 restarted')")
+--  rule("#DST_changed => plugin.restart()") -- Restart ER when DST change
 
 --  Phone = {2,107}
 --  lights={267,252,65,67,78,111,129,158,292,127,216,210,205,286,297,302,305,410,384,389,392,272,329,276} -- eller hämta värden från HomeTable
@@ -132,6 +139,13 @@ function QuickApp:main()    -- EventScript version
 --  rule("wait(7); broadcast({type='myBroadcast',value=42})")
 --  rule("#deviceEvent{id='$id',value='$value'} => log('Device %s %s',id,value)")
 --  rule("#sceneEvent{id='$id',value='$value'} => log('Scene %s %s',id,value)")
-
+  
+  fibaro.event({type='_startup_'},function()
+      Util.printBanner("Jang's HomeAutomation Engine (ER4v%s)",{self.E_VERSION},"green") -- Change to your own name...
+      Util.printRules()
+      Util.printInfo()
+      self:addHourTask(Util.printInfo)
+    end)
 --  dofile("verifyHC3scripts.lua")
+  return "silent"
 end

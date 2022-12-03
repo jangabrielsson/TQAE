@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.97,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.98,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = _debugFlags or {}
@@ -73,13 +73,14 @@ end
 
 ----------------- Module utilities ----------------------------
 Module.utilities = { name="ER Utilities", version="0.6"}
-function Module.utilities.init()
+function Module.utilities.init(QA)
   if Module.utilities.inited then return Module.utilities.inited end
   Module.utilities.inited = true
 
+  QA.color = { banner = 'black', rule='green', info='purple' }
   local self = {}
   local equal=table.equal
-  
+
   function self.findEqual(tab,obj)
     for _,o in ipairs(tab) do if equal(o,obj) then return true end end
   end
@@ -192,13 +193,24 @@ function Module.utilities.init()
 
   patchF("call")
 
-  function self.makeBanner(str)
-    if #str % 2 == 1 then str=str.." " end
+  function self.strPad(str,args,ch,w)
+    ch,w=ch or "-",w or 100
+    str = format(str,table.unpack(args or {}))
+    str = #str % 2 == 1 and str.." " or str
     local n = #str+2
     local l2=100/2-n/2
-    return string.rep("-",l2).." "..str.." "..string.rep("-",l2)
+    return string.rep(ch,l2).." "..str.." "..string.rep(ch,l2)
   end
-  function self.printBanner(str) quickApp:debug(self.makeBanner(str)) end
+
+  function self.makeBanner(str,args,ch,w) return self.strPad(str,args,ch,w) end
+  if hc3_emulator then
+    function self.printBanner(str,args,col,ch,w) quickApp:debug(self.makeBanner(str,args,ch,w)) end
+  else
+    function self.printBanner(str,args,col,ch,w)
+      col=col or QA.color.banner
+      quickApp:debug(self.htmlTable({format(str,table.unpack(args or {}))},{table="width='100%' border=1 bgcolor='"..col.."'",td="align='center'"}))
+    end
+  end
 
   function self.printColorAndTag(tag,color,fmt,...)
     assert(tag and color and fmt,"print needs tag, color, and args")
@@ -251,6 +263,133 @@ function Module.utilities.init()
   self.S2 = {click = "26", double = "24", tripple = "25", hold = "22", release = "23"} 
 
   tojson = json.encodeFast
+
+  local function lastTime(t) return t and os.date("%x-%X",t) or "not triggered" end
+  local time2str = fibaro.time2str
+
+  function self.rule2string(ru,ct)
+    local pr = fibaro.utils.printBuffer()
+    pr:add(ru.doc)
+    table.map(function(r) pr:printf("-Interv(%s) =>... [%s]",time2str(r),lastTime(ru.rep.time)) end,ct(ru.reps)) 
+    if ru.daily then
+      local s = {}
+      table.map(function(d) s[#s+1]=d==math.huge and "catchup" or time2str(d) end,ct(ru.dailys.dailys))
+      pr:printf("-Daily(%s) =>... [%s]",table.concat(s,","),lastTime(ru.daily.time))
+    end
+    table.mapkv(function(tr,r) pr:printf("-Trigger(%s) =>... [%s]",tojson(tr),lastTime(r.time)) end,ru.triggers)
+    return pr.buffer
+  end
+
+  function self.rules2string(...)
+    local args = {...}
+    if next(args)==nil then args={"all"} end
+    local i,r={},{}
+    for _,x in ipairs(args) do
+      if type(x)=='number' then
+        if x > 0 then i[x]=true else r[-x]=true end
+      elseif type(x)=='table' then
+        for z=x[1],x[2],i[3] or 1 do if z > 0 then i[z]=true else r[-z]=true end end
+      elseif x=='all' then
+        for id,_ in pairs(Rule._rules) do i[id]=true end
+      end
+    end
+    local i2={}
+    for id,_ in pairs(r) do i[id]=nil end
+    for id,_ in pairs(i) do i2[#i2+1]=id end
+    table.sort(i2)
+    local m = {}
+    for _,id in pairs(i2) do
+      m[#m+1]=Rule._rules[id].rule2str()
+    end
+    return Util.htmlTable(m,{table="border=1 bgcolor='"..QA.color.rule.."'"})
+  end
+
+  function self.printRules(...) print("\nRules:"..self.rules2string(...)) end
+
+  local function maxLen(list) local m = 0 for _,e in ipairs(list) do m=math.max(m,e:len()) end return m end
+  if hc3_emulator then 
+    function self.htmlTable(list,opts)
+      opts = opts or {}
+      local pr,cols,rows=fibaro.utils.printBuffer(),{},{}
+      for i,e in ipairs(list) do list[i]=type(e)=='table' and e or {e} end
+      for i=1,#list do
+        for j=1,#list[i] do
+          local e = list[i][j]
+          local s = e:split("\n")
+          list[i][j]=s
+          cols[j]=math.max(cols[j] or 0,maxLen(s))
+          rows[i]=math.max(rows[i] or 0,#s)
+        end
+      end
+      local s = "+"
+      for j=1,#cols do s=s..("-"):rep(cols[j]+2).."+" end -- Create line divider
+      pr:add(s)
+      for i=1,#list do  -- rows
+        for r=1,rows[i] do
+          local l = {}
+          for j=1,#list[i] do -- cols
+            local ll = list[i][j][r] or ""
+            l[#l+1]=ll..(" "):rep(cols[j]-ll:len())
+            sp=" |"
+          end
+          pr:add("| "..table.concat(l," | ").." |")
+        end
+        pr:add(s)
+      end
+      return "\n"..pr:tostring("\n")
+    end
+  else
+    function self.htmlTable(list,opts)
+      opts = opts or {}
+      local pr = fibaro.utils.printBuffer(),opts or {}
+      pr:printf("<table %s>",opts.table or "")
+      for _,l in ipairs(list) do
+        pr:printf("<tr %s>",opts.tr or "")
+        l = type(l)=='table' and l or {l}
+        for _,e in ipairs(l) do
+          pr:printf("<td %s>",opts.td or "") pr:add(tostring(e)) pr:add("</td>") 
+        end
+        pr:add("</tr>")
+      end
+      pr:add("</table>")
+      return pr:tostring()
+    end
+  end
+
+  local memoryInfo,infoStart = nil,os.time()
+  function self.printInfo()
+    local pr = fibaro.utils.printBuffer()
+    pr:printf("%s, ER uptime:%s hours",os.date("%A, %B %d"),(os.time()-infoStart)//(3600))
+    pr:printf("Sunrise:%s,  Sunset:%s",(fibaro.get(1,"sunriseHour")),(fibaro.get(1,"sunsetHour")))
+    pr:printf("#Events handled :%-6s,#Events matched:%s",fibaro.EM.stats.tried or 0,fibaro.EM.stats.matched or 0)
+    pr:printf("#Rules succeeded:%-6s,#Rules false:%s",fibaro.EM.stats.success or 0,fibaro.EM.stats.fail or 0)
+    pr:printf("#Rules error    :%s",fibaro.EM.stats.error or 0)
+    collectgarbage("collect")
+    local cm = collectgarbage("count")
+    memoryInfo = memoryinfo or {cm,cm,cm,cm,cm,cm,cm,cm}
+    local m = memoryInfo
+    table.insert(memoryInfo,1,collectgarbage("count"))
+    table.remove(memoryInfo,9)
+    pr:printf("Memory:%.1fkb [%0.f%% %0.f%% %0.f%% %0.f%% %0.f%% %0.f%% %0.f%%]",
+      m[1],100*m[1]/m[2],100*m[1]/m[3],100*m[1]/m[4],100*m[1]/m[5],100*m[1]/m[6],100*m[1]/m[7],100*m[1]/m[8])
+    print(Util.htmlTable({pr:tostring("\n")},{table="bgcolor='"..QA.color.info.."' width='100%'"}))
+  end
+
+  local hourTasks,nextHour={}
+  local function hourLoop()
+    for f,_ in pairs(hourTasks) do pcall(f) end
+    nextHour = nextHour+3600
+    hourRef = setTimeout(hourLoop,1000*(nextHour-os.time())) 
+  end
+  function QA:addHourTask(f)
+    hourTasks[f]=true
+    if hourRef==nil then 
+      nextHour = (os.time() // 3600)*3600
+      nextHour = nextHour+3600+1
+      hourRef = setTimeout(hourLoop,1000*(nextHour-os.time())) 
+    end
+  end
+
   Util = self
   return self
 end -- Utils
@@ -1318,6 +1457,13 @@ function Module.eventScript.init()
     instr['log'] = function(s,n,e) s.push(userLogFunction(e.rule,table.unpack(s.lift(n)))) end
     instr['%logRule'] = function(s,_,_,_) local src,res = s.pop(),s.pop() 
       Debug(_debugFlags.rule or (_debugFlags.ruleTrue and res),"[%s]>>'%s'",tojson(res),src) s.push(res) 
+      if res then fibaro.EM.stats.success = (fibaro.EM.stats.success or 0)+1
+      else fibaro.EM.stats.fail = (fibaro.EM.stats.fail or 0)+1 end
+    end
+    instr['%statRule'] = function(s,_,_,_) local res = s.pop()
+      if res then fibaro.EM.stats.success = (fibaro.EM.stats.success or 0)+1
+      else fibaro.EM.stats.fail = (fibaro.EM.stats.fail or 0)+1 end
+      s.push(res) 
     end
 
 -- ER funs
@@ -1349,7 +1495,14 @@ function Module.eventScript.init()
     instr['match'] = function(s,_) local a,b=s.pop(),s.pop(); s.push(string.match(b,a)) end
     instr['osdate'] = function(s,n) local x,y = s.peek(n-1),(n>1 and s.pop() or nil) s.pop(); s.push(os.date(x,y)) end
     instr['ostime'] = function(s,_) s.push(os.time()) end
-    instr['%daily'] = function(s,_,_) s.pop() s.push(true) end
+    instr['%daily'] = function(s,_,e,i) 
+      local ev = e.event
+      s.pop()
+      if ev.type=='global-variable' or ev.type=='quickvar' then
+        Rule.recalcDailys(e.rule)
+        s.push(false)
+      else s.push(true) end
+    end
     instr['%interv'] = function(s,_,_,_) local _ = s.pop(); s.push(true) end
     instr['fmt'] = function(s,n) s.push(string.format(table.unpack(s.lift(n)))) end
     instr['redaily'] = function(s,_,_,_) s.push(Rule.restartDaily(s.pop())) end
@@ -1540,10 +1693,11 @@ function Module.eventScript.init()
 
 --------- Event script Rule compiler ------------------------------------------
   local function makeEventScriptRuleCompiler()
-    local self = {}
+    local self = {}; self._rules = {}
     local HOURS24,CATCHUP,RULEFORMAT = 24*60*60,math.huge,"Rule:%s[%s]"
     local map,mapkl,getFuns,midnight,time2str=table.map,table.mapkl,ScriptEngine.getFuns,fibaro.midnight,fibaro.time2str
     local transform,isGlob,isVar,triggerVar = fibaro.utils.transform,Util.isGlob,Util.isVar,Util.triggerVar
+    local rule2string = Util.rule2string
     local _macros,dailysTab,rCounter= {},{},0
 --    local lblF=function(id,e) return {type='device', id=id, property=format("ui.%s.value",e[3])} end
     local triggFuns={}
@@ -1650,16 +1804,18 @@ function Module.eventScript.init()
 
     function self.compRule(e,env)
       local head,body,_,res,events,src,triggers2,sdaily = e[2],e[3],e[4],{},{},env.src or "<no src>",{}
+      local rRep,rDaily
       src=format(RULEFORMAT,rCounter+1,trimRule(src))
       remapEvents(head)  -- #event -> eventmatch
       local triggers,dailys,reps,dailyFlag = getTriggers(head)
       _assert(#triggers>0 or #dailys>0 or #reps>0, "no triggers found in header")
       --_assert(not(#dailys>0 and #reps>0), "can't have @daily and @@interval rules together in header")
-      local code = ScriptCompiler.compile({'%and',(_debugFlags.rule or _debugFlags.ruleTrue) and {'%logRule',head,src} or head,body},env.log)
+      local code = ScriptCompiler.compile({'%and',(_debugFlags.rule or _debugFlags.ruleTrue) and {'%logRule',head,src} or {'%statRule',head},body},env.log)
       local action = compileAction(code,src,env.log)
       if #reps>0 then -- @@interval rules
         local event,env2={type=fibaro.utils.gensym("INTERV")},{code=reps[1]}
         events[#events+1] = quickApp:event(event,action,src)
+        rRep = events[#events]
         event._sh=true
         local timeVal,skip = os.time(),ScriptEngine.eval2(env2)
         local function interval()
@@ -1671,32 +1827,43 @@ function Module.eventScript.init()
         setTimeout(interval,1000*(skip < 0 and -skip or 0))
       else
         if #dailys > 0 then -- daily rules
-          local event,timers={type=fibaro.utils.gensym("DAILY"),_sh=true},{}
-          sdaily={dailys=dailys,event=event,timers=timers}
+          local event={type=fibaro.utils.gensym("DAILY"),_sh=true}
+          sdaily={dailys=dailys,event=event,timers={}}
           dailysTab[#dailysTab+1] = sdaily
           events[#events+1]=quickApp:event(event,action,src)
-          self.recalcDailys({dailys=sdaily,src=src},true)
-          local reaction = function() self.recalcDailys(res) end
+          rDaily = events[#events]
+          self.recalcDailys({dailys=sdaily,src=src},true) -- Schedule daily for today
+          --local reaction = function() self.recalcDailys(res) end
           for _,tr in ipairs(triggers) do -- Add triggers to reschedule dailys when variables change...
-            if tr.type=='global-variable' or tr.type=='quickvar' then quickApp:event(tr,reaction,{doc=src})  end
+            if tr.type=='global-variable' or tr.type=='quickvar' then 
+              events[#events+1]=quickApp:event(tr,action,src) 
+              triggers2[tr]=events[#events]
+            end
           end
         end
         if not dailyFlag and #triggers > 0 then -- id/glob trigger or events
           for _,tr in ipairs(triggers) do 
-            if tr.property~='<nop>' then events[#events+1]=quickApp:event(tr,action,src) triggers2[#triggers2+1]=tr end
+            if tr.property~='<nop>' then 
+              events[#events+1]=quickApp:event(tr,action,src) 
+              triggers2[tr]=events[#events]
+            end
           end
         end
       end
       res=#events>1 and fibaro.EM.comboEvent(src,action,events,src) or events[1]
       res.dailys = sdaily
       if sdaily then sdaily.rule=res end
-      res.print = function()
-        table.map(function(r) quickApp:debugf("Interval(%s) =>...",time2str(r)) end,compTimes(reps)) 
-        table.map(function(d) quickApp:debugf("Daily(%s) =>...",d==CATCHUP and "catchup" or time2str(d)) end,compTimes(dailys)) 
-        table.map(function(tr) quickApp:debugf("Trigger(%s) =>...",tojson(tr)) end,triggers2)
+
+      function res.print() 
+        local opts = {table="border=1 bgcolor='green'"}
+        quickApp:debug(Util.htmlTable({res.rule2str()},opts)) 
       end
-      res.timers={}
+      function res.rule2str() return table.concat(rule2string(res,compTimes),"\n") end
+
+      res.timers,res.triggers,res.reps,res.rep,res.daily={},triggers2,reps,rRep,rDaily
+      res.index = rCounter+1
       for _,r in ipairs(res.subs or {}) do r.timers = {} end
+      self._rules[rCounter+1]=res
       rCounter=rCounter+1
       return res
     end
@@ -1708,7 +1875,7 @@ function Module.eventScript.init()
       if escript2 ~= escript and not _debugFlags.ignoreInvisibleChars then 
         quickApp:warningf("String contains illegal chars: %s",escript2:gsub("(\xC2\xA0)","<*>")) 
       end
-      if log == nil then log = {} elseif log==true then log={print=true} end
+      if log == nil then log = quickApp.ruleOpts or {} elseif log==true then log={print=true} end
       if log.print==nil then log.print=true end
       local status,res
       status, res = pcall(function() 
@@ -1719,7 +1886,7 @@ function Module.eventScript.init()
               local name,r
               if not log.print then return res0 end
               if fibaro.EM.isRule(res0) then name,r=res0.doc,"OK" else name,r=escript,res0 end
-              quickApp:debugf("%s = %s",name,tostring(r)) 
+              quickApp:debugf("%s = %s",name,tostring(r))
               return res0
             end
           end
@@ -1909,12 +2076,13 @@ function QuickApp:enableTriggerType(triggers) fibaro.enableSourceTriggers(trigge
 
 QuickApp._SILENT = true
 function QuickApp:onInit()
+  Module['utilities'].init(self)
   self:setVersion("EventRunner4",self.E_SERIAL,self.E_VERSION)
-  self:debugf("%s, deviceId:%s, version:%s",self.name,self.id,self.E_VERSION)
+  Util.printBanner("%s, deviceId:%s, version:%s",{self.name,self.id,self.E_VERSION})
   for f,v in pairs(_debugFlags) do fibaro.debugFlags[f]=v end
   _debugFlags = fibaro.debugFlags
   for _,name in ipairs(modules) do
-    if not Module[name].inited then Module[name].init(self) end
+    if not Module[name].inited then Module[name].init(self) end 
   end
   Util.defvar("E_VERSION",QuickApp.E_VERSION)
   Util.defvar("E_FIX",QuickApp.E_FIX)
@@ -1931,11 +2099,11 @@ function QuickApp:onInit()
   self.main = function(self)
     fibaro.utils.notify("info","Started "..os.date("%c"),true)
     self:tracef("Sunrise:%s,  Sunset:%s",(fibaro.get(1,"sunriseHour")),(fibaro.get(1,"sunsetHour")))
-    local uptime = api.get("/settings/info").serverStatus or os.time()
+    local uptime,silent = api.get("/settings/info").serverStatus or os.time()
     self:tracef("HC3 running since %s",os.date("%c",uptime))
     Util.printBanner("Setting up rules (main)")
     local stat,res = pcall(function()
-        main(quickApp) -- call main
+        silent = main(quickApp) -- call main
         checkForDST()
       end)
     if not stat then
@@ -1944,9 +2112,10 @@ function QuickApp:onInit()
       self:error("Main() ERROR:"..res)
       error()
     end
-    Util.printBanner("Running")
+    if silent~='silent' then Util.printBanner("Running") end
     self:setView("ERname","text","EventRunner4 %s",_version)
     quickApp:post({type='%startup%',_sh=true})
+    quickApp:post({type='_startup_',_sh=true})
     if os.time()-uptime < 30 then quickApp:post({type='se-start',_sh=true}) end
   end
   self:main()
