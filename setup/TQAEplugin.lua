@@ -31,7 +31,7 @@ local function printf(fmt,...) ide:Print(string.format(fmt,...)) end
 local ps  = ide.osname == "Windows" and "\\" or "/"
 local assetDir  = os.getenv("TQAEASSETS")
 if not assetDir then
-  assetDir = (os.getenv('HOME')  or '')..ps..".zbstudio"..ps.."tqae"..ps
+  assetDir = (os.getenv('HOME') or os.getenv('USERPROFILE') or '')..ps..".zbstudio"..ps.."tqae"..ps
 end
 printf("Asset directory set to '%s'",assetDir)
 
