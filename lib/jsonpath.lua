@@ -1,644 +1,542 @@
-dofile("lib/json.lua")
+if not json then dofile("lib/json.lua") end
 
-function EVENTSCRIPT.makeParser()
-  local builtins = EVENTSCRIPT.builtins
-  local mTokens
-  local format = string.format
-  local function assert(t,str) if not t then error({err=str,token=mTokens.last()}) end end
-  local function mkError(...) error({err=format(...),token=mTokens.last()},3) end
-  local lineNr = 1
-  table.maxn = table.maxn or function(t) return #t end
-
-  local function mkStream(tab,rule)
-    local p,self=0,{ isRule=rule, stream=tab, eof={type='eof', value='', from=tab[#tab].from, to=tab[#tab].to} }
-    function self.next() p=p+1 return p<=#tab and tab[p] or self.eof end
-    function self.last() return tab[p] or self.eof end
-    function self.peek(n) return tab[p+(n or 1)] or self.eof end
-    function self.match(t) 
-      local v=self.next(); 
-      assert(v.type==t,"Expected:"..t); return v.value 
-    end
-    function self.findNext(c)
-      local n,p = 0
-      repeat
-        n=n+1
-        p = self.peek(n).value
-      until p==c or p == self.eof
-      return p==c and n or nil
-    end
-    function self.patch(n,v) tab[p+n]=v end
-    function self.matchA(t) local v=self.next(); assert(v.type==t,"Expected:"..t); return v end
-    function self.matchO(w) local v=self.next(); assert(v.type=='operator' and  v.value==w,"Expected:"..w); return v end
-    function self.test(t) local v=self.peek(); if v.type==t then self.next(); return true else return false end end
-    function self.testO(w) local v=self.peek(); if v.type=='operator'  and v.value==w then self.next(); return true else return false end end
-    function self.back(t) p=p-1 end
-    function self.split(n)
-      local t1,t2 = {},{}
-      for  i=1,n-1 do t1[i]=tab[i] end
-      for  i=n+1,#tab do t2[i-n]=tab[i] end
-      return mkStream(t1),mkStream(t2)
-    end
-    return self
-  end
-  local function mkStack()
-    local p,st,self=0,{},{}
-    function self.push(v) p=p+1 st[p]=v end
-    function self.pop(n) n = n or 1; p=p-n; return st[p+n] end
-    function self.popn(n,v) v = v or {}; if n > 0 then local p = self.pop(); self.popn(n-1,v); v[#v+1]=p end return v end 
-    function self.peek(n) return st[p-(n or 0)] end
-    function self.isEmpty() return p<=0 end
-    function self.size() return p end    
-    function self.dump() for i=1,p do print(json.encode(st[i])) end end
-    function self.clear() p,st=0,{} end
-    return self
-  end 
-
-  local function conc(...)
-    local v = {...}
-    local l = table.remove(v,#v)
-    for i=#v,1,-1 do table.insert(l,1,v[i]) end
-    return l
-  end
-
-  local patterns,source,cursor,tokens = {}
-  local ptabs,isRule = {}
-
-  local function token(idp,pattern, createFn, logFn)
-    pattern = "^"..pattern
-    local f = function ()
-      local res = {string.find(source, pattern)}
-      if res[1] then
-        if createFn then
-          local token = createFn(select(3,table.unpack(res)))
-          if token==nil then return false end
-          token.from, token.to,token.line = cursor+1, cursor+res[2],lineNr
-          --print(json.encode(token))
-          table.insert(tokens, token)
-        end
-        if logFn then 
-          logFn(res[3]) 
-        end
-        source = string.sub(source, res[2]+1)
-        cursor = cursor + res[2]
-        return true
-      end
-    end
-    for i=1,#idp do 
-      local b = idp:byte(i)
-      local v = ptabs[b] or {}
-      ptabs[b]=v; v[#v+1]=f
-    end
-  end
-
-  local opMap  = { ['&']='and', ['|']='or', ['..']='betw'}
-  local specT={
-    ['(']=true,[')']=true,['{']=true,['}']=true,['[']=true,[']']=true,[',']=true,
-    ['.']=true,['=']=true,[';']=true,[':']=true,['#']=true,
+local testData = 
+{ store= {
+    book= {
+      { category= "reference",
+        author= "Nigel Rees",
+        title= "Sayings of the Century",
+        price= 8.95
+      },
+      { category= "fiction",
+        author= "Evelyn Waugh",
+        title= "Sword of Honour",
+        price= 12.99
+      },
+      { category= "fiction",
+        author= "Herman Melville",
+        title= "Moby Dick",
+        isbn= "0-553-21311-3",
+        price= 8.99
+      },
+      { category= "fiction",
+        author= "J. R. R. Tolkien",
+        title= "The Lord of the Rings",
+        isbn= "0-395-19395-8",
+        price= 22.99
+      }
+    },
+    bicycle= {
+      color= "red",
+      price= 19.95
+    }
   }
-  local opT={['and']=true,['or']=true,['not']=true,}
-  local reservedT={
-    ['if']=true,['else']=true,['then']=true,['elseif']=true,['while']=true,['repeat']=true,['local']=true,['for']=true,['in']=true,
-    ['do']=true,['until']=true,['end']=true,['return']=true,['true']=true,['false']=true,['function']=true,['nil']=true,['break']=true,['setp']=true
-  }
+}
 
-  local opers
-
-  local function TABEsc(str) return str:gsub("\\x(%x%x)",function(s) return string.char(tonumber(s,16)) end) end
-  token(" \t\r","([ \t\r]+)")
-  token("\n","(\n[\r\t ]*)",nil,function(str) cursor = -1; lineNr=lineNr+1 end)
-  token("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_","([%$A-Za-z_][%w_]*)", function (w) 
-      if reservedT[w] then return {type=w, value=w}
-      elseif opT[w] then return {type='operator', value = w}
-      elseif w:sub(1,1)=='$' then return {type='global', value=w:sub(2)}
-      else return {type='Name', value=w} end
-    end
-  token("0123456789","(%d%d):(%d%d):?(%d*)", function (h,m,s) 
-      return {type="number", value = 3600*tonumber(h)+60*tonumber(m)+(tonumber(s) or 0)} 
-    end)
-  token("0123456789","(%d+%.%d+)", function (d) return {type="number", value=tonumber(d)} end)
-  token("0123456789","(%d+)", function (d) return {type="number", value=tonumber(d)} end)
-  token("\"",'"([^"]*)"', 
-    function (s) return {type="string", value=TABEsc(s)} 
-    end)
-  token( "\'" , "'([^']*)'", function (s) return { type="string", value=TABEsc(s) } end )
-  token("-","%-%-%[%[(.-)%-%-%]%]")
-  token("[","%[%[(.-)%]%]", function (s) return {type="string", value=s} end)
-  token("-","(%-%-.-\n)")
-  token("-","(%-%-.*)")
-  token("#","(##)",function(op) return {type= "operator", value=op} end)  
-  token("@","(@@)",function(op) return {type= "operator", value=op} end)
-  token("<","(<=)",function(oop) return {type= "operator", value=op} end)
-  token(">","(>=)",function(op) return {type= "operator", value=op} end)
-  token("=","(=>)",function(op) isRule = #tokens return {type= "operator", value=op} end)
-  token("=","(==)",function(op) return {type= "operator", value=op} end)  
-  token("=","(=)",function(op) return {type= "operator", value=op} end)
-  token(">","(>>)",function(op) return {type= "operator", value=op} end)
-  token("|","(||)",function(op) return {type= "operator", value=op} end)
-  token("#@$=<>!+.-*&|/%^~;:","([#@%$=<>!+%.%-*&|/%^~;:])", 
-    function (op) 
-      return {type= specT[op] and op or "operator", value=opMap[op]  or op} 
-    end)
-  token("[]{}(),#%","([{}%(%),%[%]#%%])", function (op) return {type=specT[op] and op or "operator", value=op} end)
-
-  local function dispatch() 
-    local v = ptabs[source:byte(1)]
-    if v then
-      for i=1,#v do if v[i]() then return true end end
-    end
-  end
-
-  local ESCTab = {['\"'] = "22", ['\''] = "27", ['t'] = "09", ['n'] = "0A", ['r'] = "0D", }
-  local function tokenize(src)
-    local lineNr = 1
-    isRule=false
---    local t1 = os.clock()
-    src = src:gsub('\\([\"t\'nr])',function(c) return "\\x"..ESCTab[c] end)
-    source, tokens, cursor = src, {}, 0
-    while #source>0 and dispatch() do end
-    if #source > 0 then
-      print("Parser failed at " .. source) 
-    end
---      print("Time:"..os.clock()-t1)
-    return tokens,isRule
-  end
-
-  local function copyt(t) local res={}; for _,v in ipairs(t) do res[v]=true end return res end -- shallow copying
-
-  local function addVarsToCtx(varList,ctx)
-    ctx.l = ctx.l or {}
-    for _,v in ipairs(varList) do if v[1]=='var' then ctx.l[v[2]]=true end end
-  end
-
-  local gram = {}
-
-  opers = {
-    ['not']={12,1},['#']={12,1},['%neg']={12,1},['%nor']={12,1},['^']={13,2},
-    ['+']={8,2}, ['-']={8,2}, ['*']={11,2}, ['/']={11,2}, ['//']={11,2},['%']={11,2},
-    ['betw']={7,2},
-    ['|']={0,2},['~']={4,2},['&']={1,2},['<<']={6,2},['>>']={6,2},
-    ['<']={2,2}, ['<=']={2,2}, ['>']={2,2}, ['>=']={2,2}, ['==']={2,2}, ['~=']={2,2},
-    ['or']={0,2},['and']={1,2},
-    ['@']={7,1},['@@']={7,1},['##']={13,1},
-    ['=']={-2,2},
-  }
-
-  local function apply(t,st)
-    if t.value=='=' then
-      local val,ref = st.pop(),st.pop()
-      if ref[1]=='aref' then
-        return st.push({'aset',ref[2],ref[3],val})
-      elseif ref[1]=='getprop' then
-        return st.push({'setprop',ref[2],ref[3],val})
-      elseif ref[1]=='getglobal' then
-        return st.push({'setglobal',ref[2],val})
-      else return st.push({'setvar',ref[2],val}) end
-    elseif t.value=='$' then
-      local v = st.pop()
-      if type(v)=='table' and v[1]=='var' then v=v[2] end
-      st.push({'global',v}) 
-    else
-      return st.push(st.popn(opers[t.value][2],{t.value})) 
-    end
-  end
-  local _samePrio = {['.']=true,[':']=true}
-  local function lessp(t1,t2) 
-    local v1,v2 = t1.value,t2.value
-    if v1==':' and v2=='.' then return true 
-    elseif v1=='=' then v1='/' end
-    return v1==v2 and _samePrio[v1] or opers[v1][1] <= opers[v2][1]  -- ToDo, '...' and '^' should be right associative! 
-  end
-
-  local function makeVar(name,ctx)
-    return {'var',name} 
---    while ctx do if ctx.l and ctx.l[name] then return {'var',name} else ctx=ctx.n end end
---    return {'glob', name}
-  end
-  local NIL = "%%N".."IL%%"
-  local PREFIXTKNS = {['.']=true, ['(']=true, ['[']=true, [':']=true, ['{']=true}
-
-  local pExpr = {
-    ['false']=function(inp,st,ops,t,pt,ctx) inp.next(); st.push(false) end,
-    ['true']=function(inp,st,ops,t,pt,ctx) inp.next(); st.push(true) end,
---    ['nil']=function(inp,st,ops,t,pt,ctx) inp.next(); st.push(nil) end,
-    ['nil']=function(inp,st,ops,t,pt,ctx) inp.next(); st.push(NIL) end,
-    ['number']=function(inp,st,ops,t,pt,ctx) 
-      inp.next();
-      if inp.peek().type==':' then 
-        st.push(gram.prefixExp(inp,t.value,ctx))
-      else
-        st.push(t.value) 
-      end
-    end,
-    ['global'] = function(inp,st,ops,t,pt,ctx)
-      inp.next();
-      local p,v = inp.peek(),{'getglobal',t.value}
-      if PREFIXTKNS[p.type] then st.push(gram.prefixExp(inp,v,ctx)) else st.push(v) end
-    end,
-    ['string']=function(inp,st,ops,t,pt,ctx) inp.next(); st.push(t.value) end,
-    ['function']=function(inp,st,ops,t,pt,ctx) 
-      inp.next(); 
-      local args,varargs,body = gram.funcBody(inp,ctx)
-      st.push({'function','expr','fun',"<non>",args,varargs,body})
-    end,
-    ['#']=function(inp,st,ops,t,pt,ctx) 
-      inp.next()
-      local et = inp.match('Name')
-      if inp.peek().value=='{' then
-        local tt = gram.tableConstructor(inp,ctx)
-        table.insert(tt,2,"__KEY_")
-        table.insert(tt,3,"type")
-        table.insert(tt,4,et)
-        st.push(tt) t.type='}' 
-      else
-        st.push({'quote',{type=et}})
-      end
-    end,
-    ['{']=function(inp,st,ops,t,pt,ctx) 
-      local tab = gram.tableConstructor(inp,ctx)
-      t.type='}'
-      if inp.peek().type==':' then 
-        st.push(gram.prefixExp(inp,tab,ctx))
-      else
-        st.push(tab) 
-      end
-    end,
-    ['...']=function(inp,st,ops,t,pt,ctx) inp.next(); st.push({'vararg'}) end,
-    ['(']=function(inp,st,ops,t,pt,ctx) 
-      inp.next(); 
-      local expr = gram.expr(inp,ctx) 
-      inp.match(')')
-      if PREFIXTKNS[inp.peek().type] then st.push(gram.prefixExp(inp,expr,ctx)) else st.push(expr) end
-    end,
-    ['Name']=function(inp,st,ops,t,pt,ctx) 
-      inp.next();
-      local p,v = inp.peek(),makeVar(t.value,ctx)
-      if PREFIXTKNS[p.type] then st.push(gram.prefixExp(inp,v,ctx)) else st.push(v) end
-    end,
-    ['operator']=function(inp,st,ops,t,pt,ctx) 
-      if opers[t.value] then
-        if t.value == '-' and not(pt.type == 'Name' or pt.type == 'number' or pt.type == '(') then t.value='%neg' end
-        while ops.peek() and lessp(t,ops.peek()) do apply(ops.pop(),st) end
-        ops.push(t)
-        inp.next()
-      else mkError("Bad operator '%s'",t.value) end
-    end
-  }
-
-  local eStop = {['end']=true,[',']=true,[';']=true,['=']=true,[')']=true,[']']=true,['}']=true,}
-  for k,v in pairs(reservedT) do eStop[k]=v end
-  eStop['true']=nil; eStop['false']=nil; eStop['nil']=nil; eStop['function']=nil
-  function gram.expr(inp,ctx)
-    local st,ops,t,pt=mkStack(),mkStack(),{type='<START>',value='<START>'}
-    while true do
-      t,pt = inp.peek(),t
-      if t.type=='eof' or eStop and eStop[t.type] then break end
-      if not (t.type=='{' and pt.type=='<START>') then
-        if pt.type=='{' or t.type~='operator' and pt.type~='<START>' and pt.type~='operator' then break end
-      end
-      pExpr[t.type](inp,st,ops,t,pt,ctx)
-    end
-    while not ops.isEmpty() do apply(ops.pop(),st) end
-    --st.dump()
-    return st.pop()
-  end
-
---[[ My rewrite of the rules...
-afterpref ::= '.' prefixexp
-afterpref ::= '[' exp ']' afterpref
-afterpref ::= '(' args ')' afterpref
-afterpref ::= null
-
-prefixexp ::= Name
-prefixexp ::= Name . prefixexp
-prefixexp ::= Name [ exp ] [ afterpref ]
-prefixexp ::= Name ( args ) [ afterpref ]
-prefixexp ::= Name : Obj ( args ) [ afterpref ]
-prefixexp ::= ( exp ) [ afterpref ]
---]]
-
---[[
-    X = . Name X
-    X = [Expr] X
-    X = : Name (args) X
-    X = (args) X
-    (Expr) X
-    Var X
---]]
-
-  function gram.prefixExp(inp,r,ctx)  
-    if inp.test('.') then
-      local n = inp.match('Name')
-      return gram.prefixExp(inp,{'aref',r,n},ctx)
-    elseif inp.test('[') then     
-      local e = gram.expr(inp,ctx)
-      inp.match(']')
-      return gram.prefixExp(inp,{'aref',r,e},ctx)
-    elseif inp.peek().type == '(' or inp.peek().type == '{' then
-      local args = gram.args(inp,ctx)
-      if type(r)=='table' and r[1]=='var' then r=r[2] end
-      if builtins[r] then return gram.prefixExp(inp,{r,table.unpack(args)},ctx) 
-      else return gram.prefixExp(inp,{'call',r,table.unpack(args)},ctx) end
-    elseif inp.test(':') then
-      local key = inp.match('Name')
-      if inp.peek().type == '(' then
-        local args= gram.args(inp,ctx)
-        local ep = {'callobj',r,key,table.unpack(args)}
-        return gram.prefixExp(inp,ep,ctx) 
-      else
-        local ep = {"getprop",r,key}
-        return gram.prefixExp(inp,ep,ctx) 
-      end
-    else return r end
-  end
-
-  function gram.args(inp,ctx)
-    local n = inp.next()
-    if n.type == '(' then
-      local r = gram.exprList(inp,ctx)
-      inp.match(')')
-      return r
-    elseif n.type == '{' then
-      inp.back(n)
-      return {gram.tableConstructor(inp,ctx)}
-    else error("Bad function argument list") end
-  end
-
-  function gram.nameList(inp)
-    local res={inp.match('Name')}
-    while inp.test(',') do res[#res+1]=inp.match('Name') end
-    return res
-  end
-
---varlist ::= var {‘,’ var}
---var ::=  Name | prefixexp ‘[’ exp ‘]’ | prefixexp ‘.’ Name 
-
-  function gram.lvList(inp,ctx,loc)
-    local res = {}
-    local p = inp.findNext('=')
-    assert(p,"Bad assignment list")
-    inp.patch(p,inp.eof)
-    while true do
-      local v = gram.expr(inp,ctx)
-      if type(v)=='table' then
-        if v[1]=='var' then
-          res[#res+1]={'var',v[2]}
-        elseif v[1]=='aref' then
-          res[#res+1]={'tab',v[2],v[3]}
-        elseif v[1]=='getglobal' then
-          res[#res+1]={'gv',v[2]}
-        else error("Bad LV") end
-      else error("Bad LV") end
-      if inp.peek().value~=',' then break else inp.next() end
-    end
-    inp.next()
-    return res
-  end
-
-  function gram.varList(inp,ctx,loc)
-    local res = {}
-    local p = inp.peek()
-    while true do
-      local n = inp.matchA('Name')
-      local k = inp.peek()
-      if PREFIXTKNS[k.type] then
-        res[#res+1] = gram.prefixExp(inp,makeVar(n.value,ctx),ctx)
-      else res[#res+1]=loc and {'var',n.value} or makeVar(n.value,ctx) end
-      if inp.peek().type ~= ',' then break end
-      inp.next()
-      p=inp.peek()
-    end
-    return res
-  end
-
-  function gram.stat(inp,ctx)
-    local n,t2 = inp.next(),inp.peek()
-    local t,value = n.type,n.value
-    if t == ';' then return gram.stat(inp,ctx)
-    elseif t == 'break' then return {'break'}
-    elseif t == '::' then local n = inp.match('Name'); inp.match('::'); return {'label',n}
-    elseif t == 'goto' then return {'goto',inp.match('Name')}
-    elseif t == 'do' then local b = gram.block(inp,{l={},n=ctx}); inp.match('end'); return b
-    elseif t == 'while' then
-      local e = gram.expr(inp,ctx)
-      inp.match('do')
-      local b = gram.block(inp,{l={},n=ctx})
-      inp.match('end')
-      return {'while',e,b}
-    elseif t == 'repeat' then 
-      local b = gram.block(inp,{l={},n=ctx});
-      inp.match('until') 
-      return {'repeat',gram.expr(inp,ctx),b}
-    elseif t == 'for' then
---for Name ‘=’ exp ‘,’ exp [‘,’ exp] do block end | 
---for namelist in explist do block end | 
-      local l = gram.nameList(inp)
-      t = inp.next()
-      if t.value == '=' then
-        local e1,e2,e3,b = gram.expr(inp,ctx),nil,1
-        inp.match(',')
-        e2 = gram.expr(inp,ctx)
-        if inp.test(',') then e3 = gram.expr(inp,ctx) end
-        inp.match('do'); b=gram.block(inp,{l=copyt(l),n=ctx}); inp.match('end')
-        assert(#l==1,"wrong number of loop variables")
-        return {'for_idx',l[1],e1,e2,e3,b}
-      elseif t.type == 'in' then
-        local el,b = gram.exprList(inp,ctx)
-        inp.match('do'); b=gram.block(inp,{l=copyt(l),n=ctx}); inp.match('end')
-        return {'for_list',l[1],l[2] or '_',el,b}
-      else error() end
-    elseif t == 'if' then
-      local e = gram.expr(inp,ctx)
-      inp.match('then')
-      local b = gram.block(inp,{l={},n=ctx})
-      local eif,els={}
-      while inp.test('elseif') do
-        local e = gram.expr(inp,ctx)
-        inp.match('then')
-        local b = gram.block(inp,{l={},n=ctx})
-        eif[#eif+1]={e,b}
-      end
-      if inp.test('else') then 
-        els = gram.block(inp,{l={},n=ctx})
-      end
-      inp.match('end')
-      return {'if',e,b,eif,els}
-    elseif t == 'setp' then
-      local lvs=gram.lvList(inp,ctx)
-      local exprs = gram.exprList(inp,ctx)
-      return {'setp',lvs,table.unpack(exprs)}
-    elseif t == 'function' then
-      local name,ft = gram.funcName(inp,ctx)
-      local args,varargs,body = gram.funcBody(inp,ctx)
-      ctx.l[name[2]]=nil
-      return {'function','glob',ft,name,args,varargs,body}
-    elseif t == 'local' then
-      if inp.test('function') then
---      local name,ft = gram.funcName(inp)
-        local name,ft = makeVar(inp.match('Name'),ctx),'fun'  -- If it exists?
-        name[1]='var'
-        addVarsToCtx({name},ctx)
-        local args,varargs,body = gram.funcBody(inp,ctx)
-        return {'function','loc',ft,name,args,varargs,body}
-      else 
-        local vars,exprs = gram.varList(inp,ctx,true),{}
-        addVarsToCtx(vars,ctx)
-        if inp.testO('=') then
-          exprs = gram.exprList(inp,ctx)
-        end
-        local v = {}
-        for _,e in ipairs(vars) do v[#v+1]=e[2] end
-        return {'local',v,table.unpack(exprs)}
-      end
-    elseif t ~= ';' then
-      inp.back(n)
-      return gram.expr(inp,ctx)
-    end
-    inp.back(n)
-  end
-
-  function gram.exprList(inp,ctx)
-    local res,i = {gram.expr(inp,ctx)},2
-    while inp.test(',') do
-      res[i]=gram.expr(inp,ctx) i=i+1
-    end
-    return res
-  end
-
-  local bends = {['end']=true,['elseif']=true,['else']=true,['until']=true,['return']=true,['eof']=true,}
-
-  function gram.block(inp,ctx)
-    local s = {gram.stat(inp,ctx)}
-    if #s>0 then
-      while not bends[inp.peek().type] do 
-        local t=gram.stat(inp,ctx) 
-        if t== nil then break else s[#s+1]=t end
-      end
-    end
-    if inp.test('return') then
-      local re = gram.exprList(inp,ctx)
-      s[#s+1] = {'return',table.unpack(re)}
-    end
-    inp.test(';') -- optional
-    table.insert(s,1,'progn')
-    return s
-  end
-
-  function gram.field(inp,ctx) 
-    if inp.test('[') then
-      local e1 = gram.expr(inp,ctx)
-      inp.match(']')
-      inp.matchO('=')
-      return {gram.expr(inp,ctx),e1}
-    elseif inp.peek().type == 'Name' and inp.peek(2).value == '=' then
-      local n = inp.next()
-      inp.matchO('=')
-      return {gram.expr(inp,ctx),n.value}
-    else
-      return {gram.expr(inp,ctx)}
-    end
-  end
-
-  function gram.tableConstructor(inp,ctx)
-    inp.match('{') 
-    --if inp.test('}') then return {'quote',{}} end
-    local res = {gram.field(inp,ctx)}
-    while inp.peek().type == ',' or inp.peek().type == ';' do
-      inp.next()
-      if inp.peek().type == '}' then break end
-      res[#res+1]=gram.field(inp,ctx)
-    end
-    inp.match('}')
-    if #res==1 and next(res[1])==nil then
-      return {'quote',{}}
-    end
-    local r = {}
-    for _,e in ipairs(res) do
-      if e[2] then r[#r+1]='__KEY_' r[#r+1]=e[2] r[#r+1]=e[1] else r[#r+1]=e[1] end
-    end
-    return {'table',table.unpack(r)}
-  end
---[[
-functiondef ::= function funcbody
-funcbody ::= ‘(’ [parlist] ‘)’ block end
-parlist ::= namelist [‘,’ ‘...’] | ‘...’
---]]
-
-  function gram.funcBody(inp,ctx)
-    inp.match('(')
-    local p = inp.peek()
-    local varargs,args=false,{}
-    if p.type == '...' then
-      varargs=true
-      inp.next()
-    elseif p.type == 'Name' then
-      args={inp.match('Name')}
-      while inp.test(',') do 
-        p=inp.peek()
-        if inp.test('...') then  varargs=true break end
-        args[#args+1]=inp.match('Name') 
-      end
-    end 
-    inp.match(')')
-    local b = gram.block(inp,{l=copyt(args),n=ctx})
-    inp.match('end')
-    return args,varargs,b
-  end
-
---funcname ::= Name {‘.’ Name} [‘:’ Name]
-
-  function gram.funcName(inp,ctx)
-    local t = makeVar(inp.match('Name'),ctx)
-    while true do
-      local p = inp.peek()
-      if inp.test('.') then
-        local n = inp.match('Name')
-        t = {'aref',t,n}
-      elseif inp.test(':') then
-        local n = inp.match('Name')
-        return {'aref',t,n},'obj'
-      end
-      break
-    end
-    return t,'fun'
-  end
-
-  local function tokenToError(token,str)
-    local l = 1
-    local line = str
-    for c in str:gmatch"(.-)[\n$]" do l=l+1; if l==token.line then line = c break end end
-    if l==0 then return format(">>%s<<",token.value)
-    else 
-      return format('line %s:"%s>>%s<<%s"',l,line:sub(1,token.from-1),token.value,line:sub(token.to+1))
-    end
-  end
-
-  local p = function(str,locals)
-    locals = locals or {}
-    local stat,res,ir = pcall(function()
-        local expr
-        mTokens = mkStream(tokenize(str))
-        local ir = mTokens.isRule
-        if ir then
-          local e,b = mTokens.split(mTokens.isRule+1)
-          mTokens = b
-          e = gram.expr(e,{l=locals})
-          b = gram.block(b,{l=locals})
-          expr = {'if',e,b}
-        else 
-          expr = gram.block(mTokens,{l=locals})
-        end
-        if mTokens.peek() ~= mTokens.eof then
-          error({err="Unexpected token at eof",token=mTokens.next()})
-        end
-        return expr,ir
-      end)
-    if stat then return res,ir
-    else
-      if type(res)=='table' then
-        error(res.err.." - "..tokenToError(res.token,str),1)
-      else error(res,1) end
-    end
-  end
-
-  return p
+------------ Utilities -------------------------
+local function stream(tkns)
+  local self,p = {},0
+  function self.next() p=p+1 return tkns[p] end
+  function self.match(t,err) if not self.matchif(t) then error(err,2) end end 
+  function self.peek() return tkns[p+1] end
+  function self.peekm(t) return t[tkns[p+1].type]==true end
+  function self.peekif(t) return tkns[p+1].type==t end
+  function self.peek2if(t) return tkns[p+2] and tkns[p+2].type==t end
+  function self.matchif(t) if tkns[p+1].type==t then p=p+1 self.last = tkns[p] return self.last else return false end end
+  function self.error(str) return error(str..":"..tkns[p+1].value,2) end
+  return self
 end
+
+local function stack()
+  local p,st,self=0,{},{}
+  function self.push(v) p=p+1 st[p]=v end
+  function self.pop(n) n = n or 1; p=p-n; return st[p+n] end
+  function self.popn(n,v) v = v or {}; if n > 0 then local p0 = self.pop(); self.popn(n-1,v); v[#v+1]=p0 end return v end 
+  function self.peek(n) return st[p-(n or 0)] end
+  function self.isEmpty() return p<=0 end
+  function self.size() return p end    
+  function self.dump() for i=1,p do print(json.encode(st[i])) end end
+  return self
+end
+
+local function output()
+  local self,instr = {},{}
+  function self.add(e) instr[#instr+1]=e end
+  self.instr = instr
+  return self
+end
+
+local function append(t1,t2) for _,e in ipairs(t2) do t1[#t1+1]=e end end
+
+------------------ Tokenizer -------------------
+local tokenMap = { 
+  ['[']={t='LB'},[']']={t='RB'},
+  ['(']={t='LP'},[')']={t='RP'},
+  ['*']={t='star',p=12,n=2},['^']={t='parent'},
+  [':']={t='semi'},['?']={t='question'},['.']={t='dot'},[',']={t='comma'},
+  ['-']={t='op',p=11,n=2},['/']={t='op',p=13,n=2},['+']={t='op',p=11,n=2},['%']={t='op',p=13,n=2},['!']={t='op',p=5.1,n=1},
+  ['&&']={t='op',p=5,n=2},['||']={t='op',p=4,n=2},['>']={t='op',p=6,n=2},['>=']={t='op',p=6,n=2},['<']={t='op',p=6,n=2},
+  ['<=']={t='op',p=6,n=2},['==']={t='op',p=6,n=2},['!=']={t='op',p=6,n=2},
+  ['=~']={t='op',p=6,n=2},['%neg']={p=14,n=1},
+  ['$']={t='root'},['@']={t='current_node'},
+}
+
+local tokens = {
+  {"^(%-?[0-9]+)",function(t) return 'number',tonumber(t) end},
+  {"^(%.%.)",function(t) return 'recursive_descent',t end },
+  {"^([&|><=!.][&|=~.])",function(t) assert(tokenMap[t],"Illegal token:"..t) return tokenMap[t].t,t end },  
+  {"^([/%[%]%(%)%*%-!:%?%^%%%+><=@%$%.,])",function(t) assert(tokenMap[t],"Illegal token:"..t) return tokenMap[t].t,t end },  
+  {"^([a-zA-Z0-9_]+)",function(t)
+      local n = tonumber(t)
+      if n then return "number",n else return 'ident',t end
+    end},
+  {'^(%b"")',function(t) return 'str',t:sub(2,-2) end},
+  {"^(%b'')",function(t) return 'str',t:sub(2,-2) end},
+}
+
+local function getToken(str)
+  for _,t in ipairs(tokens) do
+    local t0 = str:match(t[1])
+    if t0  then return t0,t[2](t0) end
+  end
+  error("Unknown token "..str)
+end
+
+local function parseTokens(str)
+  local tokens = {}
+  while str ~= "" do
+    str=str:match("%s*(.*)")
+    if str ~="" then
+      local t0,typ,t = getToken(str)
+      str = str:sub(t0:len()+1)
+      tokens[#tokens+1]={type=typ,value=t}
+    end
+  end
+  tokens[#tokens+1]={type='EOF'}
+  return stream(tokens)
+end
+
+------------------ json grammar -------------------
+local p_jsonpath
+local p_relative_location
+local p_relative_path
+local p_bracket_expression
+local p_bracket_element
+local p_expression
+local p_slice
+local pExpr
+
+local LA_relative_location = {dot=true,recursive_descent=true,parent=true,LB=true}
+function p_jsonpath(tkns,out)
+  if tkns.matchif('root') then   --jsonpath = "$" [relative-location]
+    out.add({"root"})
+    if tkns.peekm(LA_relative_location) then p_relative_location(tkns,out) end
+  elseif tkns.matchif('current_node') then --jsonpath = / "@" [relative-location]
+    out.add({"current_node"})
+    if tkns.peekm(LA_relative_location) then p_relative_location(tkns,out) end
+  else tkns.error("Bad jsonpath") end
+end
+
+local LA_relative_path = {ident=true,str=true,star=true} -- star???
+
+function p_relative_location(tkns,out)
+  if tkns.matchif('dot') then -- relative-location = "." relative-path
+    p_relative_path(tkns,out)
+
+  elseif tkns.peekif('LB') then -- relative-location = bracket-expression [relative-location]
+    p_bracket_expression(tkns,out)
+    if tkns.peekm(LA_relative_location) then p_relative_location(tkns,out) end
+
+  elseif tkns.matchif('recursive_descent') then
+    local n = #out.instr+1
+    if tkns.peekm(LA_relative_path) then                 --relative-location = / ".." relative-path
+      p_relative_path(tkns,out)
+    elseif tkns.peekif('LB') then                         --relative-location = / ".." bracket-expression [relative-location]
+      p_bracket_expression(tkns,out)
+      if tkns.peekm(LA_relative_location) then p_relative_location(tkns,out) end
+    else tkns.error("Bad .. jsonpath") end
+    out.instr[n]={"recursive_descent",out.instr[n]}
+  elseif tkns.matchif('parent') then                    --relative-location = / "^" [relative-location]
+    out.add({"parent"})
+    if tkns.peekm(LA_relative_location) then p_relative_location(tkns,out) end
+  else tkns.error("Bad jsonpath") end
+end
+
+function p_relative_path(tkns,out)
+  local t = tkns.next()
+  if t.type=='ident' then             --relative-path = identifier [relative-location]
+    out.add({"ident_selector",t.value}) 
+  elseif t.type=='str' then           --relative-path = string [relative-location]
+    out.add({"ident_selector",t.value})
+  elseif t.type=='star' then          --relative-path = / "*" [relative-location]
+    out.add({"star_selector"})
+  else tkns.error("Bad jsonpath") end
+  if tkns.peekm(LA_relative_location) then p_relative_location(tkns,out) end 
+end
+
+function p_bracket_expression(tkns,out)
+  if tkns.matchif('LB') then             --bracket-expression = "[" bracketed-element *bracket-expression_aux "]"
+    local outs = output()
+    p_bracket_element(tkns,outs)
+    while tkns.matchif('comma') do        --bracket-expression-aux = "," bracketed-element
+      p_bracket_element(tkns,outs)
+    end
+    tkns.match('RB',"missing ]")
+    out.add({'list',outs.instr})
+  else tkns.error("Bad bracked expression") end
+end
+
+function p_bracket_element(tkns,out)
+  local t = tkns.peek()
+  if t.type=='str' then tkns.next() out.add({"ident_selector",t.value})     --bracketed-element = / string 
+  elseif t.type=='ident' then tkns.next() out.add({"ident_selector",t.value})     --bracketed-element = / ident 
+  elseif t.type=='star' then tkns.next() out.add({"star_selector"})   --bracketed-element = / "*"
+  elseif t.type=='semi' or t.type=='number' and tkns.peek2if('semi') then  --bracketed-element = / slice
+    p_slice(tkns,out)
+  elseif t.type== 'number' then tkns.next() out.add({"index_selector",t.value}) --bracketed-element = integer ; index     
+  elseif t.type=='LP' then 
+    local expr = p_expression(tkns)
+    out.add({'index_selector',expr})                             --bracketed-element = / "(" expression ")"; filter expression
+  elseif t.type=='question' then 
+    tkns.match("question","Missing '?' for expression")
+    local expr = p_expression(tkns)
+    out.add({'filter',expr})                             --bracketed-element = / "?" expression ; filter expression
+  elseif t.type=='root' or t.type=='current_node' then  --bracketed-element = / jsonpath
+    p_jsonpath(tkns,out)
+  else tkns.error("Bad bracketed element") end
+end
+
+-- slice  = [integer] ":" [integer] [ ":" [integer] ]
+function p_slice(tkns,out)
+  local i1,i2,i3
+  if tkns.matchif('number') then
+    i1=tkns.last.value
+    tkns.match('semi',"Bad slice")
+  elseif tkns.matchif('semi') then
+    i1=nil
+  else error("Bad slice") end
+  if tkns.matchif('number') then
+    i2 = tkns.last.value
+  else i2 = nil end
+  if tkns.matchif('semi') then
+    if tkns.matchif('number') then
+      i3 = tkns.last.value
+    else i3 = nil end
+  end
+  out.add({"slice_selector",i1,i2,i3})
+end
+
+local gExpr = {}
+function p_expression(tkns)
+  tkns.match("LP","Missing '(' for expression")
+  local expr = pExpr(tkns,{[')']=true})
+  tkns.match("RP","Missing ')' for expression")
+  return expr
+end
+
+------------------ filter parser  -------------------
+local function applyOp(t,st) return st.push(st.popn(tokenMap[t.value].n,{t.value})) end
+local function lessp(t1,t2) 
+  local v1,v2 = t1.value,t2.value
+  if v1=='=' then v1='/' end
+  return tokenMap[v1].p < tokenMap[v2].p
+end
+
+local function gArgs(inp,stop)
+  local res,i = {},1
+  while inp.peek().value ~= stop do 
+    assert(inp.peek().type~='EOF',"Missing ')'"); 
+    res[i] = pExpr(inp,{[stop]=true,[',']=true}); 
+    i=i+1; 
+    if inp.peek().value == ',' then inp.next() end 
+  end
+  inp.next() return res
+end
+
+local constants={['true']=true, ['false']=false}
+gExpr['LP']=function(inp,st,ops,_,pt) st.push(pExpr(inp,{[')']=true})) inp.next() end
+gExpr['LB']=function(inp,st,ops,_,pt) 
+  local args = gArgs(inp,']')
+  st.push({'table',args})
+end
+gExpr['number']=function(_,st,_,t,_) st.push(t.value) end
+gExpr['str']=function(_,st,_,t,_) st.push(t.value) end
+gExpr['ident']=function(inp,st,ops,t,pt) 
+  local v = constants[t.value]
+  if v~=nil then st.push(v) return end
+  if inp.matchif('LP') then
+    local args = gArgs(inp,')')
+    st.push({'funcall',t.value,args})
+  else st.push(t.value) end
+end
+gExpr['op']=function(_,st,ops,t,pt)
+  if t.value == '-' and not(pt.type == 'name' or pt.type == 'number' or pt.type == 'RP') then t.value='%neg' end
+  while ops.peek() and lessp(t,ops.peek()) do applyOp(ops.pop(),st) end
+  ops.push(t)
+end
+gExpr['json']=function(tkns,st,ops,t,pt)
+  local out = output()
+  p_jsonpath(tkns,out)
+  st.push({'json',out.instr})
+end
+
+function pExpr(inp,stop)
+  local st,ops,t,pt=stack(),stack(),{value='<START>'}
+  while true do
+    t,pt = inp.peek(),t
+    if t.type=='EOF' or stop and stop[t.value] then break end
+    if t.type=='current_node' then
+      gExpr['json'](inp,st,ops,t,pt)
+    else
+      t = inp.next()
+      t.type = t.type=='star' and 'op' or t.type
+      gExpr[t.type](inp,st,ops,t,pt)
+    end
+  end
+  while not ops.isEmpty() do applyOp(ops.pop(),st) end
+  local r = st.pop()
+  if not st.isEmpty() then
+    error("Bad expression "..json.encode(st.pop()))
+  end
+  return r
+end
+
+------------------- selectors ------------------------
+local run,eval
+
+local jpi={}
+function jpi.root(_,_,root) return {root} end
+function jpi.current_node(_,curr,root) return curr[1] end
+function jpi.ident_selector(i,curr,_)
+  local res = {}
+  for _,e in ipairs(curr) do if type(e)=='table' then res[#res+1]=e[i[2]] end end
+  return res
+end
+function jpi.star_selector(i,curr,_)
+  local res = {}
+  for _,e in ipairs(curr) do
+    for _,e2 in pairs(e) do res[#res+1]=e2 end
+  end
+  return res
+end
+function jpi.index_selector(i,curr,root)
+  local res,idx = {},i[2]
+  for _,e in ipairs(curr) do
+    local idx2 = eval(idx,e)
+    local n=#e
+    res[#res+1]=e[idx2 < 0 and n+1+idx2 or idx2]
+  end
+  return res
+end
+function jpi.slice_selector(i,curr,_)
+  local res,i1,i2,i3 = {},i[2],i[3],i[4]
+  i3 = i3 or 1
+  for _,e in ipairs(curr) do
+    local n = #e
+    if i1 < 0 then i1 = n+1+i1 end
+    i1 = i1 or i3 < 0 and n or 1
+    i2 = i2 or i3 < 0 and 1 or n
+    for x=i1,i2,i3 do
+      res[#res+1]=e[x]
+    end
+  end
+  return res
+end
+local function apply(i,expr,curr,root)
+  return jpi[i[1]](i,{expr},root)
+end
+
+function jpi.list(i,curr,root) 
+  local res = {}
+  for _,i2 in ipairs(i[2]) do          -- [2,3]
+    for _,e in ipairs(curr) do  
+      append(res,apply(i2,e,curr,root))
+    end
+  end
+  return res
+end
+
+local function recurse(i,expr,curr,root,res)
+  if type(expr) =='table' then
+    local r = apply(i,expr,root)
+    append(res,r)
+    for _,v in pairs(expr) do
+      recurse(i,v,curr,root,res)
+    end
+  end
+end
+function jpi.recursive_descent(i,curr,root) 
+  local res = {}
+  for _,e in ipairs(curr) do
+    recurse(i[2],e,curr,root,res)
+  end
+  return res
+end
+function jpi.filter(i,curr,root) 
+  local res,f = {},i[2]
+  for _,e in pairs(curr[1]) do
+    local r = eval(f,{e})
+    if r then res[#res+1]=e end
+  end
+  return res
+end
+
+------------------ filter evaluator ----------------------
+local fops = {
+  ['+'] = function(x,y) return  x+y  end,
+  ['-'] = function(x,y) return  x-y  end,
+  ['*'] = function(x,y) return  x*y  end,
+  ['/'] = function(x,y) return  x/y  end,
+  ['>'] = function(x,y) return  x>y  end,
+  ['>='] = function(x,y) return x>=y end,
+  ['<'] = function(x,y) return  x<y  end,
+  ['<='] = function(x,y) return x<=y end,
+  ['=='] = function(x,y) return x==y end,
+  ['~='] = function(x,y) return tostring(x):match(tostring(y)) end,
+  ['='] = function(x,y) error("Not implemeneted") end,
+  ['!='] = function(x,y) return x~=y end,
+}
+
+local ffuns = {
+  ['||'] = function(expr,data) 
+    local x = eval(expr[2],data)
+    if x then return x end
+    local y = eval(expr[3],data)
+    if y then return y else return false end
+  end,
+  ['&&'] = function(expr,data) 
+    local x = eval(expr[2],data)
+    if not x then return false end
+    local y = eval(expr[3],data)
+    if y then return y else return false end
+  end,
+  ['json'] = function(expr,data) return run(expr[2],data)[1] end,
+  ['%neg'] = function(expr,data) return -eval(expr[2],data) end,
+  ['funcall'] = function(expr,data)
+    local f,args,params = expr[2],expr[3],{}
+    for _,p in ipairs(args) do params[#params+1]=eval(p,data) end
+    return _G[f](table.unpack(params))
+  end,
+  ['table'] = function(expr,data)
+    local f,args,tab = expr[2],expr[3],{}
+    for _,p in ipairs(args) do tab[#tab+1]=eval(p,data) end
+    return tab
+  end,
+}
+
+function eval(expr,data)
+  if type(expr)=='table' then
+    local op = expr[1]
+    if fops[op] then
+      local x = eval(expr[2],data)
+      local y = eval(expr[3],data)
+      return fops[op](x,y)
+    elseif ffuns[op] then return ffuns[op](expr,data)
+    else return false end
+  else return expr end
+end
+
+------------------- jsonpath ------------------------
+
+local function parseJpath(str)
+  local tkns,out = parseTokens(str),output()
+  p_jsonpath(tkns,out)
+  return out.instr
+end
+
+function run(instr,root)
+  local curr = {root}
+  for _,i in ipairs(instr) do
+    curr = jpi[i[1]](i,curr,root)
+  end
+  return curr
+end
+
+local function jpath(jp)
+  local instr =  parseJpath(jp)
+  return function(expr) return run(instr,expr) end
+end
+
+json.jsonpath = jpath
+
+local function jpath2(str,expr)
+  local res = jpath(str)(expr)
+  print(str,"=",json.encode(res))
+end
+
+------------------------------------
+-- Usage:
+-- local p = jpath("$..test")
+-- p({h={test=8}})
+
+-- Test cases
+--jpath2("$.foo.bar",{foo={b=9,bar=8}})
+--jpath2("$.foo.bar",{foo={b=9,bar=8}})
+--jpath2("$[foo].bar",{foo={b=9,bar=8}})
+--jpath2("$.foo['bar','b']",{foo={b=9,bar=8}})
+--jpath2("$.*",{foo={b=9,bar=8}})
+--jpath2("$..b",{foo={b=9,bar={b=7}}})
+--jpath2("$..[b][1]",{foo={b={7},bar={9}}})
+--jpath2("$[::-1]",{"a","b","c","d"})
+--jpath2("$[?(@.book > 3 || @.book==0)]",{boo=9,{book=5},{book=0},{book=3}})
+--jpath2("$.store.book[*].author",testData)
+--jpath2("$..author",testData)
+--jpath2("$.store.*",testData)
+--jpath2("$.store..price",testData)
+--jpath2("$..book[2]",testData)
+--jpath2("$..book[(@.length-1)]",testData)
+--jpath2("$..book[-1:]",testData)
+--jpath2("$..book[1,2]",testData)
+--jpath2("$..book[?(@.isbn)]",testData)
+--jpath2("$..book[?(@.price<10)]",testData)
+--jpath2("$..*",testData)
+--jpath2("$[(2+2)]",{1,2,3,4})
+
+--[[   -- Grammar
+  
+local grammar = [[
+jsonpath = "$" [relative-location]
+jsonpath = / "@" [relative-location]
+relative-location = "." relative-path
+relative-location = / ".." relative-path
+relative-location = / ".." bracket-expression [relative-location]
+relative-location = / "^" [relative-location]
+
+relative-path = identifier [relative-location]
+relative-path = string [relative-location]
+relative-path = / "*" [relative-location]
+bracket-expression = "[" bracketed-element *bracket-expression_aux "]"
+bracket-expression-aux = "," bracketed-element
+
+bracketed-element = integer ; index
+bracketed-element = / slice
+bracketed-element = / string 
+bracketed-element = / "*"
+bracketed-element = / "?" expression ; filter expression
+bracketed-element = / jsonpath
+
+expression = single-quoted-string 
+expression = / json-literal ; any valid JSON value
+expression = / jsonpath 
+expression = / unary-expression 
+             / binary-expression 
+             / regex-expression 
+             / paren-expression
+             
+paren-expression  = "(" expression ")"
+unary-expression = "!" expression
+unary-expression = "-" expression
+binary-expression = expression binary-operator expression
+regex-expression = expression "=~" "/" regex "/" [i]
+binary-operator  = "*" / "/" / "%" / "+" / "-" / "&&" / "||" / "<" / "<=" / "==" / ">=" / ">" / "!=" 
+;
+; "regex" represents regular expression characters
+
+function-expression = identifier function-expression-aux
+function-expression-aux = no-args / one-or-more-args
+no-args             = "(" ")"
+one-or-more-args    = "(" one-or-more-args-aux ")"
+one-or-more-args-aux = function-arg *one-or-more-args-aux-aux
+one-or-more-args-aux-aux = "," function-arg
+function-arg        = expression
+]]

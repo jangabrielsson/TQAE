@@ -35,7 +35,7 @@ end
 local function timerCall(t,args)
   local co,ctx = table.unpack(args)
   if EM.cfg.lateTimer then EM.timerCheckFun(t) end
-  local stat,res = coroutine.resume(co)
+  local stat,res,err = coroutine.resume(co)
   ctx.timers[t]=nil
   checkForExit(false,co,stat,res)
 end
