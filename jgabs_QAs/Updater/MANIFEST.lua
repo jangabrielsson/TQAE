@@ -52,9 +52,9 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.99,
+      { version = 0.991,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.99"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.991"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "Tidy up and added nicer printing",
