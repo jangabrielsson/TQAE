@@ -582,7 +582,7 @@ end
 --jpath2("$[?(@..foo)]",{a={foo={'a','b'}},c={foo={'c','b'}} })
 --jpath2("$[?(@.a)]",{a={foo={'a','b'}},c={foo={'c','b'}} })
 --jpath2("$..[?(@.a>8)]",{a=9,c={a={'c','b'}} })
-jpath2("$..[?(!@.a)]",{a=9,c={a={'c'},b=7}})
+--jpath2("$..[?(!@.a)]",{a=9,c={a={'c'},b=7}})
 --[[   -- Grammar
   
 local grammar = [[
