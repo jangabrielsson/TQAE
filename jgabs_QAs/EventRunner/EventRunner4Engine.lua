@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.98,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.99,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = _debugFlags or {}
@@ -375,7 +375,7 @@ function Module.utilities.init(QA)
     print(Util.htmlTable({pr:tostring("\n")},{table="bgcolor='"..QA.color.info.."' width='100%'"}))
   end
 
-  local hourTasks,nextHour={}
+  local hourTasks,nextHour,hourRef={}
   local function hourLoop()
     for f,_ in pairs(hourTasks) do pcall(f) end
     nextHour = nextHour+3600
@@ -1015,6 +1015,10 @@ function Module.eventScript.init()
       local r={}; for _,e in ipairs({...}) do r[#r+1]=type(e)=='table' and tostring(e) or e end
       return oldFormat(fmt,unpack(r))
     end
+
+    local function addRuleTimer(rule,ref) rule.timers[ref]=true end
+    local function clearRuleTimer(rule,ref) rule.timers[ref]=nil end
+
     local function userLogFunction(rule,fmt,...)
       local args,t1,t0,str,c1 = {...},rule._tag or __TAG,__TAG
       str = #args==0 and tostring(fmt) or string.format(fmt,...)
@@ -1136,13 +1140,13 @@ function Module.eventScript.init()
     instr['return'] = function(s,n,_,_) return 'dead',s.lift(n) end
     instr['wait'] = function(s,_,e,_) local t,co,r=s.pop(),e.co; t=t < os.time() and t or t-os.time(); s.push(t);
       r = setTimeout(function()
-          e.rule.timers[r] = nil
+          clearRuleTimer(e.rule,r) 
           local stat,res = pcall(resume,co,e)
           if not stat then
             quickApp:errorf("'%s' - %s",e.src or "",trimError(res) or "") 
           end
         end,t*1000);
-      e.rule.timers[r]=true
+      addRuleTimer(e.rule,r) 
       return 'suspended',{}
     end
     instr['kill'] = function(s,_,e,_) local ep=s.pop() or e.rule
@@ -1175,7 +1179,7 @@ function Module.eventScript.init()
     local getFuns,setFuns
     local _getFun = function(id,prop) return fibaro.get(id,prop) end
 
-    do -- Alarm handling
+    do -- get/set functions
       local alarmCache = {}
       for _,p in ipairs(api.get("/alarms/v1/partitions") or {}) do -- prime alarm cache
         alarmCache[p.id] = { 
@@ -1291,7 +1295,7 @@ function Module.eventScript.init()
       local function profile(id,_) return api.get("/profiles/"..id.."?showHidden=true") end
       local function call(id,cmd) fibaro.call(id,cmd); return true end
       local function set(id,cmd,val) fibaro.call(id,cmd,val); return val end
-      local function pushMsg(id,cmd,val) fibaro.alert(cmd,{id},val,false,''); return val end
+      local function pushMsg(id,cmd,val) fibaro.alert(fibaro._pushMethod,{id},val,false,''); return val end
       local function set2(id,cmd,val) fibaro.call(id,cmd,table.unpack(val)); return val end
       local function dim2(id,_,val) Util.dimLight(id,table.unpack(val)) end --sec,dir,step,curve,start,stop)
       local mapOr,mapAnd,mapF=table.mapOr,table.mapAnd,function(f,l,s) table.mapf(f,l,s); return true end
@@ -1418,7 +1422,7 @@ function Module.eventScript.init()
       setFuns.schedule={set2,'setSchedule'}
       setFuns.dim={dim2,'dim'}
       fibaro._pushMethod = 'push'
-      setFuns.msg={pushMsg,fibaro._pushMethod}
+      setFuns.msg={pushMsg,"push"}
       setFuns.defemail={set,'sendDefinedEmailNotification'}
       setFuns.btn={set,'pressButton'} -- ToDo: click button on QA?
       setFuns.email={function(id,_,val) local _,_ = val:match("(.-):(.*)"); fibaro.alert('email',{id},val) return val end,""}
@@ -1428,7 +1432,7 @@ function Module.eventScript.init()
 
       self.getFuns=getFuns
       self.setFuns=setFuns
-    end
+    end --- get/set functions
 
     local function ID(id,i,l) 
       if tonumber(id)==nil then 
@@ -1496,7 +1500,7 @@ function Module.eventScript.init()
     instr['osdate'] = function(s,n) local x,y = s.peek(n-1),(n>1 and s.pop() or nil) s.pop(); s.push(os.date(x,y)) end
     instr['ostime'] = function(s,_) s.push(os.time()) end
     instr['%daily'] = function(s,_,e,i) 
-      local ev = e.event
+      local ev = e.event or {}
       s.pop()
       if ev.type=='global-variable' or ev.type=='quickvar' then
         Rule.recalcDailys(e.rule)
@@ -1536,8 +1540,8 @@ function Module.eventScript.init()
       local e,t=s.pop(),0; 
       if n==2 then t=e; e=s.pop() end
       local r = quickApp:post(e,t,ev.rule)
-      ev.rule.timers[r]=true
-      r._prehook = function() ev.rule.timers[r]=nil end
+      addRuleTimer(ev.rule,r)
+      r._prehook = function() clearRuleTimer(ev.rule,r) end
       s.push(r) 
     end
     instr['subscribe'] = function(s,_,_) quickApp:subscribe(s.pop()) s.push(true) end
@@ -1921,13 +1925,6 @@ function Module.eventScript.init()
 
     function self.macro(name,str) _macros['%$'..name..'%$'] = str end
     function self.macroSubs(str)
---        local  str0 = str
---        str = str:gsub("||"," if ",1)
---        if str0 ~= str and not str:find(";;") then str = str.." ;;" end
---        str = str:gsub(">>"," then ")
---        str = str:gsub("||"," elseif ")
---        str = str:gsub(";;"," end; ")
-
       for m,s in pairs(_macros) do 
         str = str:gsub(m,s) 
       end 
@@ -2051,19 +2048,7 @@ function Module.nodered.init(self)
   Nodered = nr
   Module.nodered.inited = nr
   return nr
-end
-
-local currDST,nextDST = os.date("*t").isdst
-local function checkForDST()
-  local dst = os.date("*t").isdst
-  nextDST = nextDST or (os.time() // 3600)*3600+5 -- 5s past the hour we check... just to be safe
-  if dst ~= currDST then
-    currDST = dst
-    fibaro.post({type='DST_changed'})
-  end
-  nextDST = nextDST + 3600
-  setTimeout(checkForDST,1000*(nextDST-os.time()))
-end
+end -- Nodered
 
 local modules = {
   "utilities","autopatch","device","extras","eventScript","nodered",--"doc"
@@ -2117,6 +2102,14 @@ function QuickApp:onInit()
     quickApp:post({type='%startup%',_sh=true})
     quickApp:post({type='_startup_',_sh=true})
     if os.time()-uptime < 30 then quickApp:post({type='se-start',_sh=true}) end
+    local currDST = os.date("*t").isdst
+    self:addHourTask(function()
+        local dst = os.date("*t").isdst
+        if dst ~= currDST then
+          currDST = dst
+          fibaro.post({type='DST_changed'})
+        end
+      end)
   end
   self:main()
 end

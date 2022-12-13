@@ -65,8 +65,8 @@ function QuickApp:main()    -- EventScript version
 --  rule("#profile{property='activeProfile', value=HomeProfile} => enable('Home',true); r2.start()") 
 --  rule("post(#profile{property='activeProfile', value=HomeProfile})") 
 --  rule("wait(20); post(#profile{property='activeProfile', value=AwayProfile})")
-  alarms = 1
-  rule("alarms:armed => log('Some alarm armed')")
+--  alarms = 1
+--  rule("alarms:armed => log('Some alarm armed')")
 --  rule("alarms:allArmed => log('All alarm armed')")
 --  rule("alarms:disarmed => log('All disarmed')")
 --  rule("alarms:anyDisarmed => log('Any disarmed')")
@@ -146,6 +146,7 @@ function QuickApp:main()    -- EventScript version
       Util.printInfo()
       self:addHourTask(Util.printInfo)
     end)
+  
 --  dofile("verifyHC3scripts.lua")
   return "silent"
 end

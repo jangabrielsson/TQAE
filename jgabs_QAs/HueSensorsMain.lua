@@ -108,11 +108,15 @@ local function classes()
   function Rotary:update(event)
     HueClass.update(self,event)
     if not event.relative_rotary then return end
+    if not event.relative_rotary.value then return end
     local rot = event.relative_rotary.value
     local dir = rot.rotation.direction
     local steps = rot.rotation.steps
     local action = rot.action
---    self:updateProperty("value",on)
+    self.value = (self.value+(action=='clock_wise' and 1 or -1)*steps) % 360
+    local p = math.floor(0.5+100*self.value/360)
+    DEBUG("class","Setting rotary to %s",p)
+    self:updateProperty("value",p)
 --    self:updateProperty("state",on)
     DEBUG("class","Rotary '%s':%s = %s,%s,%s",self.name,self.id,steps,dir,action)
   end

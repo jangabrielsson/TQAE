@@ -192,6 +192,7 @@ local function main(self,map)
 
   self:event({type='quickvar',name=CONNECTOR_VAR},        -- If some QA changes subscription
     function(env)
+      local id = env.event.id
       DEBUG("QA","QA:%s quickVar updated",id)
       updateSubscriber(env.event.id,env.event.value) 
     end) -- update

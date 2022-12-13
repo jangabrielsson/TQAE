@@ -5,6 +5,7 @@
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
  Everyone is permitted to copy and distribute verbatim copies
  of this license document, but changing it is not allowed.
+ (C) 2022 jan@gabrielsson.com
  --]]
 
 -- luacheck: globals ignore quickApp plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
@@ -14,7 +15,7 @@
 -- luacheck: globals ignore behavior_instance geolocation geolocation_client
 -- luacheck: ignore 212/self
 
-local version = 0.45
+local version = 0.46
 
 HUEv2Engine = HUEv2Engine or {}
 HUEv2Engine.version = version
@@ -477,7 +478,7 @@ local function main()
       changed=function(o,n) return o.temperature.temperature~=n.temperature.temperature,n.temperature.temperature end,
     },
   }
-  
+
   class 'temperature'(hueResource)
   function temperature:__init(id)
     hueResource.__init(self,id)
@@ -561,43 +562,70 @@ local function main()
     self._str = fmt("[geofence_client:%s]",self.id)
   end
 
-  local function fetchEvents()
+  local fetchEvents
+  local function handle_events(data)
+    for _,e1 in ipairs(data) do
+      if e1.type=='update' then
+        for _,r in ipairs(e1.data) do
+          local d = resources.get(r.id)
+          if d and d.event then 
+            DEBUG('all_event',"Event id:%s type:%s",d.id,d.type)--,json.encode(e2))
+            d:event(r)
+          else
+            local _ = 0
+            if debug.unknownType then WARNING("Unknow resource type: %s",json.encode(e1)) end
+          end
+        end
+      elseif e1.type == 'delete' then
+        for _,r in ipairs(e1.data) do
+          resources.delete(r.id)
+        end
+      elseif e1.type == 'add' then
+        for _,r in ipairs(e1.data) do
+          resources.add(r.id,r)
+        end
+      else
+        DEBUG('v2api',"New v2 event type: %s",e1.type)
+        DEBUG('v2api',"%s",json.encode(e1))
+      end
+    end
+  end 
+
+  local function fetchEvents_emu()
     local getw
     local eurl = url.."/eventstream/clip/v2"
     local args = { options = { method='GET', checkCertificate=false, headers={ ['hue-application-key'] = app_key }}}
     function args.success(res)
       local data = json.decode(res.data)
-      for _,e1 in ipairs(data) do
-        if e1.type=='update' then
-          for _,r in ipairs(e1.data) do
-            local d = resources.get(r.id)
-            if d and d.event then 
-              DEBUG('all_event',"Event id:%s type:%s",d.id,d.type)--,json.encode(e2))
-              d:event(r)
-            else
-              local _ = 0
-              if debug.unknownType then WARNING("Unknow resource type: %s",json.encode(e1)) end
-            end
-          end
-        elseif e1.type == 'delete' then
-          for _,r in ipairs(e1.data) do
-            resources.delete(r.id)
-          end
-        elseif e1.type == 'add' then
-          for _,r in ipairs(e1.data) do
-            resources.add(r.id,r)
-          end
-        else
-          DEBUG('v2api',"New v2 event type: %s",e1.type)
-          DEBUG('v2api',"%s",json.encode(e1))
-        end
-      end
+      handle_events(data)
       getw()
     end
     function args.error(err) if err~="timeout" and err~="wantread" then ERROR("/eventstream: %s",err) end getw() end
     function getw() net.HTTPClient():request(eurl,args) end
     setTimeout(getw,0)
   end
+
+  local function fetchEvents_hc3()
+    local getw
+    local eurl = url.."/eventstream/clip/v2"
+    local args = { 
+      options = { method='GET', checkCertificate=false, 
+        headers={["hue-application-key"] = app_key, Accept = "text/event-stream" }, 
+        timeout = 2000 }
+    }
+    function args.success(res)
+      if res.data:match("^: hi") then print("Hello") res.data="[]"
+      else res.data = res.data:match("(%b[])") end
+      local data = json.decode(res.data)
+      handle_events(data)
+    end
+    function args.error(err) if err~="timeout" and err~="wantread" then ERROR("/eventstream: %s",err) end getw() end
+    function getw() net.HTTPClient():request(eurl,args) end
+    setTimeout(getw,0)
+  end
+
+  if hc3_emulator then fetchEvents = fetchEvents_emu
+  else fetchEvents = fetchEvents_hc3 end
 
   function hueGET(api,event) 
     net.HTTPClient():request(url..api,{

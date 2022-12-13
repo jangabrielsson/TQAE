@@ -40,21 +40,21 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.96,
+      { version = 0.98,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.96"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.98"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "fixed mapAnd bug",
+        descr = "Tidy up and added nicer printing",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.98,
+      { version = 0.99,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.98"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.99"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
         descr = "Tidy up and added nicer printing",
