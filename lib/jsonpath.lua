@@ -143,7 +143,7 @@ local tokenMap = {
   [':']={t='semi'},['?']={t='question'},['.']={t='dot'},[',']={t='comma'},
   ['-']={t='op',p=11,n=2},['/']={t='op',p=13,n=2},['+']={t='op',p=11,n=2},['%']={t='op',p=13,n=2},['!']={t='op',p=5.1,n=1},
   ['&&']={t='op',p=5,n=2},['||']={t='op',p=4,n=2},['>']={t='op',p=6,n=2},['>=']={t='op',p=6,n=2},['<']={t='op',p=6,n=2},
-  ['<=']={t='op',p=6,n=2},['==']={t='op',p=6,n=2},['!=']={t='op',p=6,n=2},['!']={t='not',p=5.1,n=1},
+  ['<=']={t='op',p=6,n=2},['==']={t='op',p=6,n=2},['!=']={t='op',p=6,n=2},--['!']={t='not',p=5.1,n=1},
   ['=~']={t='op',p=6,n=2},['neg']={p=14,n=1},
   ['$']={t='root'},['@']={t='current_node'},
   ['in']={t='op',p=5.1,n=2}, ['nin']={t='op',p=5.1,n=2}, ['contains']={t='op',p=5.1,n=2}, 
@@ -345,7 +345,7 @@ gExpr['ident']=function(inp,st,ops,t,pt)
 end
 gExpr['op']=function(_,st,ops,t,pt)
   if t.value == '-' and not(pt.type == 'ident' or pt.type == 'number' or pt.type == 'RP') then t.value='neg' end
-  if t.value == '!' then t.value = 'not' end
+--  if t.value == '!' then t.value = 'not' end
   while ops.peek() and lessp(t,ops.peek()) do applyOp(ops.pop(),st) end
   ops.push(t)
 end
@@ -497,7 +497,7 @@ local ffuns = {
   end,
   ['json'] = function(expr,data) return run(expr[2],data)[1] end,
   ['neg'] = function(expr,data) return -eval(expr[2],data) end,
-  ['not'] = function(expr,data) return -eval(expr[2],data) end,
+  ['!'] = function(expr,data) return not eval(expr[2],data) end,
   ['funcall'] = function(expr,data)
     local f,args,params = expr[2],expr[3],{}
     for _,p in ipairs(args) do params[#params+1]=eval(p,data) end
@@ -556,32 +556,33 @@ end
 -- p({h={test=8}})
 
 -- Test cases
-jpath2("$.foo.bar",{foo={b=9,bar=8}})
-jpath2("$.foo.bar",{foo={b=9,bar=8}})
-jpath2("$[foo].bar",{foo={b=9,bar=8}})
-jpath2("$.foo['bar','b']",{foo={b=9,bar=8}})
-jpath2("$.*",{foo={b=9,bar=8}})
-jpath2("$..b",{foo={b=9,bar={b=7}}})
-jpath2("$..[b][1]",{foo={b={7},bar={9}}})
-jpath2("$[::-1]",{"a","b","c","d"})
-jpath2("$[?(@.book > 3 || @.book==0)]",{boo=9,{book=5},{book=0},{book=3}})
-jpath2("$.store.book[*].author",testData)
-jpath2("$..author",testData)
-jpath2("$.store.*",testData)
-jpath2("$.store..price",testData)
-jpath2("$..book[2]",testData)
---jpath2("$..book[(@.length-1)]",testData)
-jpath2("$..book[-1:]",testData)
-jpath2("$..book[1,2]",testData)
-jpath2("$..book[?(@.isbn)]",testData)
-jpath2("$..book[?(@.price<10)]",testData)
-jpath2("$..*",testData)
-jpath2("$[(2+2)]",{1,2,3,4})
-jpath2("$[?(@.bar || @.foo)]",{a={foo=false}})
-jpath2("$[?('b' in @..foo)]",{a={foo={'a','b'}},foo={'c','b'}})
-jpath2("$[?(@..foo)]",{a={foo={'a','b'}},c={foo={'c','b'}} })
-jpath2("$[?(@.a)]",{a={foo={'a','b'}},c={foo={'c','b'}} })
-jpath2("$..[?(@.a>8)]",{a=9,c={a={'c','b'}} })
+--jpath2("$.foo.bar",{foo={b=9,bar=8}})
+--jpath2("$.foo.bar",{foo={b=9,bar=8}})
+--jpath2("$[foo].bar",{foo={b=9,bar=8}})
+--jpath2("$.foo['bar','b']",{foo={b=9,bar=8}})
+--jpath2("$.*",{foo={b=9,bar=8}})
+--jpath2("$..b",{foo={b=9,bar={b=7}}})
+--jpath2("$..[b][1]",{foo={b={7},bar={9}}})
+--jpath2("$[::-1]",{"a","b","c","d"})
+--jpath2("$[?(@.book > 3 || @.book==0)]",{boo=9,{book=5},{book=0},{book=3}})
+--jpath2("$.store.book[*].author",testData)
+--jpath2("$..author",testData)
+--jpath2("$.store.*",testData)
+--jpath2("$.store..price",testData)
+--jpath2("$..book[2]",testData)
+----jpath2("$..book[(@.length-1)]",testData)
+--jpath2("$..book[-1:]",testData)
+--jpath2("$..book[1,2]",testData)
+--jpath2("$..book[?(@.isbn)]",testData)
+--jpath2("$..book[?(@.price<10)]",testData)
+--jpath2("$..*",testData)
+--jpath2("$[(2+2)]",{1,2,3,4})
+--jpath2("$[?(@.bar || @.foo)]",{a={foo=false}})
+--jpath2("$[?('b' in @..foo)]",{a={foo={'a','b'}},foo={'c','b'}})
+--jpath2("$[?(@..foo)]",{a={foo={'a','b'}},c={foo={'c','b'}} })
+--jpath2("$[?(@.a)]",{a={foo={'a','b'}},c={foo={'c','b'}} })
+--jpath2("$..[?(@.a>8)]",{a=9,c={a={'c','b'}} })
+jpath2("$..[?(!@.a)]",{a=9,c={a={'c'},b=7}})
 --[[   -- Grammar
   
 local grammar = [[
