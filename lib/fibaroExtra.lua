@@ -19,7 +19,7 @@ Email: jan@gabrielsson.com
 -------------------- Base ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    fibaro.FIBARO_EXTRA = "v0.953"
+    fibaro.FIBARO_EXTRA = "v0.954"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -883,9 +883,10 @@ _MODULES.debug={ author = "jan@gabrielsson.com", version = '0.4', init = functio
         return print_debug('debug',tag,arr2str(" ",...)) 
       else return "" end 
     end
-    function fibaro.trace(tag,...) 
+    function fibaro.trace(tag,a,...)
+      if a and inhibitPrint[a] and debugFlags[inhibitPrint[a]]==false then return end
       if not(type(tag)=='number' and tag > (debugFlags.traceLevel or 0)) then 
-        return print_debug('trace',tag,arr2str(" ",...)) 
+        return print_debug('trace',tag,arr2str(" ",a,...)) 
       else return "" end 
     end
     function fibaro.error(tag,...)
