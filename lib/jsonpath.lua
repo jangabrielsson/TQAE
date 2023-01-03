@@ -480,6 +480,13 @@ local fops = {
   ['!='] = function(x,y) return tostring(x)~=tostring(y) end,
   ['in'] = function(x,y) return member(x,y) or false end,
   ['nin'] = function(x,y) return not member(x,y) or false end,
+  ['subsetof'] = function(x,y) 
+    if type(x) ~= 'table' or type(y)~='table' then return false end
+    local t = {}
+    for _,v in ipairs(y) do t[v]=true end
+    for _,v in ipairs(x) do if not t[v] then return false end end
+    return true
+  end,
 }
 
 local ffuns = {
@@ -505,7 +512,7 @@ local ffuns = {
   end,
   ['table'] = function(expr,data)
     local f,args,tab = expr[2],expr[3],{}
-    for _,p in ipairs(args) do tab[#tab+1]=eval(p,data) end
+    for _,p in ipairs(f) do tab[#tab+1]=eval(p,data) end
     return tab
   end,
 }
