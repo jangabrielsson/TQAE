@@ -19,7 +19,7 @@ Email: jan@gabrielsson.com
 -------------------- Base ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    fibaro.FIBARO_EXTRA = "v0.954"
+    fibaro.FIBARO_EXTRA = "v0.955"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -167,7 +167,8 @@ _MODULES.error={ author = "jan@gabrielsson.com", version = '0.4', init = functio
           end,math.floor(ms+0.5))
       end
       fibaro.setTimeout = function(ms,fun) return setTimeout(fun,ms) end
-
+      fibaro.clearTimeout = function(ref) return clearTimeout(ref) end
+      
       function json.decode(...)
         local stat,res = pcall(decode,...)
         if not stat then error(res,2) else return res end
