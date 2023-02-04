@@ -207,7 +207,7 @@ return {
       },
       { version= 0.15,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.14"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.15"
         },
         descr = "More fixes",
         mainfile = "$base1/jgabs_QAs/HueConnector.lua",
