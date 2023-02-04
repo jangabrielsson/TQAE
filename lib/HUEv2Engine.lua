@@ -15,7 +15,7 @@
 -- luacheck: globals ignore behavior_instance geolocation geolocation_client
 -- luacheck: ignore 212/self
 
-local version = 0.46
+local version = 0.47
 
 HUEv2Engine = HUEv2Engine or {}
 HUEv2Engine.version = version
@@ -355,6 +355,18 @@ local function main()
   end
   function zgp_connectivity:connected()
     return self.rsrc.status=="connected"
+  end
+
+  class 'zigbee_device_discovery'(hueResource)
+  function zigbee_device_discovery:__init(id)
+    hueResource.__init(self,id)
+    self._str = fmt("[zigbee_device_discovery:%s,%s]",self.id,self:getName("ZDD"))
+  end
+
+  class 'matter'(hueResource)
+  function matter:__init(id)
+    hueResource.__init(self,id)
+    self._str = fmt("[matter:%s,%s]",self.id,self:getName("MATT"))
   end
 
   class 'entertainment'(hueResource)

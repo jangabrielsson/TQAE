@@ -205,9 +205,9 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
-      { version= 0.16,
+      { version= 0.17,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.16"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/HueConnector_0.17"
         },
         descr = "More fixes",
         mainfile = "$base1/jgabs_QAs/HueConnector.lua",
