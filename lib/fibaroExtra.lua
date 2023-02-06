@@ -19,7 +19,7 @@ Email: jan@gabrielsson.com
 -------------------- Base ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    fibaro.FIBARO_EXTRA = "v0.955"
+    fibaro.FIBARO_EXTRA = "v0.956"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -61,7 +61,7 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function
     if not table.maxn then 
       function table.maxn(tbl) local c=0 for _ in pairs(tbl) do c=c+1 end return c end
     end
-    
+
     function table.member(k,tab) for i,v in ipairs(tab) do if equal(v,k) then return i end end return false end
     function table.map(f,l,s) s = s or 1; local r,m={},table.maxn(l) for i=s,m do r[#r+1] = f(l[i]) end return r end
     function table.mapf(f,l,s) s = s or 1; local e=true for i=s,table.maxn(l) do e = f(l[i]) end return e end
@@ -168,7 +168,7 @@ _MODULES.error={ author = "jan@gabrielsson.com", version = '0.4', init = functio
       end
       fibaro.setTimeout = function(ms,fun) return setTimeout(fun,ms) end
       fibaro.clearTimeout = function(ref) return clearTimeout(ref) end
-      
+
       function json.decode(...)
         local stat,res = pcall(decode,...)
         if not stat then error(res,2) else return res end
@@ -696,7 +696,7 @@ _MODULES.time={ author = "jan@gabrielsson.com", version = '0.4', init = function
       return start <= optTime and optTime <= stop
     end
     function fibaro.time2str(t) return format("%02d:%02d:%02d",math.floor(t/3600),math.floor((t%3600)/60),t%60) end
-    
+
     local function hm2sec(hmstr,ns)
       local offs,sun
       sun,offs = hmstr:match("^(%a+)([+-]?%d*)")
@@ -860,7 +860,7 @@ _MODULES.debug={ author = "jan@gabrielsson.com", version = '0.4', init = functio
       return (debugFlags.html and not hc3_emulator) and htmlTransform(table.concat(res,del)) or table.concat(res,del)
     end 
     fibaro.arr2str = arr2str
-    
+
     fibaro.stringTrunc = { 100, 160, 1000 }
     local function print_debug(typ,tag,str)
       --__fibaro_add_debug_message(tag or __TAG,str or "",typ or "debug")
@@ -870,6 +870,7 @@ _MODULES.debug={ author = "jan@gabrielsson.com", version = '0.4', init = functio
         local sl,ml = str:len()-3,fibaro.stringTrunc[tonumber(m)]
         if ml and sl > ml then str=str:sub(1,ml).."..." end
       end
+      if type(tag)=='number' then tag = nil end
       api.post("/debugMessages",{message=str,messageType=typ or "debug",tag=tag or __TAG})
       if typ=='error' and debugFlags.eventError then
         fibaro.post({type='error',message=str,tag=tag})
