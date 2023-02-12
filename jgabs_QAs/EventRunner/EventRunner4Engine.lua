@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.991,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.993,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = _debugFlags or {}
@@ -47,7 +47,7 @@ function Module.device.init(selfM)
       local actions = (__fibaro_get_device(id) or {}).actions or {}
       switchMap[id] = actions.turnOff and not actions.setValue
     end
-    if switchMap[id] then action=({...})[1] and 'turnOn' or 'turnOff' end
+    if action=='setValue' and switchMap[id] then return oldFibaroCall(id,({...})[1] and 'turnOn' or 'turnOff') end
     return oldFibaroCall(id,action,...)
   end
 
@@ -514,7 +514,7 @@ function Module.extras.init(self)
       opts.headers["content-type"] = 'application/json'
     end
     if opts.user or opts.pwd then 
-      opts.headers['Authorization']= quickApp:basicAuthorization((opts.user or ""),(opts.pwd or ""))
+      opts.headers['Authorization']= fibaro.utils.basicAuthorization((opts.user or ""),(opts.pwd or ""))
       opts.user,opts.pwd=nil,nil
     end
     opts.data = data and json.encode(data)
@@ -2087,6 +2087,7 @@ function QuickApp:onInit()
     local uptime,silent = api.get("/settings/info").serverStatus or os.time()
     self:tracef("HC3 running since %s",os.date("%c",uptime))
     Util.printBanner("Setting up rules (main)")
+    local startupTime = os.clock()
     local stat,res = pcall(function()
         silent = main(quickApp) -- call main
       end)
@@ -2096,6 +2097,7 @@ function QuickApp:onInit()
       self:error("Main() ERROR:"..res)
       error()
     end
+    self:tracef("main finished in %.3fs",os.clock()-startupTime)
     if silent~='silent' then Util.printBanner("Running") end
     self:setView("ERname","text","EventRunner4 %s",_version)
     quickApp:post({type='%startup%',_sh=true})
