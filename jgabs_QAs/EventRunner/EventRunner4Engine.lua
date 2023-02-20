@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.993,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.994,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = _debugFlags or {}
@@ -68,6 +68,109 @@ function Module.device.init(selfM)
     if not last then return -1 end
     return last.script and -1 or os.time()-last.time
   end
+
+  local childID = 'ChildID'
+  local classID = 'ClassName'
+  local defChildren
+
+  local children = {}
+  local undefinedChildren = {}
+  local createChild = QuickApp.createChildDevice
+  class 'QwikAppChild'(QuickAppChild)
+
+  function QwikAppChild:__init(device) 
+    QuickAppChild.__init(self, device)
+    self:debug("Instantiating object ",device.name)
+    local uid = self:getVariable(childID) or ""
+    self.uid = uid
+    if defChildren[uid] then
+      children[uid]=self               -- Keep table with all children indexed by uid. uid is unique.
+    else                               -- If uid not in our children table, we will remove this child
+      undefinedChildren[#undefinedChildren+1]=self.id 
+    end
+  end
+
+  function QuickApp:createChildDevice(uid,props,interfaces,className)
+    __assert_type(uid,'string')
+    __assert_type(className,'string')
+    props.initialProperties = props.initialProperties or {}
+    local qas = {{name=childID,value=uid},{name=classID,value=className}}
+    props.initialProperties.quickAppVariables = qas
+    props.initialInterfaces = interfaces
+    self:debug("Creating device ",props.name)
+    return createChild(self,props,_G[className])
+  end
+
+  local function getVar(child,varName)
+    for _,v in ipairs(child.properties.quickAppVariables or {}) do
+      if v.name==varName then return v.value end
+    end
+    return ""
+  end
+
+  function QuickApp:loadExistingChildren(chs)
+    __assert_type(chs,'table')
+    local stat,err = pcall(function()
+        defChildren = chs
+        self.children = children
+        function self.initChildDevices() end
+        local cdevs,n = api.get("/devices?parentId="..self.id) or {},0 -- Pick up all my children
+        for _,child in ipairs(cdevs) do
+          local uid = getVar(child,childID)
+          local className = getVar(child,classID)
+          local childObject = _G[className] and _G[className](child) or QuickAppChild(child)
+          self.childDevices[child.id]=childObject
+          childObject.parent = self
+        end
+      end)
+    if not stat then self:error("loadExistingChildren:"..err) end
+  end
+
+  function QuickApp:createMissingChildren()
+    local stat,err = pcall(function()
+        for uid,data in pairs(defChildren) do
+          if not self.children[uid] then
+            local props = {
+              name = data.name,
+              type = data.type,
+            }
+            self:createChildDevice(uid,props,data.interfaces,data.className)           
+          end
+        end
+      end)
+    if not stat then self:error("createMissingChildren:"..err) end
+  end
+
+  function QuickApp:removeUndefinedChildren()
+    for _,deviceId in ipairs(undefinedChildren) do -- Remove children not in children table
+      self:removeChildDevice(deviceId)
+    end
+  end
+
+  function QuickApp:initChildren(children)
+    self:loadExistingChildren(children)
+    self:createMissingChildren()
+    self:removeUndefinedChildren()
+  end
+
+  local ERchildren = {}
+  local function initChildren()
+    quickApp:initChildren(ERchildren)
+    for uid,c in pairs(quickApp.children) do 
+      Util.defvar(uid,c.id)
+      Util.defvar(uid.."_D",c)
+      local d = api.get("/devices/"..c.id)
+      for name,_ in pairs(d.actions) do
+        c[name] = function(self,...) quickApp:post({type='UI',action=name,id=c.id,args={}}) end
+      end
+    end
+  end
+  local function child(uid,name,typ)
+    ERchildren[uid] = {name=name,type=typ,className='QwikAppChild'}
+  end
+  Util.defvar('child',child)
+  Util.defvar('initChildren',initChildren)
+  
   return dev
 end
 

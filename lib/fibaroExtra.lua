@@ -2132,10 +2132,15 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
       fibaro.post(ev)
     end
 
-    function fibaro.postRemote(id,ev)
-      assert(tonumber(id) and isEvent(ev),"Bad argument to postRemote")
-      ev._from,ev._time = plugin.mainDeviceId,os.time()
-      fibaro.call(id,'RECIEVE_EVENT',{type='EVENT',ev=ev}) -- We need this as the system converts "99" to 99 and other "helpful" conversions
+    function fibaro.postRemote(uuid,id,ev)
+      if ev == nil then
+        id,ev = uuid,id
+        assert(tonumber(id) and isEvent(ev),"Bad argument to postRemote")
+        ev._from,ev._time = plugin.mainDeviceId,os.time()
+        fibaro.call(id,'RECIEVE_EVENT',{type='EVENT',ev=ev}) -- We need this as the system converts "99" to 99 and other "helpful" conversions
+      else
+        -- post to slave box in the future
+      end
     end
 
     local function post(ev,t,log)
