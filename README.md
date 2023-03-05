@@ -346,7 +346,7 @@ end
 Another useful directive is
 ```
 --FILE:<filename>,<name>;
-
+```
 that allow us to include extra files in our QA. A QA can consist of several files but it must have a 'main' file. The QA code you run in the emulator will always be the main, and then you can include extra files that will be added to the QA as "files".
 Ex.
 ```
