@@ -251,10 +251,11 @@ The main idea is that the emulator could be used as a light weight playground fo
  
 The main logic is still under 1000 lines with current modules but stuff like json support and the whole fibaro.* sdk requires quite some code so it tends to swell - in any case it's modular.
 Dependencies on luasocket. (I recommend the free ZeroBrane Studio as it comes with the necessary libraries and is a specialised development environment for Lua)
+```
 local http    = require("socket.http")
 local socket  = require("socket")
 local ltn12   = require("ltn12")
- 
+```
 It has an easy structure (I think). 
 TQAE.thumb.png.8cb5f726ba525bd31f684b422496aa2e.png
  
@@ -304,14 +305,17 @@ loadfile("TQAE.lua"){ config = "myTQAEconfigfile.lua" }
  
 The config is parameters for the emulator. Then you can also set "parameters" for the individual QAs that you run using --%% directives
 The --%% directives in your QA code are collected into a Lua table. In the case above
+```
 {
    name='Test',
    id=99,
    quickVars = { x=88, y=99 }
 }
+```       
 and if present will be used to add fields to the QA. This is the way to tell what name, id and type you want your QA to have. A special field is quickVars that will be inserted as quickAppVariables of the QA at startup. Note that each field can only be one line.
  
 It's easy to startup another QA from within your code
+```
 _=loadfile and loadfile("TQAE.lua"){ user="admin", pwd="admin", host="192.168.1.57" }
 
 --%%name='Test'
@@ -323,10 +327,12 @@ function QuickApp:onInit()
   self:debug(self.name,self.id)
   fibaro.call(444,"test",5,6)    -- call other QA
 end
+```              
 If the other file is open in the IDE you can set breakpoints in it and jump between the QAs.
 In fact, hc3_emulator.installQA{id=444,file='MyThirdQA.fqa'} will load in a .fqa file directly. In that case temporary files are stored for each of the files in the .fqa.
  
 This means we can do trick like this, downloading a QA from the HC3 and run it in the emulator with one line of code
+```
 _=loadfile and loadfile("TQAE.lua"){ user="admin", pwd="admin", host="192.168.1.57" }
 
 hc3_emulator.installQA{id=700,code=api.get("/quickApp/export/700")} -- Load in QA 700 from HC3 and run it 
@@ -335,9 +341,11 @@ function QuickApp:onInit()
   self:debug(self.name,self.id)
   fibaro.call(700,"test",5,6)    -- call QA 700
 end
- 
+```
 Another useful directive is
+```
 --FILE:<filename>,<name>;
+
 that allow us to include extra files in our QA. A QA can consist of several files but it must have a 'main' file. The QA code you run in the emulator will always be the main, and then you can include extra files that will be added to the QA as "files".
 Ex.
 ```
