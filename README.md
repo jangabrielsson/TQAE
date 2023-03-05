@@ -340,6 +340,7 @@ Another useful directive is
 --FILE:<filename>,<name>;
 that allow us to include extra files in our QA. A QA can consist of several files but it must have a 'main' file. The QA code you run in the emulator will always be the main, and then you can include extra files that will be added to the QA as "files".
 Ex.
+```
 _=loadfile and loadfile("TQAE.lua"){ user="admin", pwd="admin", host="192.168.1.57" }
 
 --FILE:myUtilities.lua,utilities;
@@ -348,16 +349,18 @@ function QuickApp:onInit()
   self:debug(self.name,self.id)
   LOG("This is a test")  -- Using global LOG function defined in myUtilities.lua
 end
- 
+```
 Running and logs
 When running there will be output of two types.
 Standard logging that the QA does with fibaro.debug, self:debug etc,.
 System debugs, that are the emulators way to inform on what is ongoing. How much the system logs depends on the configuration parameter .logLevel. 
+```
 ---------------- Tiny QuickAppEmulator (TQAE) v0.5 -------------
 [29.07.2021] [11:17:34] |SYS  |: Loading  QA:TestQA1 - ID:1001
 Start
 [29.07.2021] [11:17:34] |SYS  |: Starting QA:TestQA1 - ID:1001
 [29.07.2021] [11:17:34] [DEBUG] [QUICKAPP1001]: TestQA1 - 1001
+```
 Here we se the system log (|SYS  |) that the QA is loading and then the log that it's running.
 The first is when the QA code is loaded and all functions are defined. Also if you do something on top-level, outside functions it will run here. In the example the QA does a 
 print("Start")
@@ -368,6 +371,7 @@ If you get an error after Loading but before Starting it's something on top-leve
 If you get an error after Starting, well, then it's just something wrong with your code when it runs.
  
 A run-time error will look like:
+```
 [29.07.2021] [12:27:47] [ERROR] [QUICKAPP1002]: [string "temp/main_16546.lua"]:5: attempt to call a nil value (global 'foo')
 This tells us that the error was in the QA with id 1002 (unless you have changed __TAG)
 The QA file is 'main'. A QA can consist of many files and this gives us the clue in what file the error was. If you only have one file, its name is 'main'.
@@ -382,10 +386,13 @@ The Web UI allows the file to be saved as a *.fqa file that can be uploaded manu
  
 The directive 'interfaces'
 Ex.
+```
 --%%interfaces={"power"}
+```
 will add the interfaces as the initialInterfaces property of the .fqa. An easy way to include and extra interface in the ready .fqa.
  
 Emulator options: (set in the header _=loadfile and loadfile("TQAE.lua"){...} )
+```
 user=<user>
   Account used to interact with the HC3 via REST api
 pwd=<Password>
@@ -434,6 +441,7 @@ timerVerbose=<boolean>
   If true prints timer reference with extended information (expiration time etc)
   
 QuickApp options: (set with --%% directive n file)
+```
 --%%name=<name>
 --%%id=<number>
 --%%type=<com.fibaro.XYZ>
@@ -442,7 +450,7 @@ QuickApp options: (set with --%% directive n file)
 --%%quickVars={<table of initial quickAppVariables>}
 --%%proxy=<boolean>
 --%%save=<boolean>
- 
+```
 Documentation
 Emulator parameters and QA parameters
 Web UI - and QA UI
