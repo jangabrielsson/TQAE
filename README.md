@@ -303,7 +303,7 @@ return {
 However, you still need to call loadfile("TQAE.lua"){} with and empty table. If you would like to have another name of the file you can specify that
 ```
 loadfile("TQAE.lua"){ config = "myTQAEconfigfile.lua" }
-
+```
 The config is parameters for the emulator. Then you can also set "parameters" for the individual QAs that you run using --%% directives
 The --%% directives in your QA code are collected into a Lua table. In the case above
 ```
