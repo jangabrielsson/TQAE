@@ -449,7 +449,7 @@ lateTimers=<seconds>
   Default false
 timerVerbose=<boolean>
   If true prints timer reference with extended information (expiration time etc)
-
+```
 QuickApp options: (set with --%% directive n file)
 ```
 --%%name=<name>
