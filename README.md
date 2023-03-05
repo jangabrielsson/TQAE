@@ -139,7 +139,7 @@ Restart ZBS after installing the files.
 Great we are up and running!
  
 Supported functions (v0.33)
-
+```
 fibaro.debug(tag,str) 
 fibaro.warning(tag,str) 
 fibaro.trace(tag,str) 
