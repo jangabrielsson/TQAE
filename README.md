@@ -7,48 +7,48 @@ Tiny QuickApp Emulator (TQAE) started out as a simple modular QuickApp emulator 
 (Great intro to TQAE <here> from @Joep - thanks!)
 
 ```
-/TQAE.lua v0.57                            -- Main emulator, loads other modules
+/TQAE.lua v0.57                    -- Main emulator, loads other modules
  
-/modules/sync.lua                        -- timers with fake asynchronous IO
-/modules/async.lua                      -- timers with asynchronous IO based on copas
-/modules/copas.lua                     -- copas.* functions
-/modules/net.lua                          -- net.* functions
-/modules/api.lua                          -- api.* and web api
-/modules/json.lua                        -- json library
-/modules/fibaro.lua                     -- fibaro.* functions
-/modules/class.lua                      -- class function
-/modules/files.lua                        -- support for loading files, *.lua and *.fqa files
-/modules/QuickApp.lua               -- QuickApp classes
-/modules/devices.json                -- device templates
+/modules/sync.lua                  -- timers with fake asynchronous IO
+/modules/async.lua                 -- timers with asynchronous IO based on copas
+/modules/copas.lua                 -- copas.* functions
+/modules/net.lua                   -- net.* functions
+/modules/api.lua                   -- api.* and web api
+/modules/json.lua                  -- json library
+/modules/fibaro.lua                -- fibaro.* functions
+/modules/class.lua                 -- class function
+/modules/files.lua                 -- support for loading files, *.lua and *.fqa files
+/modules/QuickApp.lua              -- QuickApp classes
+/modules/devices.json              -- device templates
 /modules/webserver.lua             -- web server for remote calls (ex. from proxy)
-/modules/proxy.lua                     -- creates QA proxy on the HC3 for funnelling back onAction and UIevents
-/modules/ui.lua                           -- Local Web UI for QA
-/modules/time.lua                       -- Time manipulation - changing start time...
-/modules/refreshStates.lua       -- /refreshStates support
-/modules/Scene.lua                   -- Initial support
-/modules/offline.lua                   -- Support for local shadowing resources. Currently /globalVariables
-/modules/stdQA.lua                   -- Standard (simulated) devices
+/modules/proxy.lua                 -- creates QA proxy on the HC3 for funnelling back onAction and UIevents
+/modules/ui.lua                    -- Local Web UI for QA
+/modules/time.lua                  -- Time manipulation - changing start time...
+/modules/refreshStates.lua         -- /refreshStates support
+/modules/Scene.lua                 -- Initial support
+/modules/offline.lua               -- Support for local shadowing resources. Currently /globalVariables
+/modules/stdQA.lua                 -- Standard (simulated) devices
  
-/web/main.html                                -- Web - Main emulator page
-/web/qa.html                                    -- Web - QuickApp info
-/web/ui.html                                     -- Web - QuickApp UI
-/web/timers.html                              -- Web - list of active timers
-/web/settings.html                            -- Web - editor for configuration file
+/web/main.html                     -- Web - Main emulator page
+/web/qa.html                       -- Web - QuickApp info
+/web/ui.html                       -- Web - QuickApp UI
+/web/timers.html                   -- Web - list of active timers
+/web/settings.html                 -- Web - editor for configuration file
  
-examples/MyQuickApp.lua                -- Simple QuickApp
-examples/Hue.lua                              -- Hue QuickApp with QuickAppChildren
-examples/Scheduler.lua                    -- Simple minute based scheduler
-examples/Ping.lua                             -- Ping QuickApp that loads Pong QuickApp and exchanges fibaro.calls...
+examples/MyQuickApp.lua            -- Simple QuickApp
+examples/Hue.lua                   -- Hue QuickApp with QuickAppChildren
+examples/Scheduler.lua             -- Simple minute based scheduler
+examples/Ping.lua                  -- Ping QuickApp that loads Pong QuickApp and exchanges fibaro.calls...
 examples/Pong.lua
-examples/TestScene.lua                   -- Test scene   
-examples/TestSceneCron.lua           -- Test scene  with Date condition
-examples/Backup.lua                        -- Non-QA code that backs up QuickApps from the HC3 to the local filesystem as *.fqa files
-examples/SamsunWebSocket.lua     -- WebSocket example controlling my Samsung TV
-examples/TestTCPSocket.lua           -- TCPSocket example with emulated responses
+examples/TestScene.lua             -- Test scene   
+examples/TestSceneCron.lua         -- Test scene  with Date condition
+examples/Backup.lua                -- Non-QA code that backs up QuickApps from the HC3 to the local filesystem as *.fqa files
+examples/SamsunWebSocket.lua       -- WebSocket example controlling my Samsung TV
+examples/TestTCPSocket.lua         -- TCPSocket example with emulated responses
  
-setup/TQAEplugin.lua                        -- ZBS plugin to give editor help and fibaro command completion.
+setup/TQAEplugin.lua               -- ZBS plugin to give editor help and fibaro command completion.
  
-TQAE.gz                                              -- Every file in one archive
+TQAE.gz                            -- Every file in one archive
 ```
  
 Installation
@@ -72,7 +72,7 @@ Alternatively, and preferred, clone the GitHub repository
 ```
 The setup procedure would be
 ```
-EMB-31KYQ6LT:~ erajgab$ mkdir development                                          # Create new directory to develop in
+EMB-31KYQ6LT:~ erajgab$ mkdir development                     # Create new directory to develop in
 EMB-31KYQ6LT:~ erajgab$ cd development/
 EMB-31KYQ6LT:development erajgab$ git clone https://github.com/jangabrielsson/TQAE # Clone repository
 Cloning into 'TQAE'...
@@ -82,14 +82,14 @@ remote: Compressing objects: 100% (135/135), done.
 remote: Total 1790 (delta 118), reused 122 (delta 57), pack-reused 1598
 Receiving objects: 100% (1790/1790), 1.75 MiB | 7.28 MiB/s, done.
 Resolving deltas: 100% (1198/1198), done.
-EMB-31KYQ6LT:development erajgab$ ls                                               # We got the code...
+EMB-31KYQ6LT:development erajgab$ ls                          # We got the code...
 TQAE
 EMB-31KYQ6LT:development erajgab$ cd TQAE/
 EMB-31KYQ6LT:TQAE erajgab$ ls
 LICENSE			TQAE.tar.gz		examples		modules
 README.md		TQAE_QA.lua		jgabs_QAs		setup
 TQAE.lua		TQAEconfigs.example	lib			web
-EMB-31KYQ6LT:TQAE erajgab$ mkdir test                                             # Create 2 directories to do your own development in
+EMB-31KYQ6LT:TQAE erajgab$ mkdir test                          # Create 2 directories to do your own development in
 EMB-31KYQ6LT:TQAE erajgab$ mkdir dev
 ```
 So both directories dev and test are in .gitignore, so you can update the TQAE code with the command (while standing in the TQAE directory)
@@ -299,10 +299,11 @@ return {
   --localModules = {"myModule.lua"}
   --globalModules = {"UDP.lua"}
 }
-
+```
 However, you still need to call loadfile("TQAE.lua"){} with and empty table. If you would like to have another name of the file you can specify that
+```
 loadfile("TQAE.lua"){ config = "myTQAEconfigfile.lua" }
- 
+
 The config is parameters for the emulator. Then you can also set "parameters" for the individual QAs that you run using --%% directives
 The --%% directives in your QA code are collected into a Lua table. In the case above
 ```
@@ -381,6 +382,7 @@ If you get an error after Starting, well, then it's just something wrong with yo
 A run-time error will look like:
 ```
 [29.07.2021] [12:27:47] [ERROR] [QUICKAPP1002]: [string "temp/main_16546.lua"]:5: attempt to call a nil value (global 'foo')
+```
 This tells us that the error was in the QA with id 1002 (unless you have changed __TAG)
 The QA file is 'main'. A QA can consist of many files and this gives us the clue in what file the error was. If you only have one file, its name is 'main'.
 Then it tells us that is was line 5 where the error occurred ([string "temp/main_16546.lua"]:5:) and then that we tried to call a global variable 'foo'
@@ -447,7 +449,7 @@ lateTimers=<seconds>
   Default false
 timerVerbose=<boolean>
   If true prints timer reference with extended information (expiration time etc)
-  
+
 QuickApp options: (set with --%% directive n file)
 ```
 --%%name=<name>
