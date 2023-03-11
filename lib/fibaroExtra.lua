@@ -19,7 +19,7 @@ Email: jan@gabrielsson.com
 -------------------- Base ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    fibaro.FIBARO_EXTRA = "v0.956"
+    fibaro.FIBARO_EXTRA = "v0.957"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -72,7 +72,8 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function
 
     local function initQA(selfv)
       local dev = __fibaro_get_device(selfv.id)
-      if not dev.enabled then  
+      if not dev.enabled then
+        if fibaro.__disabled then pcall(fibaro.__disabled,selfv) end
         selfv:debug("QA ",selfv.name," disabled")
         return 
       end
