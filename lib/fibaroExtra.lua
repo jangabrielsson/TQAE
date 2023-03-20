@@ -19,7 +19,7 @@ Email: jan@gabrielsson.com
 -------------------- Base ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    fibaro.FIBARO_EXTRA = "v0.957"
+    fibaro.FIBARO_EXTRA = "v0.958"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -570,7 +570,7 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', init = function
       local dateSeq = parseDateStr(dateStr0)
       return function() -- Pretty efficient way of testing dates...
         local t = os.date("*t",os.time())
-        if month and month~=t.month then parseDateStr(dateStr0) end -- Recalculate 'last' every month
+        if month and month~=t.month then dateSeq=parseDateStr(dateStr0) end -- Recalculate 'last' every month
         if sunPatch and (month and month~=t.month or day~=t.day) then sunPatch(dateSeq) day=t.day end -- Recalculate sunset/sunrise
         return
         dateSeq[1][t.min] and    -- min     0-59

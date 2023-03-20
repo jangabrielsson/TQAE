@@ -48,7 +48,12 @@ function EM.registerURL(method,url,handler) interceptors[#interceptors+1]={metho
 function net.TCPSocket(opts2) 
   local self2 = { opts = opts2 or {} }
   self2.sock = EM.socket.tcp()
-  if EM.copas then self2.sock = EM.copas.wrap(self2.sock) end
+  if EM.copas then 
+    self2.sock = EM.copas.wrap(self2.sock) 
+    if tonumber(opts2.timeout) then
+      self2.sock:settimeout(opts2.timeout/1000) -- timeout in ms
+    end
+  end
   function self2:connect(ip, port, opts) 
     for k,v in pairs(self.opts) do opts[k]=v end
     local _, err = self.sock:connect(ip,port)
