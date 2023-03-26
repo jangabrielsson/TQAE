@@ -11,7 +11,12 @@ Asynchronous timers and IO support - leverage copas framework
 local EM,FB=...
 
 local LOG,DEBUG,debugFlags = EM.LOG,EM.DEBUG,EM.debugFlags
-EM.copas = dofile(EM.cfg.modPath.."copas.lua")
+--EM.copas = dofile(EM.cfg.modPath.."copas.lua")
+EM.copas = require("copas")
+EM.copas.http = require("copas/http")
+EM.copas.timer = require("copas/timer")
+EM.copas.lock = require("copas/lock")
+EM.copas.https = EM.copas.http
 
 LOG.register("socketserver","Log (TCP)socketserver related events")
 

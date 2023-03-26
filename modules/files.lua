@@ -24,6 +24,27 @@ local CRC16Lookup = {
   0xef1f,0xff3e,0xcf5d,0xdf7c,0xaf9b,0xbfba,0x8fd9,0x9ff8,0x6e17,0x7e36,0x4e55,0x5e74,0x2e93,0x3eb2,0x0ed1,0x1ef0
 }
 
+local function base64encode(data)
+  local bC='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  return ((data:gsub('.', function(x) 
+          local r,b='',x:byte() for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
+          return r;
+        end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+        if (#x < 6) then return '' end
+        local c=0
+        for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
+        return bC:sub(c+1,c+1)
+      end)..({ '', '==', '=' })[#data%3+1])
+end
+
+local function getSize(b)
+  local buf = {}
+  for i=1,8 do buf[i]=b:byte(16+i) end
+  local width = (buf[1] << 24) + (buf[2] << 16) + (buf[3] << 8) + (buf[4] << 0)
+  local height = (buf[5] << 24) + (buf[6] << 16) + (buf[7] << 8) + (buf[8] << 0);
+  return width,height
+end
+
 local function crc16(bytes)
   local crc = 0
   for i=1,#bytes do
@@ -87,6 +108,16 @@ local function matchContinousLines(str,pattern1,pattern2,collector)
     end)
 end
 
+local function imageInclude(image,fn)
+  assert(image,"Missing IMAGE file:"..tostring(fn))
+  local w,h = getSize(image)
+  assert(image,"Missing IMAGE size:"..tostring(fn))
+  fn = fn:gsub("[%/%\\%s%c]","_"):match("(.+)[%.%$]")
+  return string.format([[
+    _IMAGES['%s']={data='%s',w=%s,h=%s}
+    ]],fn,"data:image/png;base64,"..base64encode(image),w,h)
+end
+
 local function loadSource(code,fileName) -- Load code and resolve info and --FILE directives
   local files = {}
   assert(code,"Missing code for "..tostring(fileName))
@@ -97,6 +128,16 @@ local function loadSource(code,fileName) -- Load code and resolve info and --FIL
       return ""
     end)
   table.insert(files,{name="main",type='lua',isOpen=false,content=code,isMain=true,fname=fileName})
+  local images = {"_IMAGES = _IMAGES or {}"}
+  matchContinousLines(code,[[%-%-%s*IMAGE:%s*(.-)%s*,%s*(.-);]],[[%-%-IMAGE:%s*(.-)%s*,%s*(.-);]],
+    function(file,name)
+      file = file:gsub("/",EM.cfg.pathSeparator)
+      images[#images+1]=imageInclude(readFile(file,EM.cfg.noFileError),file)
+      return ""
+    end)
+  if #images > 0 then
+    files[#files+1] = {name="IMAGES64B",type='lua',isOpen=false,content=table.concat(images,"\n"),isMain=false,fname="IMAGES64B"}
+  end
 
   local info = code:match("%-%-%[%[QAemu(.-)%-%-%]%]")
   if info==nil or info=="" then

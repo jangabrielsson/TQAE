@@ -112,6 +112,10 @@ end
 local win = (os.getenv('WINDIR') or (os.getenv('OS') or ''):match('[Ww]indows')) and not (os.getenv('OSTYPE') or ''):match('cygwin')
 cfg.arch = win and "Windows" or "Linux"
 cfg.pathSeparator = cfg.arch == "Windows" and "\\" or "/"
+local _ps = cfg.pathSeparator
+local function addPath(p,front) package.path=front and (p..";"..package.path) or (package.path..";"..p) end
+addPath(".".._ps.."modules".._ps.."?",true)
+addPath(".".._ps.."modules".._ps.."/?.lua",true)
 local function mkPath(...) return table.concat({...},cfg.pathSeparator) end
 EM.mkPath = mkPath 
 

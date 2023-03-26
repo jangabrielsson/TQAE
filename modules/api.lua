@@ -102,8 +102,9 @@ local GUI_HANDLERS = {
           FB.__fibaro_call_UI(id,btn,'onReleased',{})
           --env.onUIEvent(id,{deviceId=id,elementName=btn,eventType='onReleased',values={}})
         else
-          local action = qa.uiCallbacks[btn]['onReleased']
-          env.onAction(id,{deviceId=id,actionName=action,args={}})
+          --local action = qa.uiCallbacks[btn]['onReleased']
+          FB.__fibaro_call_UI(id,btn,'onReleased',{})
+          ---env.onAction(id,{deviceId=id,actionName=action,args={}})
         end
       end)
     if not stat then LOG.error("%s",err) end
