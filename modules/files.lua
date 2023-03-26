@@ -108,14 +108,14 @@ local function matchContinousLines(str,pattern1,pattern2,collector)
     end)
 end
 
-local function imageInclude(image,fn)
+local function imageInclude(image,fn,name)
   assert(image,"Missing IMAGE file:"..tostring(fn))
   local w,h = getSize(image)
   assert(image,"Missing IMAGE size:"..tostring(fn))
-  fn = fn:gsub("[%/%\\%s%c]","_"):match("(.+)[%.%$]")
+ -- fn = fn:gsub("[%/%\\%s%c]","_"):match("(.+)[%.%$]")
   return string.format([[
     _IMAGES['%s']={data='%s',w=%s,h=%s}
-    ]],fn,"data:image/png;base64,"..base64encode(image),w,h)
+    ]],name,"data:image/png;base64,"..base64encode(image),w,h)
 end
 
 local function loadSource(code,fileName) -- Load code and resolve info and --FILE directives
@@ -132,7 +132,7 @@ local function loadSource(code,fileName) -- Load code and resolve info and --FIL
   matchContinousLines(code,[[%-%-%s*IMAGE:%s*(.-)%s*,%s*(.-);]],[[%-%-IMAGE:%s*(.-)%s*,%s*(.-);]],
     function(file,name)
       file = file:gsub("/",EM.cfg.pathSeparator)
-      images[#images+1]=imageInclude(readFile(file,EM.cfg.noFileError),file)
+      images[#images+1]=imageInclude(readFile(file,EM.cfg.noFileError),file,name)
       return ""
     end)
   if #images > 0 then
