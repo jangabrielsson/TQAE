@@ -7,10 +7,12 @@ MIT License
 Class support, mimicking LuaBind's class implementation
 
 --]]
-local setmetatable = hc3_emulator.setmetatable
-local getmetatable = hc3_emulator.getmetatable
-local rawset = hc3_emulator.rawset
-local rawget = hc3_emulator.rawget
+if hc3_emulator then
+   setmetatable = hc3_emulator.setmetatable
+   getmetatable = hc3_emulator.getmetatable
+   rawset = hc3_emulator.rawset
+   rawget = hc3_emulator.rawget
+end
 
 --[[
 local metas = {}

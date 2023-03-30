@@ -15,11 +15,12 @@ Email: jan@gabrielsson.com
 -- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
 -- luacheck: globals ignore __assert_type __fibaro_get_device __TAG __fibaro_get_device_property
 -- luacheck: globals ignore utils hc3_emulator urlencode sceneId table string _MODULES
+fibaro,QuickApp = fibaro or {},QuickApp or {}
 
 -------------------- Base ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    fibaro.FIBARO_EXTRA = "v0.958"
+    fibaro.FIBARO_EXTRA = "v0.959"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -100,8 +101,9 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function
       end
     end
   end
-}
+} -- Base
 if not _MODULES.base._inited then _MODULES.base.init() end
+
 -------------------- Error handling ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.error={ author = "jan@gabrielsson.com", version = '0.4', init = function()
@@ -207,7 +209,8 @@ _MODULES.error={ author = "jan@gabrielsson.com", version = '0.4', init = functio
       }
     end
   end
-}
+} --  Error handling 
+
 -------------------- Utilities ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.utilities={ author = "jan@gabrielsson.com", version = '0.4', init = function()
@@ -495,7 +498,7 @@ _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', init = function(
       return sunrise, sunset, sunrise_t, sunset_t
     end
   end 
-} -- Sun
+} -- Sun calc
 
 -------------------- Cron ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
@@ -746,7 +749,8 @@ _MODULES = _MODULES or {} -- Global
 _MODULES.trace={ author = "jan@gabrielsson.com", version = '0.4', init = function()
     local _,_ = fibaro.debugFlags,string.format
   end
-}
+} -- Trace functions
+
 --------------------- Debug functions -----------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.debug={ author = "jan@gabrielsson.com", version = '0.4', init = function()
@@ -928,7 +932,8 @@ _MODULES.debug={ author = "jan@gabrielsson.com", version = '0.4', init = functio
     end
 
   end -- Debug functions
-}
+} -- Debug functions
+
 --------------------- Scene function  -----------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.scene={ author = "jan@gabrielsson.com", version = '0.4', init = function()
@@ -1059,7 +1064,7 @@ _MODULES.profiles={ author = "jan@gabrielsson.com", version = '0.4', init = func
   end 
 } -- Profiles
 
---------------------- Alarm functions ------------------------------------------
+--------------------- Alarm ------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.alarm={ author = "jan@gabrielsson.com", version = '0.4', init = function()
     local _,_ = fibaro.debugFlags,string.format
@@ -1156,7 +1161,7 @@ _MODULES.weather={ author = "jan@gabrielsson.com", version = '0.4', init = funct
     function fibaro.weather.weatherCondition() return api.get("/weather").WeatherCondition end
     function fibaro.weather.conditionCode() return api.get("/weather").ConditionCode end
   end
-} --Weather
+} -- Weather
 
 --------------------- Climate panel ----------------------------
 _MODULES = _MODULES or {} -- Global
@@ -1215,7 +1220,7 @@ _MODULES.climate={ author = "jan@gabrielsson.com", version = '0.4', init = funct
   end 
 } --- Climate panel
 
---------------------- sourceTrigger & refreshStates ----------------------------
+--------------------- sourceTrigger refreshStates ----------------------------
 _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = function()
     local debugFlags,_ = fibaro.debugFlags,string.format
     fibaro.REFRESH_STATES_INTERVAL = 1000
@@ -1489,7 +1494,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = func
       return api.post("/plugins/publishEvent", data)
     end
   end
-} -- sourceTrigger & refreshStates
+} -- sourceTrigger refreshStates
 
 --------------------- Net functions --------------------------------------------
 _MODULES = _MODULES or {} -- Global
@@ -1539,7 +1544,7 @@ _MODULES.net={ author = "jan@gabrielsson.com", version = '0.4', init = function(
   end
 } -- Net functions
 
---------------------- QA functions ---------------------------------------------
+--------------------- QA ---------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.qa={ author = "jan@gabrielsson.com", version = '0.4', init = function()
     fibaro.loadModule("debug"); fibaro.loadModule("event")
@@ -2067,7 +2072,7 @@ _MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', init = 
       end
     end
   end
-} -- quickerChild
+} -- QuickerAppChild
 
 --------------------- RPC --------------------------------------------
 _MODULES = _MODULES or {} -- Global
@@ -2107,12 +2112,12 @@ _MODULES.rpc={ author = "jan@gabrielsson.com", version = '0.4', init = function(
 --    end
 --end
   end
-} -- rpc
+} -- RPC
 
 --------------------- Events --------------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    fibaro.loadModule("time"); fibaro.loadModule("triggers")
+    fibaro.loadModule("time"); --fibaro.loadModule("triggers")
     local debugFlags,format,equal,copy,toTime = fibaro.debugFlags,string.format,table.equal,table.copy,fibaro.toTime
 
 --  local function DEBUG(...) if debugFlags.event then fibaro.debugf(nil,...) end end
@@ -2611,3 +2616,20 @@ _MODULES.pubsub={ author = "jan@gabrielsson.com", version = '0.4', init = functi
     end
   end
 } -- PubSub
+--------------------------------
+if debug then                           -- Embedded call...
+  local file = debug.getinfo(1)         -- Find out what file we are
+  if file and file.source then
+    file = file.source:sub(2)
+    local c = io.open(file,"r"):read("*all")
+    local path = file:match("(.*/)")
+    c:gsub("%-%-%-%-%-+ ([%w]+[ ]?%w*) %-%-%-%-*\n(.-\n)%-%-%-%-",function(s,c)
+        local name = c:match("MODULES%.(%w+)=")
+        local fname = path.."fibaroExtra_"..name..".lua"
+        print("Writing",fname)
+        local f = io.open(fname,"w+")
+        f:write(c)
+        f:close()
+    end)
+  end
+end
