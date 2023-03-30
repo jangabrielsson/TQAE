@@ -1,6 +1,6 @@
 _MODULES = _MODULES or {} -- Global
 _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    local _,utils,_ = fibaro.debugFlags,fibaro.utils,string.format
+    local _,utils,format = fibaro.debugFlags,fibaro.utils,string.format
     local function sunturnTime(date, rising, latitude, longitude, zenith, local_offset)
       local rad,deg,floor = math.rad,math.deg,math.floor
       local frac = function(n) return n - floor(n) end
@@ -69,10 +69,10 @@ _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', init = function(
       local set_time = os.date("*t", sunturnTime(date, false, lat, lon, zenith, utc))
       local rise_time_t = os.date("*t", sunturnTime(date, true, lat, lon, zenith_twilight, utc))
       local set_time_t = os.date("*t", sunturnTime(date, false, lat, lon, zenith_twilight, utc))
-      local sunrise = string.format("%.2d:%.2d", rise_time.hour, rise_time.min)
-      local sunset = string.format("%.2d:%.2d", set_time.hour, set_time.min)
-      local sunrise_t = string.format("%.2d:%.2d", rise_time_t.hour, rise_time_t.min)
-      local sunset_t = string.format("%.2d:%.2d", set_time_t.hour, set_time_t.min)
+      local sunrise = format("%.2d:%.2d", rise_time.hour, rise_time.min)
+      local sunset = format("%.2d:%.2d", set_time.hour, set_time.min)
+      local sunrise_t = format("%.2d:%.2d", rise_time_t.hour, rise_time_t.min)
+      local sunset_t = format("%.2d:%.2d", set_time_t.hour, set_time_t.min)
       return sunrise, sunset, sunrise_t, sunset_t
     end
   end 

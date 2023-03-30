@@ -1,5 +1,5 @@
 _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    local debugFlags,_ = fibaro.debugFlags,string.format
+    local debugFlags,format = fibaro.debugFlags,string.format
     fibaro.REFRESH_STATES_INTERVAL = 1000
     fibaro.REFRESHICONSTATUS = "icon"
     local sourceTriggerCallbacks,refreshCallbacks,refreshRef,pollRefresh={},{}
@@ -126,7 +126,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = func
     function post(ev)
       if ENABLEDSOURCETRIGGERS[ev.type] then
         if #sourceTriggerCallbacks==0 then return end
-        if debugFlags.sourceTrigger then fibaro.debugf(nil,"##1SourceTrigger:%s",ev) end
+        if debugFlags.sourceTrigger then fibaro.debug(__TAG,format("##1SourceTrigger:%s",tostring(ev))) end
         ev._trigger=true
         for _,cb in ipairs(sourceTriggerCallbacks) do
           setTimeout(function() cb(ev) end,0) 
@@ -138,7 +138,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = func
       local handler = EventTypes[e.type]
       if handler then handler(e.data,e)
       elseif handler==nil and fibaro._UNHANDLED_REFRESHSTATES then 
-        fibaro.debugf(__TAG,"[Note] Unhandled refreshState/sourceTrigger:%s -- please report",e) 
+        fibaro.debugf(__TAG,format("[Note] Unhandled refreshState/sourceTrigger:%s -- please report",tostring(e))) 
       end
     end
 
@@ -240,7 +240,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = func
     function fibaro._postSourceTrigger(trigger) post(trigger) end
 
     function fibaro._postRefreshState(event)
-      if debugFlags._allRefreshStates then fibaro.debugf(nil,"##1RefreshState:%s",event) end
+      if debugFlags._allRefreshStates then fibaro.debug(__TAG,fmt("##1RefreshState:%s",event)) end
       if #refreshCallbacks>0 and not DISABLEDREFRESH[event.type] then
         for i=1,#refreshCallbacks do
           setTimeout(function() refreshCallbacks[i](event) end,0)

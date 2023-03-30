@@ -17,7 +17,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
       assert(isEvent(ev),"Bad argument to remote event")
       local time = ev.ev._time
       ev,ev.ev._time = ev.ev,nil
-      if time and time+5 < os.time() then fibaro.warningf(nil,"Slow events %s, %ss",ev,os.time()-time) end
+      if time and time+5 < os.time() then fibaro.warning(__TAG,format("Slow events %s, %ss",tostring(ev),os.time()-time)) end
       fibaro.post(ev)
     end
 
@@ -36,7 +36,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
       local now = os.time()
       t = type(t)=='string' and toTime(t) or t or 0
       if t < 0 then return elseif t < now then t = t+now end
-      if debugFlags.post and (type(ev)=='function' or not ev._sh) then fibaro.tracef(nil,"Posting %s at %s%s",ev,os.date("%c",t),type(log)=='string' and ("("..log..")") or "") end
+      if debugFlags.post and (type(ev)=='function' or not ev._sh) then fibaro.trace(__TAG,format("Posting %s at %s%s",tostring(ev),os.date("%c",t),type(log)=='string' and ("("..log..")") or "")) end
       if type(ev) == 'function' then
         return setTimeout(function() ev(ev) end,1000*(t-now),log)
       elseif isEvent(ev) then
@@ -324,7 +324,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
           if test() then
             if state == false then
               state=os.time()+time
-              if debugFlags.trueFor then fibaro.debugf(nil,"trueFor: test() true, running action() in %ss",state-os.time()) end
+              if debugFlags.trueFor then fibaro.debug(__TAG,format("trueFor: test() true, running action() in %ss",state-os.time())) end
               ref = setTimeout(ac,1000*(state-os.time()))
               timers[1]=ref
             elseif state == true then
@@ -332,7 +332,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
             end
           else
             if ref then timers[1]=nil ref = clearTimeout(ref) end
-            if debugFlags.trueFor then fibaro.debugf(nil,"trueFor: test() false, cancelling action()") end
+            if debugFlags.trueFor then fibaro.debug(__TAG,"trueFor: test() false, cancelling action()") end
             state=false
           end
         end

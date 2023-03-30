@@ -18,7 +18,7 @@ _MODULES.rpc={ author = "jan@gabrielsson.com", version = '0.4', init = function(
           end
         end 
       end
-      error(string.format("RPC timeout %s:%d",fun,id),3)
+      error(format("RPC timeout %s:%d",fun,id),3)
     end
     function fibaro.rpc(id,name,timeout) return function(...) return fibaro._rpc(id,name,{...},timeout) end end
     function QuickApp:RPC_CALL(path2,var2,n2,fun,args,qaf)

@@ -36,7 +36,7 @@ _MODULES.error={ author = "jan@gabrielsson.com", version = '0.4', init = functio
         local fun = function() -- wrap function to get error messages
           if debugFlags.lateTimer then
             local d = os.time() - ref.expires
-            if d > debugFlags.lateTimer then fibaro.warningf(nil,"Late timer (%ds):%s",d,ref) end
+            if d > debugFlags.lateTimer then fibaro.warning(__TAG,format("Late timer (%ds):%s",d,tostring(ref))) end
           end
           NC = NC-1
           ref.expired = true

@@ -1,6 +1,6 @@
 _MODULES = _MODULES or {} -- Global
 _MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    local _,_,copy = fibaro.debugFlags,string.format,table.copy
+    local _,format,copy = fibaro.debugFlags,string.format,table.copy
     class 'QuickerAppChild'(QuickAppBase)
 
     local childDevices={}
@@ -98,7 +98,7 @@ _MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', init = 
         devices = devices or {}
         devices[#devices+1]=dev
         if callbacks then setCallbacks(self,callbacks) end
-        fibaro.tracef(__TAG,"Created new child:%s %s",dev.id,dev.type)
+        fibaro.trace(__TAG,format("Created new child:%s %s",dev.id,dev.type))
       else
         callbacks = getVar(dev,"_callbacks")
       end

@@ -67,26 +67,6 @@ _MODULES.debug={ author = "jan@gabrielsson.com", version = '0.4', init = functio
       end
     end
 
-    local old_tostring = tostring
-    fibaro._orgToString = old_tostring
-    if hc3_emulator then
-      function tostring(obj)
-        if type(obj)=='table' and not hc3_emulator.getmetatable(obj) then
-          if obj.__tostring then return obj.__tostring(obj) 
-          elseif debugFlags.json then return json.encodeFast(obj) end
-        end
-        return old_tostring(obj)
-      end
-    else
-      function tostring(obj)
-        if type(obj)=='table' then
-          if obj.__tostring then return obj.__tostring(obj) 
-          elseif debugFlags.json then return json.encodeFast(obj) end
-        end
-        return old_tostring(obj)
-      end
-    end
-
     local htmlCodes={['\n']='<br>', [' ']='&nbsp;'}
     local function fix(str) return str:gsub("([\n%s])",function(c) return htmlCodes[c] or c end) end
     local function htmlTransform(str)

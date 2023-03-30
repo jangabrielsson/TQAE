@@ -4,7 +4,8 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
-
+    local debugFlags = fibaro.debugFlags
+    
     function fibaro.printf(fmt,...) print(string.format(fmt,...)) end
     fibaro.printf("fibaroExtra %s, ©%s",fibaro.FIBARO_EXTRA,"jan@gabrielsson.com")
     function fibaro.protectFun(fun,f,level)
@@ -48,6 +49,26 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function
     function table.mapf(f,l,s) s = s or 1; local e=true for i=s,table.maxn(l) do e = f(l[i]) end return e end
     function table.delete(k,tab) local i = table.member(tab,k); if i then table.remove(tab,i) return i end end
     table.equal,table.copy = equal,copy
+
+    local old_tostring = tostring
+    fibaro._orgToString = old_tostring
+    if hc3_emulator then
+      function tostring(obj)
+        if type(obj)=='table' and not hc3_emulator.getmetatable(obj) then
+          if obj.__tostring then return obj.__tostring(obj) 
+          elseif debugFlags.json then return json.encodeFast and json.encodeFast(obj) or json.encode(obj)  end
+        end
+        return old_tostring(obj)
+      end
+    else
+      function tostring(obj)
+        if type(obj)=='table' then
+          if obj.__tostring then return obj.__tostring(obj) 
+          elseif debugFlags.json then return json.encodeFast and json.encodeFast(obj) or json.encode(obj)  end
+        end
+        return old_tostring(obj)
+      end
+    end
 
     local _init,_onInit = QuickApp.__init
 

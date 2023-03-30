@@ -1,6 +1,6 @@
 _MODULES = _MODULES or {} -- Global
 _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    local _,_ = fibaro.debugFlags,string.format
+    local _,format = fibaro.debugFlags,string.format
     local function dateTest(dateStr0)
       local days = {sun=1,mon=2,tue=3,wed=4,thu=5,fri=6,sat=7}
       local months = {jan=1,feb=2,mar=3,apr=4,may=5,jun=6,jul=7,aug=8,sep=9,oct=10,nov=11,dec=12}
@@ -14,7 +14,7 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', init = function
         return res
       end
 
-      local function _assert(test,msg,...) if not test then error(string.format(msg,...),3) end end
+      local function _assert(test,msg,...) if not test then error(format(msg,...),3) end end
 
       local function expandDate(w1,md)
         local function resolve(id)

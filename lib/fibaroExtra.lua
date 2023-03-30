@@ -24,7 +24,8 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
-
+    local debugFlags = fibaro.debugFlags
+    
     function fibaro.printf(fmt,...) print(string.format(fmt,...)) end
     fibaro.printf("fibaroExtra %s, ©%s",fibaro.FIBARO_EXTRA,"jan@gabrielsson.com")
     function fibaro.protectFun(fun,f,level)
@@ -68,6 +69,26 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', init = function
     function table.mapf(f,l,s) s = s or 1; local e=true for i=s,table.maxn(l) do e = f(l[i]) end return e end
     function table.delete(k,tab) local i = table.member(tab,k); if i then table.remove(tab,i) return i end end
     table.equal,table.copy = equal,copy
+
+    local old_tostring = tostring
+    fibaro._orgToString = old_tostring
+    if hc3_emulator then
+      function tostring(obj)
+        if type(obj)=='table' and not hc3_emulator.getmetatable(obj) then
+          if obj.__tostring then return obj.__tostring(obj) 
+          elseif debugFlags.json then return json.encodeFast and json.encodeFast(obj) or json.encode(obj)  end
+        end
+        return old_tostring(obj)
+      end
+    else
+      function tostring(obj)
+        if type(obj)=='table' then
+          if obj.__tostring then return obj.__tostring(obj) 
+          elseif debugFlags.json then return json.encodeFast and json.encodeFast(obj) or json.encode(obj)  end
+        end
+        return old_tostring(obj)
+      end
+    end
 
     local _init,_onInit = QuickApp.__init
 
@@ -143,7 +164,7 @@ _MODULES.error={ author = "jan@gabrielsson.com", version = '0.4', init = functio
         local fun = function() -- wrap function to get error messages
           if debugFlags.lateTimer then
             local d = os.time() - ref.expires
-            if d > debugFlags.lateTimer then fibaro.warningf(nil,"Late timer (%ds):%s",d,ref) end
+            if d > debugFlags.lateTimer then fibaro.warning(__TAG,format("Late timer (%ds):%s",d,tostring(ref))) end
           end
           NC = NC-1
           ref.expired = true
@@ -422,7 +443,7 @@ _MODULES.utilities={ author = "jan@gabrielsson.com", version = '0.4', init = fun
 -------------------- Sun calc ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    local _,utils,_ = fibaro.debugFlags,fibaro.utils,string.format
+    local _,utils,format = fibaro.debugFlags,fibaro.utils,string.format
     local function sunturnTime(date, rising, latitude, longitude, zenith, local_offset)
       local rad,deg,floor = math.rad,math.deg,math.floor
       local frac = function(n) return n - floor(n) end
@@ -491,10 +512,10 @@ _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', init = function(
       local set_time = os.date("*t", sunturnTime(date, false, lat, lon, zenith, utc))
       local rise_time_t = os.date("*t", sunturnTime(date, true, lat, lon, zenith_twilight, utc))
       local set_time_t = os.date("*t", sunturnTime(date, false, lat, lon, zenith_twilight, utc))
-      local sunrise = string.format("%.2d:%.2d", rise_time.hour, rise_time.min)
-      local sunset = string.format("%.2d:%.2d", set_time.hour, set_time.min)
-      local sunrise_t = string.format("%.2d:%.2d", rise_time_t.hour, rise_time_t.min)
-      local sunset_t = string.format("%.2d:%.2d", set_time_t.hour, set_time_t.min)
+      local sunrise = format("%.2d:%.2d", rise_time.hour, rise_time.min)
+      local sunset = format("%.2d:%.2d", set_time.hour, set_time.min)
+      local sunrise_t = format("%.2d:%.2d", rise_time_t.hour, rise_time_t.min)
+      local sunset_t = format("%.2d:%.2d", set_time_t.hour, set_time_t.min)
       return sunrise, sunset, sunrise_t, sunset_t
     end
   end 
@@ -503,7 +524,7 @@ _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', init = function(
 -------------------- Cron ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    local _,_ = fibaro.debugFlags,string.format
+    local _,format = fibaro.debugFlags,string.format
     local function dateTest(dateStr0)
       local days = {sun=1,mon=2,tue=3,wed=4,thu=5,fri=6,sat=7}
       local months = {jan=1,feb=2,mar=3,apr=4,may=5,jun=6,jul=7,aug=8,sep=9,oct=10,nov=11,dec=12}
@@ -517,7 +538,7 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', init = function
         return res
       end
 
-      local function _assert(test,msg,...) if not test then error(string.format(msg,...),3) end end
+      local function _assert(test,msg,...) if not test then error(format(msg,...),3) end end
 
       local function expandDate(w1,md)
         local function resolve(id)
@@ -818,26 +839,6 @@ _MODULES.debug={ author = "jan@gabrielsson.com", version = '0.4', init = functio
     function print(a,...) 
       if not inhibitPrint[a] or debugFlags[inhibitPrint[a]] then
         oldPrint(a,...) 
-      end
-    end
-
-    local old_tostring = tostring
-    fibaro._orgToString = old_tostring
-    if hc3_emulator then
-      function tostring(obj)
-        if type(obj)=='table' and not hc3_emulator.getmetatable(obj) then
-          if obj.__tostring then return obj.__tostring(obj) 
-          elseif debugFlags.json then return json.encodeFast(obj) end
-        end
-        return old_tostring(obj)
-      end
-    else
-      function tostring(obj)
-        if type(obj)=='table' then
-          if obj.__tostring then return obj.__tostring(obj) 
-          elseif debugFlags.json then return json.encodeFast(obj) end
-        end
-        return old_tostring(obj)
       end
     end
 
@@ -1222,7 +1223,7 @@ _MODULES.climate={ author = "jan@gabrielsson.com", version = '0.4', init = funct
 
 --------------------- sourceTrigger refreshStates ----------------------------
 _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    local debugFlags,_ = fibaro.debugFlags,string.format
+    local debugFlags,format = fibaro.debugFlags,string.format
     fibaro.REFRESH_STATES_INTERVAL = 1000
     fibaro.REFRESHICONSTATUS = "icon"
     local sourceTriggerCallbacks,refreshCallbacks,refreshRef,pollRefresh={},{}
@@ -1349,7 +1350,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = func
     function post(ev)
       if ENABLEDSOURCETRIGGERS[ev.type] then
         if #sourceTriggerCallbacks==0 then return end
-        if debugFlags.sourceTrigger then fibaro.debugf(nil,"##1SourceTrigger:%s",ev) end
+        if debugFlags.sourceTrigger then fibaro.debug(__TAG,format("##1SourceTrigger:%s",tostring(ev))) end
         ev._trigger=true
         for _,cb in ipairs(sourceTriggerCallbacks) do
           setTimeout(function() cb(ev) end,0) 
@@ -1361,7 +1362,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = func
       local handler = EventTypes[e.type]
       if handler then handler(e.data,e)
       elseif handler==nil and fibaro._UNHANDLED_REFRESHSTATES then 
-        fibaro.debugf(__TAG,"[Note] Unhandled refreshState/sourceTrigger:%s -- please report",e) 
+        fibaro.debugf(__TAG,format("[Note] Unhandled refreshState/sourceTrigger:%s -- please report",tostring(e))) 
       end
     end
 
@@ -1463,7 +1464,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = func
     function fibaro._postSourceTrigger(trigger) post(trigger) end
 
     function fibaro._postRefreshState(event)
-      if debugFlags._allRefreshStates then fibaro.debugf(nil,"##1RefreshState:%s",event) end
+      if debugFlags._allRefreshStates then fibaro.debug(__TAG,fmt("##1RefreshState:%s",event)) end
       if #refreshCallbacks>0 and not DISABLEDREFRESH[event.type] then
         for i=1,#refreshCallbacks do
           setTimeout(function() refreshCallbacks[i](event) end,0)
@@ -1948,7 +1949,7 @@ _MODULES.qa={ author = "jan@gabrielsson.com", version = '0.4', init = function()
 --------------------- QuickerAppChild --------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    local _,_,copy = fibaro.debugFlags,string.format,table.copy
+    local _,format,copy = fibaro.debugFlags,string.format,table.copy
     class 'QuickerAppChild'(QuickAppBase)
 
     local childDevices={}
@@ -2046,7 +2047,7 @@ _MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', init = 
         devices = devices or {}
         devices[#devices+1]=dev
         if callbacks then setCallbacks(self,callbacks) end
-        fibaro.tracef(__TAG,"Created new child:%s %s",dev.id,dev.type)
+        fibaro.trace(__TAG,format("Created new child:%s %s",dev.id,dev.type))
       else
         callbacks = getVar(dev,"_callbacks")
       end
@@ -2095,7 +2096,7 @@ _MODULES.rpc={ author = "jan@gabrielsson.com", version = '0.4', init = function(
           end
         end 
       end
-      error(string.format("RPC timeout %s:%d",fun,id),3)
+      error(format("RPC timeout %s:%d",fun,id),3)
     end
     function fibaro.rpc(id,name,timeout) return function(...) return fibaro._rpc(id,name,{...},timeout) end end
     function QuickApp:RPC_CALL(path2,var2,n2,fun,args,qaf)
@@ -2134,7 +2135,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
       assert(isEvent(ev),"Bad argument to remote event")
       local time = ev.ev._time
       ev,ev.ev._time = ev.ev,nil
-      if time and time+5 < os.time() then fibaro.warningf(nil,"Slow events %s, %ss",ev,os.time()-time) end
+      if time and time+5 < os.time() then fibaro.warning(__TAG,format("Slow events %s, %ss",tostring(ev),os.time()-time)) end
       fibaro.post(ev)
     end
 
@@ -2153,7 +2154,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
       local now = os.time()
       t = type(t)=='string' and toTime(t) or t or 0
       if t < 0 then return elseif t < now then t = t+now end
-      if debugFlags.post and (type(ev)=='function' or not ev._sh) then fibaro.tracef(nil,"Posting %s at %s%s",ev,os.date("%c",t),type(log)=='string' and ("("..log..")") or "") end
+      if debugFlags.post and (type(ev)=='function' or not ev._sh) then fibaro.trace(__TAG,format("Posting %s at %s%s",tostring(ev),os.date("%c",t),type(log)=='string' and ("("..log..")") or "")) end
       if type(ev) == 'function' then
         return setTimeout(function() ev(ev) end,1000*(t-now),log)
       elseif isEvent(ev) then
@@ -2441,7 +2442,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
           if test() then
             if state == false then
               state=os.time()+time
-              if debugFlags.trueFor then fibaro.debugf(nil,"trueFor: test() true, running action() in %ss",state-os.time()) end
+              if debugFlags.trueFor then fibaro.debug(__TAG,format("trueFor: test() true, running action() in %ss",state-os.time())) end
               ref = setTimeout(ac,1000*(state-os.time()))
               timers[1]=ref
             elseif state == true then
@@ -2449,7 +2450,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
             end
           else
             if ref then timers[1]=nil ref = clearTimeout(ref) end
-            if debugFlags.trueFor then fibaro.debugf(nil,"trueFor: test() false, cancelling action()") end
+            if debugFlags.trueFor then fibaro.debug(__TAG,"trueFor: test() false, cancelling action()") end
             state=false
           end
         end
@@ -2497,10 +2498,10 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
 _MODULES = _MODULES or {} -- Global
 _MODULES.pubsub={ author = "jan@gabrielsson.com", version = '0.4', init = function()
     fibaro.loadModule("event")
-    local debugFlags = fibaro.debugFlags
+    local debugFlags,format = fibaro.debugFlags,string.format
     local SUB_VAR = "TPUBSUB"
     local idSubs = {}
-    local function DEBUG(...) if debugFlags.pubsub then fibaro.debugf(nil,...) end end
+    local function DEBUG(...) if debugFlags.pubsub then fibaro.debug(__TAG,format(...)) end end
     local inited,initPubSub,match,compile
     local member,equal,copy = table.member,table.equal,table.copy
 
@@ -2630,6 +2631,6 @@ if debug then                           -- Embedded call...
         local f = io.open(fname,"w+")
         f:write(c)
         f:close()
-    end)
+      end)
   end
 end

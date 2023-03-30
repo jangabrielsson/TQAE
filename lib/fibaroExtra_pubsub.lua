@@ -1,10 +1,10 @@
 _MODULES = _MODULES or {} -- Global
 _MODULES.pubsub={ author = "jan@gabrielsson.com", version = '0.4', init = function()
     fibaro.loadModule("event")
-    local debugFlags = fibaro.debugFlags
+    local debugFlags,format = fibaro.debugFlags,string.format
     local SUB_VAR = "TPUBSUB"
     local idSubs = {}
-    local function DEBUG(...) if debugFlags.pubsub then fibaro.debugf(nil,...) end end
+    local function DEBUG(...) if debugFlags.pubsub then fibaro.debug(__TAG,format(...)) end end
     local inited,initPubSub,match,compile
     local member,equal,copy = table.member,table.equal,table.copy
 
