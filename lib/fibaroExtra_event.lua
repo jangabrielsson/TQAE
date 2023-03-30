@@ -168,7 +168,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = functio
 
     local registered 
     function fibaro.event(pattern,fun,doc)
-      if not registered then registered=true fibaro.registerSourceTriggerCallback(handleEvent) end
+      if fibaro.registerSourceTriggerCallback and not registered then registered=true fibaro.registerSourceTriggerCallback(handleEvent) end
       doc = doc or format("Event(%s) => ..",json.encodeFast(pattern))
       if type(pattern) == 'table' and pattern[1] then 
         return comboEvent(pattern,fun,map(function(es) return fibaro.event(es,fun) end,pattern),doc) 
