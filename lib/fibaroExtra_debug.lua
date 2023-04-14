@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.debug={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.debug={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local debugFlags,utils,format = fibaro.debugFlags,fibaro.utils,string.format
     local function setDefault(v1,v2) if v1==nil then return v2 else return v1 end end
 

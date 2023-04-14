@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local _,utils,format = fibaro.debugFlags,fibaro.utils,string.format
     local function sunturnTime(date, rising, latitude, longitude, zenith, local_offset)
       local rad,deg,floor = math.rad,math.deg,math.floor

@@ -1,6 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.pubsub={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    fibaro.loadModule("event")
+_MODULES.pubsub={ author = "jan@gabrielsson.com", version = '0.4', depends={'base','event'},
+  init = function()
     local debugFlags,format = fibaro.debugFlags,string.format
     local SUB_VAR = "TPUBSUB"
     local idSubs = {}

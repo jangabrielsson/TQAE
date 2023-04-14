@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.climate={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.climate={ author = "jan@gabrielsson.com", version = '0.4',depends={'base'},
+  init = function()
     local _,_ = fibaro.debugFlags,string.format
     --Returns mode - "Manual", "Vacation", "Schedule"
     function fibaro.getClimateMode(id)

@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.error={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.error={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     json = json or {}
     local debugFlags,format,copy = fibaro.debugFlags,string.format,table.copy
     local setinterval,encode,decode =  setInterval, json.encode, json.decode -- gives us a better error messages

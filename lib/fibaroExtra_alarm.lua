@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.alarm={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.alarm={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local _,_ = fibaro.debugFlags,string.format
     function fibaro.partitionIdToName(pid)
       __assert_type(pid,"number")

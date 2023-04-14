@@ -2,6 +2,7 @@ local _=loadfile and loadfile("TQAE.lua"){
   refreshStates=true,
   debug = { onAction=true, http=false, UIEevent=true },
 --offline = true,
+copas=true
 }
 
 --%%name="TelegramBot"
@@ -12,7 +13,8 @@ local _=loadfile and loadfile("TQAE.lua"){
 --%%u3={label='row1',text=""}
 --%%u4={label='row2',text=""}
 --%%u5={label='row3',text=""}
-
+--%%proxy=true,
+  
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 
 version = "v0.2"
@@ -43,7 +45,7 @@ end
 
 local function setup()
 
-  fibaro:event({type='start'},function(env)
+  fibaro.event({type='start'},function(env)
       local ev = env.event
       Telegram = createTelegramSupport(fibaro.botID)
       Telegram.bot('msg')
@@ -54,7 +56,7 @@ local function setup()
       end
     end)
 
-  fibaro:event({type='msg'},function(env)
+  fibaro.event({type='msg'},function(env)
       local ev = env.event
       local from = ev.user
       local text = ev.text
@@ -121,6 +123,10 @@ function createTelegramSupport(bot_key)
             --pdebug("LID0:%s, LID1:%s, %s",lastID,m.update_id,m.message.text)
             if lastID == m.update_id then return end
             lastID,msg=m.update_id,m.message
+            if msg.from.username == nil then
+              quickApp:warningf("Telegram: Please set username") 
+              return
+            end
             recordUser(msg.from.username,msg.chat.id)
             local user = {name=msg.from.username, id=msg.chat.id, verified=Users[msg.from.username] and true or false}
             fibaro.post({type=tag,user=user,text=msg.text,id={msg.chat.id},info=msg.chat,_sh=true})
@@ -153,82 +159,25 @@ function QuickApp:onInit()
   if not botID then 
     fibaro.printf("Please set quickvar 'BOT_ID' to your Telegram bot key")
   end
+  fibaro.enableSourceTriggers({'quickvar','deviceEvent'},true) 
   Users = self:getVariable("Users")
   if Users == "" then Users = {} end
   for _,u in ipairs(Users) do u.verified = true end  -- We trust users declared
   fibaro.botID = botID
   Subs = createSubscribers()
   setup()
-  fibaro.post({type='start'})
-end
-
-function createSubscribers()
-  local self = {}
-  local topics = {}
-  local isSubscriber = {}
-
-  local function addSusbcriberToTopic(topic,id)
-    local s = topics[topic] or {}
-    s[id]=true
-    topics[topic] = s
-  end
-
-  local function removeSubscriber(id)
-    for topic,subs in pairs(topics) do
-      topic[id]=nil
-    end
-  end
-
-  function self.notify(topic,msg,from)
-    local method = topic=="" and "TELEGRAM" or "TELEGRAM_"..topic
-    local notified = false
-    for id,_ in pairs(topics[topic] or {}) do
-      notified = true
-      fibaro.call(id,method,msg,from)
-    end
-    return notified
-  end
-
-  local function checkDevice(id)
-    if id == quickApp.id then return end
-    local isSub=false
-    local files = fibaro.getFiles(id)    
-    for _,name in ipairs(files) do
-      local f = fibaro.getFile(
-    end
-    local code = d.properties.mainFunction or ""
-    if code:match("QuickApp:TELEGRAMQA") then
-      fibaro.call(id,"TELEGRAMQA",quickApp.id)
-    end
-    for match in code:gmatch("QuickApp:TELEGRAM(.-)%(") do
-      if match~="QA" then
-        local topic = ""
-        if match:sub(1,1)=="_" then topic=match:sub(2) end
-        addSusbcriberToTopic(topic,id)
-        self:tracef("DeviceId:%s subscribed to '%s'",id,topic)
-        isSubscriber[id]=true
-        isSub=true
-      end
-    end
-    if (not isSub) and isSubscriber[id] then
-      self:tracef("DeviceId:%s unsubscribed",id) 
-      isSubscriber[id]=nil
-      removeSubscriber(id)
-    end
-  end
-  self.checkDevice = checkDevice
 
   -- At startup, check all QAs for subscriptions
   for _,d in ipairs(api.get("/devices?interface=quickApp") or {}) do
-    checkDevice(d.id)
+    Subs.checkDevice(d.id)
   end
 
   self:event({type='deviceEvent',value='removed'},        -- If some QA is removed
     function(env) 
       local id = env.event.id
       if id ~= self.id then
-        isSubscriber[id]= nil                            -- update
-        removeSubscriber(id)
+        Subs.isSubscriber[id]= nil                              -- update
+        Subs.removeSubscriber(id)
       end
     end)
 
@@ -239,9 +188,65 @@ function createSubscribers()
     function(env)                                        -- update
       local id = env.event.id
       if id ~= self.id then
-        checkDevice(id)
+        Subs.checkDevice(id)
       end
     end)
+  
+   self:event({type='quickvar',name="TG_SUBS"},        -- If some QA changes subscription
+    function(env) Subs.checkDevice(env.event.id) end)  -- update
 
+  fibaro.post({type='start'})
+end
+
+function createSubscribers()
+  local self = {}
+  local topics = {}
+  local isSubscriber = {}
+  self.isSubscriber = isSubscriber
+  
+  local function addSubcriberToTopic(topic,id)
+    local s = topics[topic] or {}
+    s[id]=true
+    topics[topic] = s
+  end
+
+  function self.removeSubscriber(id)
+    for topic,subs in pairs(topics) do
+      topic[id]=nil
+    end
+  end
+
+  function self.notify(topic,msg,from)
+    local method = "TELEGRAM"
+    local notified = false
+    for id,_ in pairs(topics[topic] or {}) do
+      notified = true
+      fibaro.call(id,method,topic,msg,from)
+    end
+    return notified
+  end
+
+  function self.checkDevice(id)
+    if id == quickApp.id then return end
+    local isSub=false
+    local d = api.get("/devices/"..id)
+    local qv,topics = d.properties.quickAppVariables or {}
+    for _,v in ipairs(qv) do
+      if v.name == "TG_SUBS" then topics = v.value break end
+    end
+    if type(topics) ~= 'table' then return end
+    fibaro.call(id,"TELEGRAMQA",quickApp.id)
+    for _,topic in ipairs(topics) do 
+      addSubcriberToTopic(topic,id)
+      quickApp:tracef("DeviceId:%s subscribed to '%s'",id,topic)
+      isSubscriber[id]=true
+      isSub=true
+    end
+    if (not isSub) and isSubscriber[id] then
+      quickApp:tracef("DeviceId:%s unsubscribed",id) 
+      isSubscriber[id]=nil
+      self.removeSubscriber(id)
+    end
+  end
   return self
 end

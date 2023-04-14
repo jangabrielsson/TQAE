@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.hc3={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.hc3={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local _,format = fibaro.debugFlags,string.format
     local HC3version,IPaddress
 

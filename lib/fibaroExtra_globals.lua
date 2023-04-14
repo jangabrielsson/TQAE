@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.globals={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.globals={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local _,_ = fibaro.debugFlags,string.format
     function fibaro.getAllGlobalVariables() 
       return table.map(function(v) return v.name end,api.get("/globalVariables")) 

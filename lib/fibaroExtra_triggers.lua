@@ -1,4 +1,5 @@
-_MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local debugFlags,format = fibaro.debugFlags,string.format
     fibaro.REFRESH_STATES_INTERVAL = 1000
     fibaro.REFRESHICONSTATUS = "icon"

@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.weather={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.weather={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local _,_ = fibaro.debugFlags,string.format
     fibaro.weather = {}
     function fibaro.weather.temperature() return api.get("/weather").Temperature end

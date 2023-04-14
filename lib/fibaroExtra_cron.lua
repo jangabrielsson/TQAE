@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local _,format = fibaro.debugFlags,string.format
     local function dateTest(dateStr0)
       local days = {sun=1,mon=2,tue=3,wed=4,thu=5,fri=6,sat=7}

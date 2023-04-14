@@ -1,6 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    fibaro.loadModule("time"); --fibaro.loadModule("triggers")
+_MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base','time'},
+  init = function()
     local debugFlags,format,equal,copy,toTime = fibaro.debugFlags,string.format,table.equal,table.copy,fibaro.toTime
 
 --  local function DEBUG(...) if debugFlags.event then fibaro.debugf(nil,...) end end

@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.time={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.time={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local _,utils,format = fibaro.debugFlags,fibaro.utils,string.format
 
     local function toSeconds(str)

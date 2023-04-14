@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.utilities={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.utilities={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local _,utils,format = fibaro.debugFlags,fibaro.utils,string.format
 
     local _,copy = table.member,table.copy

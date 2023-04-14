@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local _,format,copy = fibaro.debugFlags,string.format,table.copy
     class 'QuickerAppChild'(QuickAppBase)
 

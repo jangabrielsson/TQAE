@@ -1,6 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.qa={ author = "jan@gabrielsson.com", version = '0.4', init = function()
-    fibaro.loadModule("debug"); fibaro.loadModule("event")
+_MODULES.qa={ author = "jan@gabrielsson.com", version = '0.4', depends={'base','debug','event'}, 
+  init = function()
     local debugFlags,format,copy = fibaro.debugFlags,string.format,table.copy
     function fibaro.restartQA(id)
       __assert_type(id,"number")
@@ -47,8 +47,6 @@ _MODULES.qa={ author = "jan@gabrielsson.com", version = '0.4', init = function()
       __assert_type(enable,"boolean")
       return api.post("/devices/"..(id or plugin.mainDeviceId),{enabled=enable==true})
     end
-
-
 
     function QuickApp.debug(_,...) fibaro.debug(nil,...) end
     function QuickApp.trace(_,...) fibaro.trace(nil,...) end

@@ -1,5 +1,6 @@
 _MODULES = _MODULES or {} -- Global
-_MODULES.rpc={ author = "jan@gabrielsson.com", version = '0.4', init = function()
+_MODULES.rpc={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
+  init = function()
     local _,format = fibaro.debugFlags,string.format
     local var,cid,n = "RPC"..plugin.mainDeviceId,plugin.mainDeviceId,0
     local vinit,path = { name=var, value=""},"/plugins/"..cid.."/variables/"..var
