@@ -46,6 +46,8 @@
      ['label'] = function(out,c)
         if view[c.name]['text']:match('img src') then
            out('<div class"m-1">%s</div>',view[c.name]['text']:fromutf8())
+        elseif view[c.name]['text']:match('<table.*>') then
+           out('<div class"m-1">%s</div>',view[c.name]['text'])
         else
            out('<div class"m-1">%s</div>',view[c.name]['text']:fromutf8():htmlEsc())
         end

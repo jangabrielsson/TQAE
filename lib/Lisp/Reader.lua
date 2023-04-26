@@ -4,6 +4,7 @@ local singleTokens = {
   ["("] = 'TT_LPAR',
   [")"] = 'TT_RPAR',
   ["+"] = 'TT_ATOM',
+  ["%"] = 'TT_ATOM',
   ["/"] = 'TT_ATOM',
   ["'"] = 'TT_QUOTE',
   ["`"] = 'TT_BACKQUOTE',
@@ -60,7 +61,7 @@ end
 
 local parseFuns = {
   TT_EOF    = function(st) Exception.Reader("Read beyond EOF", st:lineNo()) end,
-  TT_NUMBER  = function(st) return st.val end,
+  TT_NUMBER = function(st) return st.val end,
   TT_STRING = function(st) return st.val end,
   TT_ATOM   = function(st) return Atom(st.val):intern() end,
   TT_QUOTE  = function(st,p) return Cons(Lisp.QUOTE, Cons(p:parse(st), Lisp.NIL)) end,

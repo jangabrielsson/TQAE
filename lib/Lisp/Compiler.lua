@@ -52,9 +52,11 @@ function compile_aux(e, cenv)
   if type(e) ~= 'table' or e.__ltyp==nil then return e end
   if e:isCons() then
     local car,cdr = e.car,e.cdr
+    if isLType(car)==nil then 
+      Exception.Compile("Bad functor",a) 
+    end
     if car:isAtom() then
       local a = car
-
       -- Quote: i.e. '(1 2 3)
       if a == Lisp.QUOTE then
         return Const(cdr.car)

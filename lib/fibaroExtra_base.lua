@@ -1,7 +1,7 @@
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={}, 
   init = function()
-    fibaro.FIBARO_EXTRA = "v0.959"
+    fibaro.FIBARO_EXTRA = "v0.960"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -98,7 +98,6 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={},
     function fibaro.loadModule(name)
       local m = _MODULES[name]
       assert(m,"Module "..tostring(name).." doesn't exist")
-      print(name)
       if not m._inited then m._inited=true
         for _,d in ipairs(m.depends) do fibaro.loadModule(d) end
         m.init()

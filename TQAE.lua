@@ -536,7 +536,7 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
     },
     coroutine=EM.userCoroutines,
     table=table,select=select,pcall=pcall,xpcall=xpcall,print=print,string=string,error=error,
-    collectgarbage=collectgarbage,unpack=table.unpack,
+    collectgarbage=collectgarbage,unpack=table.unpack,utf8=utf8,
     next=next,pairs=pairs,ipairs=ipairs,tostring=tostring,tonumber=tonumber,math=math,assert=assert,
   }
   if info.fullLUA then

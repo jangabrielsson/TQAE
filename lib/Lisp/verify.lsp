@@ -1,7 +1,7 @@
 
 (defmacro verify(test res)
   `(let ((t0 ',test)(t1 ,test)(r1 ,res))
-     (strformat "%s = %s" t0 (if (equal t1 r1) "OK" (concat "FAIL:" t1)))))
+     (strformat "%s = %s" (if (equal t1 r1) "OK" (concat "FAIL:" t1)) t0 )))
      
 (verify (+ 2 3) 5)
 (verify (+ 0 1) 1)
@@ -35,6 +35,20 @@
 (verify (nth 2 '(a b c)) 'c)
 (verify (list* 1 2 3) '( 1 2 . 3))
 (verify (last '(a b c)) '(c))
+(verify (unless nil 7 8) 8)
+(verify (first '(a b c)) 'a)
+(verify (rest '(a b c)) '(b c))
+(verify (second '(a b c)) 'b)
+(verify (third '(a b c)) 'c)
+(verify (caar '((a) b c)) 'a)
+(verify (cadr '((a e) (b) c)) '(b))
+(verify (cdar '((a e) (b) c)) '(e))
+(verify (cddr '(a (b) c)) '(c))
+(verify (cdddr '(a (b) c e)) '(e))
+(verify (cadar '((a b) (b) c e)) 'b)
+(verify (let ((n 0)) (dolist (x '(1 2 3)) (incf n x)) n) 6)
+(verify (add 1 2 3) 6)
+(verify (foldl #'- 0 '(1 2 3)) 2)
 
 
 

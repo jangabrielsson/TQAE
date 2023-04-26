@@ -6,7 +6,7 @@ local typeTab = {
   ['string'] = function() return 'String' end,
   ['boolean'] = function() return 'Bool' end,
 }
-local function isLType(o) return type(o)=='table' and o.__ltyp end
+local function isLType(o) return type(o)=='table' and o.__ltyp or nil end
 Lisp.isLType = isLType
 local function LType(o) return typeTab[type(o)](o) end
 Lisp.LType = LType
@@ -69,7 +69,7 @@ function Const:__init(val)
 end
 function Const:eval() return self.val end
 function Const:isConst() return true end
-function Const:__tostring() return tostring(self.val) end
+function Const:__tostring() return "'"..tostring(self.val) end
 
 class 'Cons'(Expr)
 Cons.__ltyp='Cons'

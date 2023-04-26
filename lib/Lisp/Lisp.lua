@@ -22,6 +22,7 @@ function Lisp.Exception.Std(fm,...)      error(LExcept('std',fmt(fm,...))) end
 function Lisp.Exception.User(tag,value)  error({type='user',tag=tag,value=value}) end
 function Lisp.lassert(test,fun,...) if not test then fun(...) end end
 
+json = json or dofile("lib/Lisp/json.lua")
 dofile("lib/Lisp/Types.lua")
 
 local function defSymbol(name) Lisp[name:match("&(.*)") or name]=Atom(name):intern() end

@@ -1447,7 +1447,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
             refreshRef = setTimeout(pollRefresh,fibaro.REFRESH_STATES_INTERVAL or 0)
           end,
           error=function(res) 
-            fibaro.errorf(__TAG,"refreshStates:%s",res)
+            fibaro.error(__TAG,format("refreshStates:%s",res))
             refreshRef = setTimeout(pollRefresh,fibaro.REFRESH_STATES_INTERVAL or 0)
           end,
         })
@@ -2097,7 +2097,6 @@ _MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', depends
 _MODULES = _MODULES or {} -- Global
 _MODULES.rpc={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
   init = function()
-    local _,format = fibaro.debugFlags,string.format
     local var,cid,n = "RPC"..plugin.mainDeviceId,plugin.mainDeviceId,0
     local vinit,path = { name=var, value=""},"/plugins/"..cid.."/variables/"..var
     api.post("/plugins/"..cid.."/variables",{ name=var, value=""}) -- create var if not exist
@@ -2115,7 +2114,7 @@ _MODULES.rpc={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'}
           end
         end 
       end
-      error(format("RPC timeout %s:%d",fun,id),3)
+      error(string.format("RPC timeout %s:%d",fun,id),3)
     end
     function fibaro.rpc(id,name,timeout) return function(...) return fibaro._rpc(id,name,{...},timeout) end end
     function QuickApp:RPC_CALL(path2,var2,n2,fun,args,qaf)
@@ -2139,7 +2138,7 @@ _MODULES = _MODULES or {} -- Global
 _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base','time'},
   init = function()
     local debugFlags,format,equal,copy,toTime = fibaro.debugFlags,string.format,table.equal,table.copy,fibaro.toTime
-
+  
 --  local function DEBUG(...) if debugFlags.event then fibaro.debugf(nil,...) end end
 
     local em,handlers = { sections = {}, stats={tried=0,matched=0}},{}
@@ -2306,7 +2305,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
     local registered 
     function fibaro.event(pattern,fun,doc)
       if fibaro.registerSourceTriggerCallback and not registered then registered=true fibaro.registerSourceTriggerCallback(handleEvent) end
-      doc = doc or format("Event(%s) => ..",json.encodeFast(pattern))
+      doc = doc or format("Event(%s) => ..",json.encodeFast and json.encodeFast(pattern) or json.encode(pattern))
       if type(pattern) == 'table' and pattern[1] then 
         return comboEvent(pattern,fun,map(function(es) return fibaro.event(es,fun) end,pattern),doc) 
       end

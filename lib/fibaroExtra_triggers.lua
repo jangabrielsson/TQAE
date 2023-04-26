@@ -206,7 +206,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
             refreshRef = setTimeout(pollRefresh,fibaro.REFRESH_STATES_INTERVAL or 0)
           end,
           error=function(res) 
-            fibaro.errorf(__TAG,"refreshStates:%s",res)
+            fibaro.error(__TAG,format("refreshStates:%s",res))
             refreshRef = setTimeout(pollRefresh,fibaro.REFRESH_STATES_INTERVAL or 0)
           end,
         })

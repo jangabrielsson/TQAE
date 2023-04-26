@@ -1,7 +1,6 @@
 _MODULES = _MODULES or {} -- Global
 _MODULES.rpc={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
   init = function()
-    local _,format = fibaro.debugFlags,string.format
     local var,cid,n = "RPC"..plugin.mainDeviceId,plugin.mainDeviceId,0
     local vinit,path = { name=var, value=""},"/plugins/"..cid.."/variables/"..var
     api.post("/plugins/"..cid.."/variables",{ name=var, value=""}) -- create var if not exist
@@ -19,7 +18,7 @@ _MODULES.rpc={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'}
           end
         end 
       end
-      error(format("RPC timeout %s:%d",fun,id),3)
+      error(string.format("RPC timeout %s:%d",fun,id),3)
     end
     function fibaro.rpc(id,name,timeout) return function(...) return fibaro._rpc(id,name,{...},timeout) end end
     function QuickApp:RPC_CALL(path2,var2,n2,fun,args,qaf)
