@@ -112,7 +112,7 @@ local function imageInclude(image,fn,name)
   assert(image,"Missing IMAGE file:"..tostring(fn))
   local w,h = getSize(image)
   assert(image,"Missing IMAGE size:"..tostring(fn))
- -- fn = fn:gsub("[%/%\\%s%c]","_"):match("(.+)[%.%$]")
+  -- fn = fn:gsub("[%/%\\%s%c]","_"):match("(.+)[%.%$]")
   return string.format([[
     _IMAGES['%s']={data='%s',w=%s,h=%s}
     ]],name,"data:image/png;base64,"..base64encode(image),w,h)
@@ -232,14 +232,15 @@ end
 
 local function saveFQA(D)
   local fqa = packageFQA(D)
+  local save = D.name..".fqa"
   local stat,res = pcall(function()
-      local f = io.open(D.save,"w+")
-      assert(f,"Can't open file "..D.save)
+      local f = io.open(save,"w+")
+      assert(f,"Can't open file "..save)
       f:write((json.encode(fqa)))
       f:close()
     end)
   if not stat then LOG.error("saving .fqa - %s",res) 
-  else LOG.sys("Saved %s",D.save) end
+  else LOG.sys("Saved %s",save) end
 end
 
 local function uploadFQA(D)

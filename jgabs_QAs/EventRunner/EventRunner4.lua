@@ -6,7 +6,7 @@ _=loadfile and loadfile("TQAE.lua"){
     onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true, qa=true-- timersSched=true
   },
   --startTime="18:10:00",
-  --offline=true
+  offline=true
 }
 
 --%%name="EventRunner4"
@@ -16,6 +16,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u3={button='debugPost', text='Post:ON', onReleased='FEventRunner4'}
 --%%u4={button='debugRule', text='Rules:ON', onReleased='FEventRunner4'}
 --%%u5={button='Test', text='Test', onReleased='FEventRunner4'}
+--%%proxy=true
 
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 --FILE:jgabs_QAs/EventRunner/EventRunner4Engine.lua,EventRunner;
@@ -40,7 +41,7 @@ _debugFlags.logTrigger=false -- Enable log source triggers (when log text for UI
 
 function QuickApp:main()    -- EventScript version
   local rule = function(...) return self:evalScript(...) end          -- old rule function
-  self:enableTriggerType({"device","global-variable","custom-event","profile","alarm","location","quickvar","user"}) -- types of events we want
+  self:enableTriggerType({"device","global-variable","custom-event","profile","alarm","weather","location","quickvar","user"}) -- types of events we want
   local HT = { 
     keyfob = 26, 
     motion= 21,
@@ -51,16 +52,30 @@ function QuickApp:main()    -- EventScript version
   self.color.banner='black'
   self.color.rule='green'
   self.color.info='purple'
-  
+
   if hc3_emulator then
-    s1 = hc3_emulator.create.binarySensor(77)
-    s2 = hc3_emulator.create.binarySensor(88)
-    s2 = hc3_emulator.create.globalVariables{name="Test",value="10:00"}
+--    s0 = hc3_emulator.create.binarySwitch(65)
+--    s1 = hc3_emulator.create.binarySwitch(66)
+--    s2 = hc3_emulator.create.binarySwitch(67)
+--    s3 = hc3_emulator.create.binarySwitch(68)
+--    s4 = hc3_emulator.create.binarySwitch(69)
+--    s5 = hc3_emulator.create.binarySwitch(70)
+--    s6 = hc3_emulator.create.binarySwitch(71)
+--    s7 = hc3_emulator.create.binarySwitch(72)
+--    s8 = hc3_emulator.create.binarySwitch(73)
+--    s1 = hc3_emulator.create.binarySensor(77)
+--    s2 = hc3_emulator.create.binarySensor(88)
+    s2 = hc3_emulator.create.multilevelSwitch(88)
+    s3 = hc3_emulator.create.multilevelSwitch(89)
+--    s2 = hc3_emulator.create.globalVariables{name="Test",value="10:00"}
+    hc3_emulator.create.globalVariables{name='A',value="41"}
+    hc3_emulator.create.globalVariables{name='B',value=nil}
   end
 
   Util.defvars(HT)
   Util.reverseMapDef(HT)
-
+  
+    rule("@20:18:00+rnd(-00:00:10,00:00:20) => log('Hupp')")
 --  rule("#profile{property='activeProfile', value=AwayProfile} => enable('Away',true)") 
 --  rule("#profile{property='activeProfile', value=HomeProfile} => enable('Home',true); r2.start()") 
 --  rule("post(#profile{property='activeProfile', value=HomeProfile})") 
@@ -139,14 +154,19 @@ function QuickApp:main()    -- EventScript version
 --  rule("wait(7); broadcast({type='myBroadcast',value=42})")
 --  rule("#deviceEvent{id='$id',value='$value'} => log('Device %s %s',id,value)")
 --  rule("#sceneEvent{id='$id',value='$value'} => log('Scene %s %s',id,value)")
-  
+
+    local errf = fibaro.errorf
+    function fibaro.errorf(tag,fmt,...) self:post({type='er_error',msg=errf(tag,fmt,...)}) end
+    
+    rule("#er_error{msg=msg} => log('Error:%s',msg)")
+    
   fibaro.event({type='_startup_'},function()
       Util.printBanner("Jang's HomeAutomation Engine (ER4v%s)",{self.E_VERSION},"green") -- Change to your own name...
       Util.printRules()
       Util.printInfo()
       self:addHourTask(Util.printInfo)
     end)
-  
+
 --  dofile("verifyHC3scripts.lua")
   return "silent"
 end

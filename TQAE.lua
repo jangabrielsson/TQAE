@@ -90,7 +90,7 @@ QuickApp options: (set with --%% directive in file)
 --]]
 
 local embedded=...              -- get parameters if emulator included from QA code...
-local version = "0.57"
+local version = "0.58"
 local EM = { cfg = embedded or {} }
 local cfg,pfvs = EM.cfg
 local function DEF(x,y) if x==nil then return y else return x end end
