@@ -1,0 +1,17 @@
+{
+    "TQAE file header": {
+        "prefix": "tqae",
+        "body": [
+            "_=loadfile and loadfile(\"TQAE.lua\"){",
+            "    refreshStates=true,",
+            "    debug = {", 
+            "      onAction=true, http=false, UIEevent=true, trigger=true, post=true, dailys=true, pubsub=true, qa=true-- timersSched=true",
+            "    },",
+            "    --startTime=\"18:10:00\",",
+            "    --offline=true",
+            "}",
+            "$0"
+        ],
+        "description": "TQAE emulator file header for QA"
+    }
+}

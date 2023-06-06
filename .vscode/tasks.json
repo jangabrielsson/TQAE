@@ -1,0 +1,27 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "download QA",
+            "type": "shell",
+            "command": "lua",
+            "args": ["./setup/tool.lua", "getQA", "${input:QA_id}","${input:path_id}"]
+        }
+      ],
+      "inputs": [
+        {
+          "type": "promptString",
+          "id": "QA_id",
+          "description": "deviceId of QA from HC3 you want to download?",
+          "default": "-"
+        },
+        {
+          "type": "promptString",
+          "id": "path_id",
+          "description": "path where to store the QA",
+          "default": "test"
+        }
+      ]
+    }

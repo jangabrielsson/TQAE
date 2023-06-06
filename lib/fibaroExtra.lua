@@ -283,8 +283,6 @@ _MODULES.utilities={ author = "jan@gabrielsson.com", version = '0.4', depends={'
     end
 
     function utils.gensym(s) return (s or "G")..fibaro._orgToString({}):match("%s(.*)") end
-    local gIndex = 100
-    function utils.gensym(s) gIndex=gIndex+1; return (s or "GEN")..gIndex end
 
     function urlencode(str) -- very useful
       if str then
@@ -1484,7 +1482,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
     function fibaro._postSourceTrigger(trigger) post(trigger) end
 
     function fibaro._postRefreshState(event)
-      if debugFlags._allRefreshStates then fibaro.debug(__TAG,fmt("##1RefreshState:%s",event)) end
+      if debugFlags._allRefreshStates then fibaro.debug(__TAG,string.format("##1RefreshState:%s",event)) end
       if #refreshCallbacks>0 and not DISABLEDREFRESH[event.type] then
         for i=1,#refreshCallbacks do
           setTimeout(function() refreshCallbacks[i](event) end,0)
@@ -1614,7 +1612,7 @@ _MODULES.qa={ author = "jan@gabrielsson.com", version = '0.4', depends={'base','
     function fibaro.enableQA(id,enable)
       __assert_type(id,"number")
       __assert_type(enable,"boolean")
-      return api.put("/devices/"..(id or plugin.mainDeviceId),{enabled=enable==true})
+      return api.post("/devices/"..(id or plugin.mainDeviceId),{enabled=enable==true})
     end
 
     function QuickApp.debug(_,...) fibaro.debug(nil,...) end
