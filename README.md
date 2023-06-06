@@ -250,14 +250,7 @@ With an offline emulator running on a PC/Mac you can use a modern IDE like ZeroB
 When it works in the emulator you can move the code to the HC3 and it will work.
 No need to develop on the HC3 and accidentally crash the whole box and make your family upset.
 
-Here is a video showing a typical workflow.
-
-[video](https://youtu.be/e76sVOBEWtw)
-<iframe width="560" height="315"
-src="https://youtu.be/e76sVOBEWtw"
-frameborder="0"
-allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-allowfullscreen></iframe>
+Here is a video showing a typical workflow. [video](https://youtu.be/e76sVOBEWtw)
 
 (Note that the Web UI now has a button "Upload" that uploads the QuickApp when it's ready to the HC3)
 
