@@ -118,6 +118,8 @@ addPath(".".._ps.."modules".._ps.."?",true)
 addPath(".".._ps.."modules".._ps.."/?.lua",true)
 local function mkPath(...) return table.concat({...},cfg.pathSeparator) end
 EM.mkPath = mkPath 
+if package.cpath:match("[Zz]ero[bB]rane[sS]tudio") then cfg.editor = "ZB"
+else cfg.editor = "VSC" end
 
 cfg.root         = DEF(cfg.root,"")
 cfg.modPath      = DEF(cfg.modpath,mkPath("modules",""))   -- directory where TQAE modules are stored
