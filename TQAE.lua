@@ -133,6 +133,8 @@ debugFlags.html  = DEF(debugFlags.html,true)
 debugFlags.color = DEF(debugFlags.color,true)
 local fibColors  = DEF(cfg.fibColors,{ ["DEBUG"] = 'green', ["TRACE"] = 'blue', ["WARNING"] = 'orange', ["ERROR"] = 'red' })
 local logColors  = DEF(cfg.logColors,{ ["SYS"] = 'brown', ["ERROR"]='red', ["WARN"] = 'orange', ["TRACE"] = 'blue' })
+if debugFlags.dark then fibColors['TEXT']=fibColors['TEXT'] or 'white' logColors['TEXT']=logColors['TEXT'] or 'white' end
+
 EM.utilities.colorMap = DEF(cfg.colorMap,{})
 
 local globalModules = { -- default global modules loaded once into emulator environment
@@ -283,7 +285,7 @@ function FB.__fibaro_add_debug_message(tag,str,typ)
   str = str:gsub("(&nbsp;)"," ")      -- remove html space
   if debugFlags.color then
     local tcolor = ANSICOLORS[(fibColors['TEXT'] or "black")]
-    print(fmt("%s [%s%s] [%s]: %s%s",EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),typ,tcolor,tag,str,ANSIEND))
+    print(fmt("%s%s [%s%s] [%s]: %s%s",tcolor,EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),typ,tcolor,tag,str,ANSIEND))
   else print(fmt("%s [%s] [%s]: %s",EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),typ,tag,str)) end
 end
 
@@ -291,7 +293,7 @@ local function _LOG(typ,...)
   if debugFlags.color then
     local colorCode = ANSICOLORS[logColors[typ]  or 'black']
     local textColor = ANSICOLORS[logColors['TEXT'] or 'black'] 
-    print(fmt("%s |%s%-5s|%s %s%s%s",EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),colorCode,typ,ANSIEND,textColor,fmt(...),ANSIEND))
+    print(fmt("%s%s |%s%-5s|%s %s%s%s",textColor,EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),colorCode,typ,ANSIEND,textColor,fmt(...),ANSIEND))
   else
     print(fmt("%s |%-5s| %s",EM.osDate("[%d.%m.%Y] [%H:%M:%S]"),typ,fmt(...)))
   end
