@@ -111,7 +111,7 @@ This will update the TQAE code (it's usually updated quite often) but will leave
 You can also link dev to some other directory where you do your development.
 I will do my best to keep the repository clean. This way it's easy to keep up with updates of the code.
 
-Download ZeroBrane studio <link>
+Download [ZeroBrane studio](https://studio.zerobrane.com/download?not-this-time)
 Open ZBS and open the TQAE_QA.lua file
 Set project directory in ZBS to the current file, TQAE_QA.lua (Project->Project Directory->Set From Current File)
 
@@ -136,7 +136,6 @@ While TQAE_QA.lua is running open <http://192.168.1.18:8976/web/main> in your br
 Goto [Settings] in the web page menu (upper right).
 
 <img src="images/settings2.png" alt="app-screen" width="500" />
-
 
 Fill in User ID, Password, and IP address for the HC3. Click "Save"
 Hopefully there is now a TQAEconfigs.lua file with the HC3 credentials that the emulator can use.
