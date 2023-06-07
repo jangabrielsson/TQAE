@@ -1,5 +1,5 @@
 _=loadfile and loadfile("TQAE.lua"){
-  debug = { color = true, dark=true }
+  debug = { color = true, --[[dark=true--]] }
 }
 
 --%%name="Test QA"
