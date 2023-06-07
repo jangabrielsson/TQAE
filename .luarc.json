@@ -1,0 +1,6 @@
+{
+ //   "workspace.library": ["path/to/library/directory"],
+    "runtime.version": "Lua 5.3",
+    "hint.enable": true,
+    "diagnostics.disable": ["duplicate-set-field"]
+}

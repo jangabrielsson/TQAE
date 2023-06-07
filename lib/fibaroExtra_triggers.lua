@@ -3,7 +3,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
     local debugFlags,format = fibaro.debugFlags,string.format
     fibaro.REFRESH_STATES_INTERVAL = 1000
     fibaro.REFRESHICONSTATUS = "icon"
-    local sourceTriggerCallbacks,refreshCallbacks,refreshRef,pollRefresh={},{}
+    local sourceTriggerCallbacks,refreshCallbacks,refreshRef,pollRefresh={},{},nil,nil
     local ENABLEDSOURCETRIGGERS,DISABLEDREFRESH={},{}
     local post,sourceTriggerTransformer,filter
     local member,equal = table.member,table.equal
@@ -241,7 +241,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
     function fibaro._postSourceTrigger(trigger) post(trigger) end
 
     function fibaro._postRefreshState(event)
-      if debugFlags._allRefreshStates then fibaro.debug(__TAG,fmt("##1RefreshState:%s",event)) end
+      if debugFlags._allRefreshStates then fibaro.debug(__TAG,format("##1RefreshState:%s",event)) end
       if #refreshCallbacks>0 and not DISABLEDREFRESH[event.type] then
         for i=1,#refreshCallbacks do
           setTimeout(function() refreshCallbacks[i](event) end,0)

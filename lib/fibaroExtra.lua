@@ -73,7 +73,7 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={},
 
     local old_tostring = tostring
     fibaro._orgToString = old_tostring
-    if hc3_emulator then
+    if hc3_emulator then 
       function tostring(obj)
         if type(obj)=='table' and not hc3_emulator.getmetatable(obj) then
           if obj.__tostring then return obj.__tostring(obj) 
@@ -91,14 +91,14 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={},
       end
     end
 
-    local _init,_onInit = QuickApp.__init
+    local _init,_onInit = QuickApp.__init,nil
 
     local function initQA(selfv)
       local dev = __fibaro_get_device(selfv.id)
       if not dev.enabled then
         if fibaro.__disabled then pcall(fibaro.__disabled,selfv) end
         selfv:debug("QA ",selfv.name," disabled")
-        return 
+        return
       end
       for m,_ in pairs(_MODULES or {}) do fibaro.loadModule(m) end
       selfv.config = {}
@@ -1244,7 +1244,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
     local debugFlags,format = fibaro.debugFlags,string.format
     fibaro.REFRESH_STATES_INTERVAL = 1000
     fibaro.REFRESHICONSTATUS = "icon"
-    local sourceTriggerCallbacks,refreshCallbacks,refreshRef,pollRefresh={},{}
+    local sourceTriggerCallbacks,refreshCallbacks,refreshRef,pollRefresh={},{},nil,nil
     local ENABLEDSOURCETRIGGERS,DISABLEDREFRESH={},{}
     local post,sourceTriggerTransformer,filter
     local member,equal = table.member,table.equal
