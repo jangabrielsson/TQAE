@@ -2,5 +2,11 @@
  //   "workspace.library": ["path/to/library/directory"],
     "runtime.version": "Lua 5.3",
     "hint.enable": true,
-    "diagnostics.disable": ["duplicate-set-field"]
+    "diagnostics.disable": ["duplicate-set-field"],
+    "diagnostics.globals": [
+        "QuickAppBase", "QuickApp", "QuickAppChild", "quickApp", "fibaro", "QuickerAppChild", "class",
+        "plugin", "api", "net", "netSync", "setTimeout", "clearTimeout", "setInterval", "clearInterval", "json",
+        "__assert_type", "__fibaro_get_device", "__TAG", "__fibaro_get_device_property",
+        "utils", "hc3_emulator", "urlencode", "sceneId", "table", "string", "_MODULES"
+    ]
 }

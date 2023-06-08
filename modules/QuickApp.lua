@@ -1,6 +1,6 @@
 -- Local module, loaded into each QA's environment
 __TAG="QUICKAPP"..plugin.mainDeviceId
-__print = print
+__print = print ---@diagnostic disable-line: lowercase-global
 function print(...) fibaro.debug(__TAG,...) end
 
 function plugin.deleteDevice(id) return api.delete("/devices/"..id) end

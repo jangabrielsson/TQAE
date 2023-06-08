@@ -92,7 +92,7 @@ QuickApp options: (set with --%% directive in file)
 local embedded=...              -- get parameters if emulator included from QA code...
 local version = "0.59"
 local EM = { cfg = embedded or {} }
-local cfg,pfvs = EM.cfg
+local cfg,pfvs = EM.cfg,nil
 local function DEF(x,y) if x==nil then return y else return x end end
 cfg.configFile  = DEF(cfg.configFile,"TQAEconfigs.lua")
 EM.readConfigFile = cfg.configFile
@@ -177,7 +177,7 @@ local ltn12  = require("ltn12")
 
 local FB,Devices = {},{}  -- id->Device map
 local Utils=EM.utilities
-local fmt,gID,setTimeout,LOG,DEBUG,loadModules,runQA = string.format,1001
+local fmt,gID,setTimeout,LOG,DEBUG,loadModules,runQA = string.format,1001,nil,nil,nil,nil,nil
 local format,deepCopy,merge,member = string.format,Utils.deepCopy,Utils.merge,Utils.member
 EM.http,EM.https=http,https
 EM._info = { modules = { ["local"] = {}, global= {} } }
@@ -186,7 +186,7 @@ EM._info = { modules = { ["local"] = {}, global= {} } }
 ------------------------ Builtin functions ------------------------------------------------------
 
 local function httpRequest(reqs,extra)
-  local resp,req,status,h,resetTimeout,timeout,_={},{} 
+  local resp,req,status,h,resetTimeout,timeout,_={},{},nil,nil,nil,nil,nil
   for k,v in pairs(extra or {}) do req[k]=v end; for k,v in pairs(reqs) do req[k]=v end
   req.sink,req.headers = ltn12.sink.table(resp), req.headers or {}
   req.headers["Accept"] = req.headers["Accept"] or "*/*"
@@ -561,7 +561,8 @@ function runQA(id,cont)         -- Creates an environment and load file modules 
   for _,f in pairs(fs) do                                  -- for every file we got, load it..
     DEBUG("files","sys","         ...%s",f.name)
     local code = check(env.__TAG,load(f.content,f.fname,"t",env))   -- Load our QA code, check syntax errors
-    EM.checkForExit(true,co,pcall(code))                            -- Run the QA code, check runtime errors
+    ---@diagnostic disable-next-line: param-type-mismatch
+    EM.checkForExit(true,co,pcall(code))                           -- Run the QA code, check runtime errors
   end
   LOADLOCK:release()
   if env.QuickApp and env.QuickApp.onInit then

@@ -100,7 +100,7 @@ local function setTimeout(fun,ms,tag,ctx)
 end
 
 local function socketServer(args)
-  local port,pat,conMsg,handler,i = args.port,args.pat,args.connectMsg,args.cmdHandler
+  local port,pat,conMsg,handler,i = args.port,args.pat,args.connectMsg,args.cmdHandler,nil
   local server,msg = EM.socket.bind("*", port)
   assert(server,(msg or "").." ,port "..port)
   i, msg = server:getsockname()

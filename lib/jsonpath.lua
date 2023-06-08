@@ -356,7 +356,7 @@ gExpr['json']=function(tkns,st,ops,t,pt)
 end
 
 function pExpr(inp,stop)
-  local st,ops,t,pt=stack(),stack(),{value='<START>'}
+  local st,ops,t,pt=stack(),stack(),{value='<START>'},nil
   while true do
     t,pt = inp.peek(),t
     if t.type=='EOF' or stop and stop[t.value] then break end

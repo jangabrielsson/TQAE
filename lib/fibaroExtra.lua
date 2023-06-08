@@ -468,14 +468,14 @@ _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'}
       end
 
       local function fit_into_range(val, min, max)
-        local range,count = max - min
+        local range,count = max - min,nil
         if val < min then count = floor((min - val) / range) + 1; return val + count * range
         elseif val >= max then count = floor((val - max) / range) + 1; return val - count * range
         else return val end
       end
 
       -- Convert the longitude to hour value and calculate an approximate time
-      local n,lng_hour,t =  day_of_year(date), longitude / 15
+      local n,lng_hour,t =  day_of_year(date), longitude / 15,nil
       if rising then t = n + ((6 - lng_hour) / 24) -- Rising time is desired
       else t = n + ((18 - lng_hour) / 24) end -- Setting time is desired
       local M = (0.9856 * t) - 3.289 -- Calculate the Sun^s mean anomaly
@@ -616,7 +616,7 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
 
     -- Alternative, several timers share a cron loop instance.
     do
-      local jobs,timer = {} -- {fun = {test=.., args={...}}}
+      local jobs,timer = {},nil -- {fun = {test=.., args={...}}}
 
       local function cronLoop()
         if timer==nil or timer.expired then
@@ -647,7 +647,7 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
     end
 
     function fibaro.cron2(str,fun,...) 
-      local test,args,timer = dateTest(str),{...}
+      local test,args,timer = dateTest(str),{...},nil
       local nxt = (os.time() // 60 + 1)*60
       local function loop()
         local stat,res
@@ -2023,7 +2023,7 @@ _MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', depends
         if not args.silent then fibaro.warning(__TAG,"Child devices "..args.uid.." already exists") end
         return uidMap[args.uid],false
       end
-      local props,created,dev,res={},false
+      local props,created,dev,res={},false,nil,nil
       args.className = args.className or getClassName(self.__init) 
       if devices == nil then
         devices = api.get("/devices?parentId="..plugin.mainDeviceId) or {}
@@ -2442,7 +2442,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
         delay = copy(delay)
         delay = delay[1] and delay or {delay}
         assert(isEvent(delay[1]),"4th argument not an event for trueFor(...)")
-        local state,ref = false
+        local state,ref = false,nil
         local function ac()
           if debugFlags.trueFor then fibaro.debug(nil,"trueFor: action()") end
           if action() then
