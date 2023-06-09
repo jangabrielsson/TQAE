@@ -3,20 +3,21 @@ So the previous example controls a light with a set of sensors. Example in a roo
 Assume that we want to generalise this to handle all sensor and lights in a house. We then need to set up a table which sensor controls which lights. What we do here is that we setup what sensor control what room, and then a table with rooms and their lights.
 --]]
 
-local rooms = {  -- Lights in rooms and delays
-   kitchen =    {devices = { 77, 99, 11}, delay=50*60}},
-   bedroom =    {devices = { 76, 54},     delay=40*60}},
-   hall =       {devices = { 87, 32},     delay =10*60}},
+local rooms = { -- Lights in rooms and delays
+   kitchen = {devices = { 77, 99, 11}, delay=50*60},
+   bedroom = {devices = { 76, 54},     delay=40*60},
+   hall =    {devices = { 87, 32},     delay =10*60},
 }
 
-local sensors = {  -- Which room a sensor controls
-    101 = 'kitchen',
-    108 = 'kitchen',
-    113 = 'bedroom',
-    111 = 'bedroom',
-    199 = 'hall',
-    155 = 'hall',
-    144 = 'hall',
+local sensors = {  -- Sensors and what room they control
+    -- Which room a sensor controls
+    [101] = 'kitchen',
+    [108] = 'kitchen',
+    [113] = 'bedroom',
+    [111] = 'bedroom',
+    [199] = 'hall',
+    [155] = 'hall',
+    [144] = 'hall',
 }
 
 function EVENT.breached(event)

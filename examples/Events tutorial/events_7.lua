@@ -34,7 +34,7 @@ end
 function handleEvent(event)
    local es =  events[event.type]
    for _,e in pairs(es) do
-     for k,v in pairs(e.event) do if event[k]~=v then break end -- find matching event
+     for k,v in pairs(e.event) do if event[k]~=v then break end end -- find matching event
      e.handler(event)
      return
    end
