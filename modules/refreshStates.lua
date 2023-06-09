@@ -29,7 +29,7 @@ local function createRefreshStateQueue(size)
   local self = {}
 
   local function mkQueue(size)
-    local queue,dump,pop = {}
+    local queue,dump,pop = {},nil,nil
     local tail,head = 301,301
     local function getSize() return size end
     local function empty() return tail==head end
@@ -155,7 +155,7 @@ local function pollEvents(interval)
   function cb()
     EM.systemTimer(poll,INTERVAL,"RefreshState")
   end
-  poll(cb)
+  poll()
 end
 
 local function interceptHTTP(matches,args) -- Intercept http calls to refreshStates to get events from our queue
