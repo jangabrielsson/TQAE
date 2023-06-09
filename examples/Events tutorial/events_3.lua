@@ -49,7 +49,7 @@ post({type='stopList'}) -- Stop playing song
 There is another neat advantage with the event model. Each step we take in our application logic is a posted event -> handled event. And each posted event is calling the event handler with a setTimeout call. Every time we do a setTImeout we give the opportunity to other code in our QA to run.
 For the QA to receive button and slider clicks from the UI there need to be time for them to execute. If you run a busy loop
 --]]
-while true
+while true do
    fibaro.sleep(1000)
 end
 --[[
