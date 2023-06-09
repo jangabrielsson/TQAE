@@ -247,7 +247,7 @@ function fibaro.isPartitionBreached(id)
 end
 
 function fibaro.getPartitionArmState(id)
-  __assert_type(value, "number")
+  __assert_type(id, "number")
   local p = api.get("/alarms/v1/partitions/"..id)
   if not p then error("Bad partitions id: "..tostring(id)) end
   return p.armed and "armed" or "disarmed"
