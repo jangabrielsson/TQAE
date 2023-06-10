@@ -14,5 +14,6 @@
         "utils", "hc3_emulator", "urlencode", "sceneId", "table", "string", "_MODULES",
         "__fibaro_add_debug_message", "__fibaro_get_partition","__fibaroSleep","__fibaroUseAsyncHandler",
         "__fibaro_get_global_variable","__fibaro_get_devices","__fibaro_get_room"
-    ]
+    ],
+    "workspace.checkThirdParty": false
 }

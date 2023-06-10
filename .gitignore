@@ -3,6 +3,7 @@ myQAs/
 dev/
 backup/
 temp/
+projs/
 TQAEconfigs.lua
 ~$*.doc*
 .DS_Store
