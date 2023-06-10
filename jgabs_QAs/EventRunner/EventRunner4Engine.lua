@@ -433,7 +433,7 @@ function Module.utilities.init(QA)
           for j=1,#list[i] do -- cols
             local ll = list[i][j][r] or ""
             l[#l+1]=ll..(" "):rep(cols[j]-ll:len())
-            sp=" |"
+            --sp=" |"
           end
           pr:add("| "..table.concat(l," | ").." |")
         end
@@ -469,7 +469,7 @@ function Module.utilities.init(QA)
     pr:printf("#Rules error    :%s",fibaro.EM.stats.error or 0)
     collectgarbage("collect")
     local cm = collectgarbage("count")
-    memoryInfo = memoryinfo or {cm,cm,cm,cm,cm,cm,cm,cm}
+    memoryInfo = memoryInfo or {cm,cm,cm,cm,cm,cm,cm,cm}
     local m = memoryInfo
     table.insert(memoryInfo,1,collectgarbage("count"))
     table.remove(memoryInfo,9)
@@ -478,7 +478,7 @@ function Module.utilities.init(QA)
     print(Util.htmlTable({pr:tostring("\n")},{table="bgcolor='"..QA.color.info.."' width='100%'"}))
   end
 
-  local hourTasks,nextHour,hourRef={}
+  local hourTasks,nextHour,hourRef={},nil,nil
   local function hourLoop()
     for f,_ in pairs(hourTasks) do pcall(f) end
     nextHour = nextHour+3600
@@ -640,15 +640,15 @@ function Module.extras.init(self)
 
   local equations = {}
   function equations.linear(t, b, c, d) return c * t / d + b; end
-  function equations.inQuad(t, b, c, d) t = t / d; return c * math.pow(t, 2) + b; end
-  function equations.inOutQuad(t, b, c, d) t = t / d * 2; return t < 1 and c / 2 * math.pow(t, 2) + b or -c / 2 * ((t - 1) * (t - 3) - 1) + b end
+  function equations.inQuad(t, b, c, d) t = t / d; return c * (t ^ 2) + b; end
+  function equations.inOutQuad(t, b, c, d) t = t / d * 2; return t < 1 and c / 2 * (t ^ 2) + b or -c / 2 * ((t - 1) * (t - 3) - 1) + b end
   function equations.outInExpo(t, b, c, d) return t < d / 2 and equations.outExpo(t * 2, b, c / 2, d) or equations.inExpo((t * 2) - d, b + c / 2, c / 2, d) end
-  function equations.inExpo(t, b, c, d) return t == 0 and b or c * math.pow(2, 10 * (t / d - 1)) + b - c * 0.001 end
-  function equations.outExpo(t, b, c, d) return t == d and  b + c or c * 1.001 * (-math.pow(2, -10 * t / d) + 1) + b end
+  function equations.inExpo(t, b, c, d) return t == 0 and b or c * (2 ^ (10 * (t / d - 1))) + b - c * 0.001 end
+  function equations.outExpo(t, b, c, d) return t == d and  b + c or c * 1.001 * ((2 ^ (-10 * t / d)) + 1) + b end
   function equations.inOutExpo(t, b, c, d)
     if t == 0 then return b elseif t == d then return b + c end
     t = t / d * 2
-    if t < 1 then return c / 2 * math.pow(2, 10 * (t - 1)) + b - c * 0.0005 else t = t - 1; return c / 2 * 1.0005 * (-math.pow(2, -10 * t) + 2) + b end
+    if t < 1 then return c / 2 * (2 ^ (10 * (t - 1))) + b - c * 0.0005 else t = t - 1; return c / 2 * 1.0005 * ((2 ^ (-10 * t)) + 2) + b end
   end
 
   function Util.dimLight(id,sec,dir,step,curve,start,stop)
@@ -740,7 +740,7 @@ function Module.eventScript.init()
       return res
     end
 
-    local pExpr,gExpr,gStatement={}
+    local pExpr,gExpr,gStatement={},nil,nil
     pExpr['lpar']=function(inp,st,ops,_,pt)
       if pt.value:match("^[%]%)%da-zA-Z]") then 
         while not ops.isEmpty() and opers[ops.peek().value][1] >= 12.9 do apply(ops.pop(),st) end
@@ -782,7 +782,7 @@ function Module.eventScript.init()
     end
 
     function gExpr(inp,stop)
-      local st,ops,t,pt=mkStack(),mkStack(),{value='<START>'}
+      local st,ops,t,pt=mkStack(),mkStack(),{value='<START>'},nil
       while true do
         t,pt = inp.peek(),t
         if t.type=='eof' or stop and stop[t.value] then break end
@@ -1057,13 +1057,13 @@ function Module.eventScript.init()
     end
     comp['%and'] = function(e,ops) 
       compT(e[2],ops)
-      local o1,z = {mkOp('%ifnskip'),0,0}
+      local o1,z = {mkOp('%ifnskip'),0,0},nil
       ops[#ops+1] = o1 -- true skip
       z = #ops; ops[#ops+1]= POP; compT(e[3],ops); o1[3] = #ops-z+1
     end
     comp['%or'] = function(e,ops)  
       compT(e[2],ops)
-      local o1,z = {mkOp('%ifskip'),0,0}
+      local o1,z = {mkOp('%ifskip'),0,0},nil
       ops[#ops+1] = o1 -- true skip
       z = #ops; ops[#ops+1]= POP; compT(e[3],ops); o1[3] = #ops-z+1;
     end
@@ -1116,7 +1116,7 @@ function Module.eventScript.init()
     local oldFormat
     oldFormat,string.format = string.format,function(fmt,...)
       local r={}; for _,e in ipairs({...}) do r[#r+1]=type(e)=='table' and tostring(e) or e end
-      return oldFormat(fmt,unpack(r))
+      return oldFormat(fmt,table.unpack(r))
     end
 
     local function addRuleTimer(rule,ref) rule.timers[ref]=true end
@@ -1241,7 +1241,7 @@ function Module.eventScript.init()
     end
     instr['yield'] = function(s,n,_,_) local r = s.lift(n); s.push(nil); return 'suspended',r end
     instr['return'] = function(s,n,_,_) return 'dead',s.lift(n) end
-    instr['wait'] = function(s,_,e,_) local t,co,r=s.pop(),e.co; t=t < os.time() and t or t-os.time(); s.push(t);
+    instr['wait'] = function(s,_,e,_) local t,co,r=s.pop(),e.co,nil; t=t < os.time() and t or t-os.time(); s.push(t);
       r = setTimeout(function()
           clearRuleTimer(e.rule,r) 
           local stat,res = pcall(resume,co,e)
@@ -1910,7 +1910,7 @@ function Module.eventScript.init()
     end
 
     function self.compRule(e,env)
-      local head,body,_,res,events,src,triggers2,sdaily = e[2],e[3],e[4],{},{},env.src or "<no src>",{}
+      local head,body,_,res,events,src,triggers2,sdaily = e[2],e[3],e[4],{},{},env.src or "<no src>",{},nil
       local rRep,rDaily
       src=format(RULEFORMAT,rCounter+1,trimRule(src))
       remapEvents(head)  -- #event -> eventmatch
@@ -1998,7 +1998,7 @@ function Module.eventScript.init()
             end
           end
           local f = compileAction(expr,nil,log)
-          return f({log=log,rule={cache={}, timers={}}})
+          return f and f({log=log,rule={cache={}, timers={}}})
         end)
       if not status then 
         if not isError(res) then res={ERR=true,ctx=res.ctx,src=escript,err=res} end
@@ -2187,7 +2187,7 @@ function QuickApp:onInit()
   self.main = function(self)
     fibaro.utils.notify("info","Started "..os.date("%c"),true)
     self:tracef("Sunrise:%s,  Sunset:%s",(fibaro.get(1,"sunriseHour")),(fibaro.get(1,"sunsetHour")))
-    local uptime,silent = api.get("/settings/info").serverStatus or os.time()
+    local uptime,silent = api.get("/settings/info").serverStatus or os.time(),nil
     self:tracef("HC3 running since %s",os.date("%c",uptime))
     Util.printBanner("Setting up rules (main)")
     local startupTime = os.clock()
