@@ -1,0 +1,17 @@
+{
+    "$schema": "https://raw.githubusercontent.com/LuaLS/LLS-Addons/main/schemas/addon_config.schema.json",
+    "name": "FibaroHC2QA",
+    "words": [
+      "QuickApp.*"
+    ],
+    "settings": {
+      "Lua.runtime.version": "Lua 5.3",
+      "Lua.runtime.special": {
+        "include": "require",
+        "IncludeCS": "require"
+      },
+      "Lua.diagnostics.disable": [
+        "duplicate-set-field"
+      ]
+    }
+  }
