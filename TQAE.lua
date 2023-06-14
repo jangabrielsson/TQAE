@@ -93,21 +93,6 @@ local embedded = ... -- get parameters if emulator included from QA code...
 local version = "0.59"
 local EM = { cfg = embedded or {} }
 local cfg, pfvs = EM.cfg, nil
-local function DEF(x, y) if x == nil then return y else return x end end
-cfg.configFile    = DEF(cfg.configFile, "TQAEconfigs.lua")
-EM.readConfigFile = cfg.configFile
-do
-  EM.configFileValues = {}
-  local pf, _ = loadfile(cfg.configFile)
-  if pf then
-    local p = pf() or {};
-    assert(type(p) == 'table', "Bad format for configuration file")
-    EM.configFileValues = pf()             -- Get copy of config values for settings panel
-    pfvs = true
-    for k, v in pairs(cfg) do p[k] = v end -- Overwrite config values with values from file header
-    cfg, EM.cfg = p, p
-  end
-end
 
 local win = (os.getenv('WINDIR') or (os.getenv('OS') or ''):match('[Ww]indows')) and
     not (os.getenv('OSTYPE') or ''):match('cygwin')
@@ -118,15 +103,33 @@ local function addPath(p, front) package.path = front and (p .. ";" .. package.p
 addPath("." .. _ps .. "modules" .. _ps .. "?", true)
 addPath("." .. _ps .. "modules" .. _ps .. "/?.lua", true)
 local function mkPath(...) return table.concat({ ... }, cfg.pathSeparator) end
+
+local function DEF(x, y) if x == nil then return y else return x end end
+cfg.root         = DEF(cfg.root, "")
+cfg.modPath      = DEF(cfg.modpath, mkPath("modules", ""))     -- Path to modules
+cfg.modPath = cfg.root .. cfg.modPath
+cfg.configFile    = DEF(cfg.configFile, "TQAEconfigs.lua")
+EM.readConfigFile = cfg.configFile
+do
+  EM.configFileValues = {}
+  local pf, _ = loadfile(cfg.root..cfg.configFile)
+  if pf then
+    local p = pf() or {};
+    assert(type(p) == 'table', "Bad format for configuration file")
+    EM.configFileValues = pf()             -- Get copy of config values for settings panel
+    pfvs = true
+    for k, v in pairs(cfg) do p[k] = v end -- Overwrite config values with values from file header
+    cfg, EM.cfg = p, p
+  end
+end
+
 EM.mkPath = mkPath
 if package.cpath:match("[Zz]ero[bB]rane[sS]tudio") then
   cfg.editor = "ZB"
 else
   cfg.editor = "VSC"
 end
-
-cfg.root         = DEF(cfg.root, "")
-cfg.modPath      = DEF(cfg.modpath, mkPath("modules", ""))                                                           -- directory where TQAE modules are stored
+                                                      -- directory where TQAE modules are stored
 cfg.temp         = DEF(cfg.temp, os.getenv("TMPDIR") or os.getenv("TEMP") or os.getenv("TMP") or mkPath("temp", "")) -- temp directory
 cfg.defaultRoom  = DEF(cfg.defaultRoom, 219)
 EM.utilities     = dofile(cfg.modPath .. "utilities.lua")
@@ -713,7 +716,7 @@ function EM.startEmulator(cont)
 end
 
 if embedded then                -- Embedded call...
-  local file = debug.getinfo(2) -- Find out what file that called us
+  local file = cfg.source and cfg or debug.getinfo(2) -- Find out what file that called us
   if file and file.source then
     if not file.source:sub(1, 1) == '@' then error("Can't locate file:" .. file.source) end
     local fileName = file.source:sub(2)

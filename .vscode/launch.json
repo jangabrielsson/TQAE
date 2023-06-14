@@ -7,19 +7,13 @@
         
     
         {
-            "name": "Debug Lua Interpreter",
+            "name": "Debug Lua File",
             "type": "lua-local",
             "request": "launch",
             "program": {
                 "lua": "lua",
                 "file": "${file}"
             }
-        },
-        {
-            "name": "Debug Custom Lua Environment",
-            "type": "lua",
-            "request": "launch",
-            "program": "${workspaceFolder}/${file}"
         }
     ]
 }
