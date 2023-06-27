@@ -307,7 +307,7 @@ end
 
 function EM.create.customEvent(args)
   local v = { name=args.name, userDescription=args.userDescription or "" }
-  EM.rsrc.customEvents[v.id]=v
+  EM.rsrc.customEvents[v.name]=v
   return v
 end
 
