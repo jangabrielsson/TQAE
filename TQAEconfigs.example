@@ -1,3 +1,4 @@
+-- Save as TQAEconfigs.lua
 return {
  NOVERIFY=true, 
  configFile="TQAEconfigs.lua", 
