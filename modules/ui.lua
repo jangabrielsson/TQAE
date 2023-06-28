@@ -226,9 +226,9 @@ customUI['com.fibaro.colorController'] =
   {slider='__value', min=0, max=99, onChanged='setValue'},
   {
     {button='__sli', text="&#8679;",onReleased="startLevelIncrease"},
-    {button='__sld', text="&#8681;",onReleased="startLevelIncrease"},
-    {button='__sls', text="&Vert;",onReleased="stopLevelChange"},
-  }
+    {button='__sld', text="&#8681;",onReleased="startLevelDecrease"},
+    {button='__sls', text="&Vert;",onReleased="stopLevelChange"}
+  } 
 }
 
 local initElm = {

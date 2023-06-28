@@ -887,7 +887,8 @@ _MODULES.debug={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
         if ml and sl > ml then str=str:sub(1,ml).."..." end
       end
       if type(tag)=='number' then tag = nil end
-      api.post("/debugMessages",{message=str,messageType=typ or "debug",tag=tag or __TAG})
+      __fibaro_add_debug_message(tag or __TAG, str, typ)
+      --api.post("/debugMessages",{message=str,messageType=typ or "debug",tag=tag or __TAG})
       if typ=='error' and debugFlags.eventError then
         fibaro.post({type='error',message=str,tag=tag})
       elseif typ=='warning' and debugFlags.eventWarning then
