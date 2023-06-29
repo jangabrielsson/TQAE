@@ -71,6 +71,17 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={},
     function table.delete(k,tab) local i = table.member(tab,k); if i then table.remove(tab,i) return i end end
     table.equal,table.copy = equal,copy
 
+    if hc3_emulator then fibaro._emulator= "TQAE" end
+    if fibaro._emulator == "fibemu" then
+      hc3_emulator = { EM = { EMURUNNING = "TQAE_running"}}
+      hc3_emulator.create = {} -- need to do this better
+      function hc3_emulator.create.globalVariables() end
+      function hc3_emulator.create.binarySwitch() end
+      function hc3_emulator.create.multilevelSwitch() end
+      hc3_emulator.IPaddress = fibaro._IPADDRESS
+      hc3_emulator.getmetatable = function(obj) return getmetatable(obj) end
+    end
+
     local old_tostring = tostring
     fibaro._orgToString = old_tostring
     if hc3_emulator then 
@@ -2009,7 +2020,9 @@ _MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', depends
               classNames[f]=n
             end
           end)
-        if classNames[f] then return classNames[f] end
+        if classNames[f] then 
+          return classNames[f] 
+        end
       end
     end
 
