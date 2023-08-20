@@ -135,7 +135,7 @@ local function loadSource(code,fileName) -- Load code and resolve info and --FIL
       images[#images+1]=imageInclude(readFile(file,EM.cfg.noFileError),file,name)
       return ""
     end)
-  if #images > 0 then
+  if #images > 1 then
     files[#files+1] = {name="IMAGES64B",type='lua',isOpen=false,content=table.concat(images,"\n"),isMain=false,fname="IMAGES64B"}
   end
 

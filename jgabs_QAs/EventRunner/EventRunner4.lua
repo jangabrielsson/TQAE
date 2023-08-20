@@ -16,7 +16,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u3={button='debugPost', text='Post:ON', onReleased='FEventRunner4'}
 --%%u4={button='debugRule', text='Rules:ON', onReleased='FEventRunner4'}
 --%%u5={button='Test', text='Test', onReleased='FEventRunner4'}
---%%proxy=true
+--%% proxy=true
 
 --%%fileoffset="dev/"
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
