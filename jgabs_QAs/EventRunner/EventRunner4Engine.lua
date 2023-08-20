@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.994,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.995,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = _debugFlags or {}
@@ -1604,11 +1604,14 @@ function Module.eventScript.init()
     instr['ostime'] = function(s,_) s.push(os.time()) end
     instr['%daily'] = function(s,_,e,i) 
       local ev = e.event or {}
-      s.pop()
+      local t,m = s.pop(),midnight()
+      --print("T:",os.date("%X",e.time),"D:",os.date("%X",t+m),e.time,t+m)
       if ev.type=='global-variable' or ev.type=='quickvar' then
         Rule.recalcDailys(e.rule)
         s.push(false)
-      else s.push(true) end
+      else 
+        s.push(t+m == e.time) 
+      end
     end
     instr['%interv'] = function(s,_,_,_) local _ = s.pop(); s.push(true) end
     instr['fmt'] = function(s,n) s.push(string.format(table.unpack(s.lift(n)))) end
@@ -1662,7 +1665,9 @@ function Module.eventScript.init()
       if t1  > 24*60*60 then
         s.push(t1 <= time and t2 >= time)
       else
-        local now = time-midnight()
+        local midnight = midnight()
+        local now = time-midnight
+        --print(os.date("%H:%M:%S",t1+midnight),os.date("%H:%M:%S",time),os.date("%H:%M:%S",t2+midnight))
         if t1<=t2 then s.push(t1 <= now and now <= t2) else s.push(now >= t1 or now <= t2) end 
       end
     end

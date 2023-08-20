@@ -209,16 +209,18 @@ _MODULES.qa={ author = "jan@gabrielsson.com", version = '0.4', depends={'base','
     end
 
 -- Add interfaces to QA. Note, if interfaces are added the QA will restart
-    function QuickApp:addInterfaces(interfaces) 
-      assert(type(interfaces) == "table")
-      local d,map,i2 = __fibaro_get_device(self.id),{},{}
-      for _,i in ipairs(d.interfaces or {}) do map[i]=true end
-      for _,i in ipairs(interfaces) do i2[#i2+1]=i end
-      for j,i in ipairs(i2) do if map[i] then table.remove(interfaces,j) end end
-      if i2[1] then
-        api.post("/plugins/interfaces", {action = 'add', deviceId = self.id, interfaces = interfaces})
-      end
-    end
+function QuickApp:addInterfaces(interfaces)
+  assert(type(interfaces) == "table")
+  local d, map, i2, res = __fibaro_get_device(self.id), {}, {}, {}
+  for _, i in ipairs(d.interfaces or {}) do map[i] = true end
+  for _, i in ipairs(interfaces) do i2[i] = true end
+  for j, _ in pairs(i2) do if map[j] then i2[j]=nil end end
+  for j,_ in pairs(i2) do res[#res+1]=j end
+  --print("EX:",json.encode(i2))
+  if res[1] then
+    api.post("/plugins/interfaces", { action = 'add', deviceId = self.id, interfaces = res })
+  end
+end
 
     local _updateProperty = QuickApp.updateProperty
     function QuickApp:updateProperty(prop,value)

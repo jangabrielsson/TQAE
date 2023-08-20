@@ -1,7 +1,7 @@
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={}, 
   init = function()
-    fibaro.FIBARO_EXTRA = "v0.960"
+    fibaro.FIBARO_EXTRA = "v0.961"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -51,9 +51,20 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={},
     function table.delete(k,tab) local i = table.member(tab,k); if i then table.remove(tab,i) return i end end
     table.equal,table.copy = equal,copy
 
+    if hc3_emulator then fibaro._emulator= "TQAE" end
+    if fibaro._emulator == "fibemu" then
+      hc3_emulator = { EM = { EMURUNNING = "TQAE_running"}}
+      hc3_emulator.create = {} -- need to do this better
+      function hc3_emulator.create.globalVariables() end
+      function hc3_emulator.create.binarySwitch() end
+      function hc3_emulator.create.multilevelSwitch() end
+      hc3_emulator.IPaddress = fibaro._IPADDRESS
+      hc3_emulator.getmetatable = function(obj) return getmetatable(obj) end
+    end
+
     local old_tostring = tostring
     fibaro._orgToString = old_tostring
-    if hc3_emulator then
+    if hc3_emulator then 
       function tostring(obj)
         if type(obj)=='table' and not hc3_emulator.getmetatable(obj) then
           if obj.__tostring then return obj.__tostring(obj) 
@@ -71,14 +82,14 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={},
       end
     end
 
-    local _init,_onInit = QuickApp.__init
+    local _init,_onInit = QuickApp.__init,nil
 
     local function initQA(selfv)
       local dev = __fibaro_get_device(selfv.id)
       if not dev.enabled then
         if fibaro.__disabled then pcall(fibaro.__disabled,selfv) end
         selfv:debug("QA ",selfv.name," disabled")
-        return 
+        return
       end
       for m,_ in pairs(_MODULES or {}) do fibaro.loadModule(m) end
       selfv.config = {}

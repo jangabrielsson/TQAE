@@ -185,7 +185,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
     math.randomseed(os.time())
     local urlTail = "&lang=en&rand="..math.random(2000,4000).."&logs=false"
     function pollRefresh()
-      local _,_ = http:request("http://127.0.0.1:11111/api/refreshStates?last=" .. lastRefresh..urlTail,{
+      local a,b = http:request("http://127.0.0.1:11111/api/refreshStates?last=" .. lastRefresh..urlTail,{
           success=function(res)
             local states = res.status == 200 and json.decode(res.data)
             if states then
@@ -241,7 +241,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
     function fibaro._postSourceTrigger(trigger) post(trigger) end
 
     function fibaro._postRefreshState(event)
-      if debugFlags._allRefreshStates then fibaro.debug(__TAG,format("##1RefreshState:%s",event)) end
+      if debugFlags._allRefreshStates then fibaro.debug(__TAG,format("##1RefreshState:%s",json.encodeFast(event))) end
       if #refreshCallbacks>0 and not DISABLEDREFRESH[event.type] then
         for i=1,#refreshCallbacks do
           setTimeout(function() refreshCallbacks[i](event) end,0)
@@ -266,7 +266,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
     function fibaro.postCentralSceneEvent(keyId,keyAttribute)
       local data = {
         type =  "centralSceneEvent",
-        source = quickApp.mainDeviceId,
+        source = plugin.mainDeviceId,
         data = { keyAttribute = keyAttribute, keyId = keyId }
       }
       return api.post("/plugins/publishEvent", data)

@@ -86,7 +86,7 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
 
     -- Alternative, several timers share a cron loop instance.
     do
-      local jobs,timer = {} -- {fun = {test=.., args={...}}}
+      local jobs,timer = {},nil -- {fun = {test=.., args={...}}}
 
       local function cronLoop()
         if timer==nil or timer.expired then
@@ -117,7 +117,7 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
     end
 
     function fibaro.cron2(str,fun,...) 
-      local test,args,timer = dateTest(str),{...}
+      local test,args,timer = dateTest(str),{...},nil
       local nxt = (os.time() // 60 + 1)*60
       local function loop()
         local stat,res

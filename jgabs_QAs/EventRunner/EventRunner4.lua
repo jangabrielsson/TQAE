@@ -18,6 +18,7 @@ _=loadfile and loadfile("TQAE.lua"){
 --%%u5={button='Test', text='Test', onReleased='FEventRunner4'}
 --%%proxy=true
 
+--%%fileoffset="dev/"
 --FILE:lib/fibaroExtra.lua,fibaroExtra;
 --FILE:jgabs_QAs/EventRunner/EventRunner4Engine.lua,EventRunner;
 --FILE:jgabs_QAs/EventRunner/EventRunnerDoc.lua,Doc;
@@ -74,8 +75,12 @@ function QuickApp:main()    -- EventScript version
 
   Util.defvars(HT)
   Util.reverseMapDef(HT)
-  
-    rule("@20:18:00+rnd(-00:00:10,00:00:20) => log('Hupp')")
+    --rule("#f4_office_remote{value='Pressed2'} =>  HT['办公室']['筒灯']:toggle")
+    ---rule("@@00:00:05 => log('Hupp')")
+    
+    NOW = os.time() - fibaro.midnight() + 2
+    rule("@NOW+3 & 11:00..21:01 => log('Upp')")
+      
 --  rule("#profile{property='activeProfile', value=AwayProfile} => enable('Away',true)") 
 --  rule("#profile{property='activeProfile', value=HomeProfile} => enable('Home',true); r2.start()") 
 --  rule("post(#profile{property='activeProfile', value=HomeProfile})") 

@@ -21,7 +21,7 @@ fibaro,QuickApp = fibaro or {},QuickApp or {}
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={}, 
   init = function()
-    fibaro.FIBARO_EXTRA = "v0.960"
+    fibaro.FIBARO_EXTRA = "v0.961"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -1438,7 +1438,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
     math.randomseed(os.time())
     local urlTail = "&lang=en&rand="..math.random(2000,4000).."&logs=false"
     function pollRefresh()
-      local _,_ = http:request("http://127.0.0.1:11111/api/refreshStates?last=" .. lastRefresh..urlTail,{
+      local a,b = http:request("http://127.0.0.1:11111/api/refreshStates?last=" .. lastRefresh..urlTail,{
           success=function(res)
             local states = res.status == 200 and json.decode(res.data)
             if states then
@@ -1494,7 +1494,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
     function fibaro._postSourceTrigger(trigger) post(trigger) end
 
     function fibaro._postRefreshState(event)
-      if debugFlags._allRefreshStates then fibaro.debug(__TAG,format("##1RefreshState:%s",event)) end
+      if debugFlags._allRefreshStates then fibaro.debug(__TAG,format("##1RefreshState:%s",json.encodeFast(event))) end
       if #refreshCallbacks>0 and not DISABLEDREFRESH[event.type] then
         for i=1,#refreshCallbacks do
           setTimeout(function() refreshCallbacks[i](event) end,0)
@@ -1519,7 +1519,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
     function fibaro.postCentralSceneEvent(keyId,keyAttribute)
       local data = {
         type =  "centralSceneEvent",
-        source = quickApp.mainDeviceId,
+        source = plugin.mainDeviceId,
         data = { keyAttribute = keyAttribute, keyId = keyId }
       }
       return api.post("/plugins/publishEvent", data)
@@ -1788,16 +1788,18 @@ _MODULES.qa={ author = "jan@gabrielsson.com", version = '0.4', depends={'base','
     end
 
 -- Add interfaces to QA. Note, if interfaces are added the QA will restart
-    function QuickApp:addInterfaces(interfaces) 
-      assert(type(interfaces) == "table")
-      local d,map,i2 = __fibaro_get_device(self.id),{},{}
-      for _,i in ipairs(d.interfaces or {}) do map[i]=true end
-      for _,i in ipairs(interfaces) do i2[#i2+1]=i end
-      for j,i in ipairs(i2) do if map[i] then table.remove(interfaces,j) end end
-      if i2[1] then
-        api.post("/plugins/interfaces", {action = 'add', deviceId = self.id, interfaces = interfaces})
-      end
-    end
+function QuickApp:addInterfaces(interfaces)
+  assert(type(interfaces) == "table")
+  local d, map, i2, res = __fibaro_get_device(self.id), {}, {}, {}
+  for _, i in ipairs(d.interfaces or {}) do map[i] = true end
+  for _, i in ipairs(interfaces) do i2[i] = true end
+  for j, _ in pairs(i2) do if map[j] then i2[j]=nil end end
+  for j,_ in pairs(i2) do res[#res+1]=j end
+  --print("EX:",json.encode(i2))
+  if res[1] then
+    api.post("/plugins/interfaces", { action = 'add', deviceId = self.id, interfaces = res })
+  end
+end
 
     local _updateProperty = QuickApp.updateProperty
     function QuickApp:updateProperty(prop,value)
@@ -2188,9 +2190,9 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
       if t < 0 then return elseif t < now then t = t+now end
       if debugFlags.post and (type(ev)=='function' or not ev._sh) then fibaro.trace(__TAG,format("Posting %s at %s%s",tostring(ev),os.date("%c",t),type(log)=='string' and ("("..log..")") or "")) end
       if type(ev) == 'function' then
-        return setTimeout(function() ev(ev) end,1000*(t-now),log)
+        return setTimeout(function() ev(ev,t) end,1000*(t-now),log)
       elseif isEvent(ev) then
-        return setTimeout(function() handleEvent(ev) end,1000*(t-now),log)
+        return setTimeout(function() handleEvent(ev,t) end,1000*(t-now),log)
       else
         error("post(...) not event or function;",tostring(ev))
       end
@@ -2373,7 +2375,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
       return format("%s => %s",tostring(e.event),tostring(e.rule))
     end
 
-    function handleEvent(ev)
+    function handleEvent(ev,firingTime)
       local hasKeys = fromHash[ev.type] and fromHash[ev.type](ev) or {ev.type}
       for _,hashKey in ipairs(hasKeys) do
         for _,rules in ipairs(handlers[hashKey] or {}) do -- Check all rules of 'type'
@@ -2390,7 +2392,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
               local rule=rules[j]
               if not rule._disabled then 
                 em.stats.matched=em.stats.matched+1
-                if invokeHandler({event = ev, p=m, rule=rule, __tostring=ruleHandler2string}) == em.BREAK then return end
+                if invokeHandler({event = ev, time = firingTime, p=m, rule=rule, __tostring=ruleHandler2string}) == em.BREAK then return end
               end
             end
           end

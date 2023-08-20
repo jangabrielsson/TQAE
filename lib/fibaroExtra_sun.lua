@@ -20,14 +20,14 @@ _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'}
       end
 
       local function fit_into_range(val, min, max)
-        local range,count = max - min
+        local range,count = max - min,nil
         if val < min then count = floor((min - val) / range) + 1; return val + count * range
         elseif val >= max then count = floor((val - max) / range) + 1; return val - count * range
         else return val end
       end
 
       -- Convert the longitude to hour value and calculate an approximate time
-      local n,lng_hour,t =  day_of_year(date), longitude / 15
+      local n,lng_hour,t =  day_of_year(date), longitude / 15,nil
       if rising then t = n + ((6 - lng_hour) / 24) -- Rising time is desired
       else t = n + ((18 - lng_hour) / 24) end -- Setting time is desired
       local M = (0.9856 * t) - 3.289 -- Calculate the Sun^s mean anomaly

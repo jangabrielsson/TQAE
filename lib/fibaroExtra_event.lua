@@ -38,9 +38,9 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
       if t < 0 then return elseif t < now then t = t+now end
       if debugFlags.post and (type(ev)=='function' or not ev._sh) then fibaro.trace(__TAG,format("Posting %s at %s%s",tostring(ev),os.date("%c",t),type(log)=='string' and ("("..log..")") or "")) end
       if type(ev) == 'function' then
-        return setTimeout(function() ev(ev) end,1000*(t-now),log)
+        return setTimeout(function() ev(ev,t) end,1000*(t-now),log)
       elseif isEvent(ev) then
-        return setTimeout(function() handleEvent(ev) end,1000*(t-now),log)
+        return setTimeout(function() handleEvent(ev,t) end,1000*(t-now),log)
       else
         error("post(...) not event or function;",tostring(ev))
       end
@@ -223,7 +223,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
       return format("%s => %s",tostring(e.event),tostring(e.rule))
     end
 
-    function handleEvent(ev)
+    function handleEvent(ev,firingTime)
       local hasKeys = fromHash[ev.type] and fromHash[ev.type](ev) or {ev.type}
       for _,hashKey in ipairs(hasKeys) do
         for _,rules in ipairs(handlers[hashKey] or {}) do -- Check all rules of 'type'
@@ -240,7 +240,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
               local rule=rules[j]
               if not rule._disabled then 
                 em.stats.matched=em.stats.matched+1
-                if invokeHandler({event = ev, p=m, rule=rule, __tostring=ruleHandler2string}) == em.BREAK then return end
+                if invokeHandler({event = ev, time = firingTime, p=m, rule=rule, __tostring=ruleHandler2string}) == em.BREAK then return end
               end
             end
           end
@@ -306,7 +306,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
         delay = copy(delay)
         delay = delay[1] and delay or {delay}
         assert(isEvent(delay[1]),"4th argument not an event for trueFor(...)")
-        local state,ref = false
+        local state,ref = false,nil
         local function ac()
           if debugFlags.trueFor then fibaro.debug(nil,"trueFor: action()") end
           if action() then

@@ -42,7 +42,9 @@ _MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', depends
               classNames[f]=n
             end
           end)
-        if classNames[f] then return classNames[f] end
+        if classNames[f] then 
+          return classNames[f] 
+        end
       end
     end
 
@@ -57,7 +59,7 @@ _MODULES.quickerChild={ author = "jan@gabrielsson.com", version = '0.4', depends
         if not args.silent then fibaro.warning(__TAG,"Child devices "..args.uid.." already exists") end
         return uidMap[args.uid],false
       end
-      local props,created,dev,res={},false
+      local props,created,dev,res={},false,nil,nil
       args.className = args.className or getClassName(self.__init) 
       if devices == nil then
         devices = api.get("/devices?parentId="..plugin.mainDeviceId) or {}

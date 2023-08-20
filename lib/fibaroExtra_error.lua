@@ -10,7 +10,7 @@ _MODULES.error={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
       setTimeout,oldSetTimout=function(f,...)
         local t
         local function nf(...)
-          if t._prehook then t._prehook() end
+          if type(t)=='table' and t._prehook then t._prehook() end
           return f(...) 
           --if t._posthook then t._posthook() end
         end
