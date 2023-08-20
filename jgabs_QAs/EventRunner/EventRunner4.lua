@@ -79,7 +79,7 @@ function QuickApp:main()    -- EventScript version
     ---rule("@@00:00:05 => log('Hupp')")
     
     NOW = os.time() - fibaro.midnight() + 2
-    rule("@NOW+3 & 11:00..21:01 => log('Upp')")
+    rule("@{NOW+3,13:00} & 11:00..21:01 => log('Upp')")
       
 --  rule("#profile{property='activeProfile', value=AwayProfile} => enable('Away',true)") 
 --  rule("#profile{property='activeProfile', value=HomeProfile} => enable('Home',true); r2.start()") 

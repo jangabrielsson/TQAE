@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.996,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.997,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = _debugFlags or {}
@@ -1610,7 +1610,12 @@ function Module.eventScript.init()
         Rule.recalcDailys(e.rule)
         s.push(false)
       else 
-        s.push(t+m == e.time) 
+        if type(t)=='table' then
+          for _,t0 in ipairs(t) do if t0+m == e.time then s.push(true) return end end
+          s.push(false) 
+        else
+          s.push(t+m == e.time) 
+        end
       end
     end
     instr['%interv'] = function(s,_,_,_) local _ = s.pop(); s.push(true) end
