@@ -497,7 +497,7 @@ end
 -- Check arguments and print a QA error message
 local function check(name, stat, err)
   if type(err) == 'table' then return end
-  if not stat then
+  if stat==nil then
     err = err:gsub('(%[string ")(.-)("%])', function(_, s, _) return s end)
     FB.__fibaro_add_debug_message(name, err, "ERROR")
   end

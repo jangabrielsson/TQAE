@@ -4,7 +4,7 @@
 --luacheck: ignore 212/self
 --luacheck: ignore 432/self
 
-QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.997,"N/A"
+QuickApp.E_SERIAL,QuickApp.E_VERSION,QuickApp.E_FIX = "UPD896661234567892",0.998,"N/A"
 
 --local _debugFlags = { triggers = true, post=true, rule=true, fcall=true  }
 _debugFlags = _debugFlags or {}
@@ -1382,7 +1382,10 @@ function Module.eventScript.init()
       local get = _getFun
       local function on(id,prop) return BN(fibaro.get(id,prop)) > 0 end
       local function off(id,prop) return BN(fibaro.get(id,prop)) == 0 end
-      local function last(id,prop) local _,t=fibaro.get(id,prop); return t and os.time()-t or 0 end
+      local function last(id,prop) local _,t=fibaro.get(id,prop); 
+        local r = t and os.time()-t or 0; 
+        return r 
+      end
       local function cce(id,_,e) 
         e=e.event; return e.type=='device' and e.property=='centralSceneEvent'and e.id==id and e.value or {} 
       end
@@ -1611,10 +1614,10 @@ function Module.eventScript.init()
         s.push(false)
       else 
         if type(t)=='table' then
-          for _,t0 in ipairs(t) do if t0+m == e.time then s.push(true) return end end
+          for _,t0 in ipairs(t) do if (t0+m == e.time) or ev.catch then s.push(true) return end end
           s.push(false) 
         else
-          s.push(t+m == e.time) 
+          s.push(t+m == e.time or ev.catch) 
         end
       end
     end
@@ -1690,6 +1693,7 @@ function Module.eventScript.init()
     end
     instr['trueFor'] = function(s,_,e,i)
       local val,time = s.pop(),s.pop()
+      local id = e.rule.index
       e.rule._event = e.event
       local flags = i[5] or {}; i[5]=flags
 
@@ -1709,16 +1713,16 @@ function Module.eventScript.init()
         flags.timer = setTimeout(function() 
             --  Event._callTimerFun(function()
             flags.expired,flags.timer=true,nil; 
-            quickApp:post({type='trueFor',stop=true,expired=true,rule=e.rule,_sh=true})
+            quickApp:post({type='trueFor',id=id,stop=true,expired=true,status='action',time=time,rule=e.rule,_sh=true})
             e.rule.start(e.rule._event) 
             --      end)
           end,1000*time);
-        quickApp:post({type='trueFor',start=true,rule=e.rule,_sh=true})
+        quickApp:post({type='trueFor',id=id,start=true,status='started',time=time,rule=e.rule,_sh=true})
         s.push(false); return
       else
         if flags.timer then 
           flags.timer=clearTimeout(flags.timer)
-          quickApp:post({type='trueFor',stop=true,rule=e.rule,_sh=true})
+          quickApp:post({type='trueFor',id=id,stop=true,status='cancelled',time=time,rule=e.rule,_sh=true})
         end
         s.push(false)
       end
@@ -2069,7 +2073,11 @@ function Module.eventScript.init()
         end
       end
       if not tf then quickApp:errorf("No time in @<expr> for %s",r.src) end
-      if catch and catchup2 and catchup1 then quickApp:tracef("Catching up:%s",r.src); quickApp:post(dailys.event) end
+      if catch and catchup2 and catchup1 then 
+        local ce = table.copy(dailys.event)
+        ce.catch = true
+        quickApp:tracef("Catching up:%s",r.src); quickApp:post(ce) 
+      end
       return r
     end
 

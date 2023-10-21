@@ -64,12 +64,12 @@ return {
         interfaces= {"quickApp"},
         quickAppVariables = {},
       },
-      { version = 0.997,
+      { version = 0.998,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.997"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/ER4_0.998"
         },
         mainfile = "$base1/jgabs_QAs/EventRunner/EventRunner4.lua",
-        descr = "@daily true test",
+        descr = "fixed catchup fot @daily",
         files = "generate",
         keep= { "main" },
         viewLayout = "generate",

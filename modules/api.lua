@@ -230,7 +230,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
   ["GET/devices/#id/properties/#name"] = function(_,path,_,_,id,prop) 
     local d = Devices[id] and Devices[id].dev or EM.rsrc.devices[id] 
     if d then 
-      if d.properties[prop]~=nil then return { value = d.properties[prop], modified=0},200 
+      if d.properties[prop]~=nil then return { value = d.properties[prop], modified=d.modified},200 
       else return nil,404 end
     elseif not cfg.offline then return HC3Request("GET",path) end
   end,
@@ -314,6 +314,7 @@ local API_CALLS = { -- Intercept some api calls to the api to include emulated Q
     if D then
       local oldVal = D.dev.properties[data.propertyName]
       D.dev.properties[data.propertyName]=data.value 
+      D.dev.modified = os.time()
       EM.addRefreshEvent({
           type='DevicePropertyUpdatedEvent',
           created = EM.osTime(),
