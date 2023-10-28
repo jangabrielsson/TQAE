@@ -90,7 +90,7 @@ QuickApp options: (set with --%% directive in file)
 --]]
 
 local embedded = ... -- get parameters if emulator included from QA code...
-local version = "0.59"
+local version = "0.60"
 local EM = { cfg = embedded or {} }
 local cfg, pfvs = EM.cfg, nil
 
@@ -665,6 +665,8 @@ function runQA(id, cont) -- Creates an environment and load file modules and sta
     tonumber = tonumber,
     math = math,
     assert = assert,
+    getmetatable = getmetatable,
+    setmetatable = setmetatable,
   }
   if info.fullLUA then
     EM._createQA = createQA
