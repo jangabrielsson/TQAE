@@ -77,6 +77,17 @@ local function keyCompare(a,b)
   return av < bv
 end
 
+local otherDirectories = { "../EventRunner5/Update.json" }
+local function addOtherDirectories(out)
+  for _,d in ipairs(otherDirectories) do
+    local f = io.open(d)
+    local conf = f:read("*a")
+    conf = json.decode(conf)
+    local key, data = next(conf)
+    out[key]=data
+  end
+end
+
 function QuickApp:onInit()
   self:debug(self.name, self.id)
   self._childsInited=true
@@ -88,6 +99,7 @@ function QuickApp:onInit()
 
   local out = {}
   for id,e in pairs(data) do out[id]=generateAppEntry(id,e) end
+  addOtherDirectories(out)
   print("\n"..EM.utilities.encodeFormated(out,keyCompare))
   
   file = io.open("jgabs_QAs/Updater/MANIFEST.json","w+")
