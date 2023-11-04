@@ -1,6 +1,7 @@
 _=loadfile and loadfile("TQAE.lua"){
   debug = { onAction=true, http=false, UIEevent=true },
   copas=true,
+  noproxy=true
 }
 
 --%%name="Generator"
