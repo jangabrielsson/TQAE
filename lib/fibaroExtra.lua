@@ -15,13 +15,14 @@ Email: jan@gabrielsson.com
 -- luacheck: globals ignore plugin api net netSync setTimeout clearTimeout setInterval clearInterval json
 -- luacheck: globals ignore __assert_type __fibaro_get_device __TAG __fibaro_get_device_property
 -- luacheck: globals ignore utils hc3_emulator urlencode sceneId table string _MODULES
+---@diagnostic disable: cast-local-type, undefined-field, need-check-nil
 fibaro,QuickApp = fibaro or {},QuickApp or {}
 
 -------------------- Base ----------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={}, 
   init = function()
-    fibaro.FIBARO_EXTRA = "v0.961"
+    fibaro.FIBARO_EXTRA = "v0.964"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -84,22 +85,12 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={},
 
     local old_tostring = tostring
     fibaro._orgToString = old_tostring
-    if hc3_emulator then 
-      function tostring(obj)
-        if type(obj)=='table' and not hc3_emulator.getmetatable(obj) then
-          if obj.__tostring then return obj.__tostring(obj) 
-          elseif debugFlags.json then return json.encodeFast and json.encodeFast(obj) or json.encode(obj)  end
-        end
-        return old_tostring(obj)
+    function tostring(obj)
+      if type(obj)=='table' and not getmetatable(obj) then
+        if obj.__tostring then return type(obj.__tostring)=='string' and obj.__tostring or obj.__tostring(obj) 
+        elseif debugFlags.json then return json.encodeFast and json.encodeFast(obj) or json.encode(obj)  end
       end
-    else
-      function tostring(obj)
-        if type(obj)=='table' then
-          if obj.__tostring then return obj.__tostring(obj) 
-          elseif debugFlags.json then return json.encodeFast and json.encodeFast(obj) or json.encode(obj)  end
-        end
-        return old_tostring(obj)
-      end
+      return old_tostring(obj)
     end
 
     local _init,_onInit = QuickApp.__init,nil
@@ -307,7 +298,7 @@ _MODULES.utilities={ author = "jan@gabrielsson.com", version = '0.4', depends={'
     end
 
     do
-      local sortKeys = {"type","device","deviceID","value","oldValue","val","key","arg","event","events","msg","res"}
+      local sortKeys = {"type","device","deviceID","id","value","oldValue","val","key","arg","event","events","msg","res"}
       local sortOrder={}
       for i,s in ipairs(sortKeys) do sortOrder[s]="\n"..string.char(i+64).." "..s end
       local function keyCompare(a,b)
@@ -461,6 +452,7 @@ _MODULES = _MODULES or {} -- Global
 _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
   init = function()
     local _,utils,format = fibaro.debugFlags,fibaro.utils,string.format
+    ---@return number
     local function sunturnTime(date, rising, latitude, longitude, zenith, local_offset)
       local rad,deg,floor = math.rad,math.deg,math.floor
       local frac = function(n) return n - floor(n) end
@@ -501,8 +493,8 @@ _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'}
       local sinDec = 0.39782 * sin(L) -- Calculate the Sun's declination
       local cosDec = cos(asin(sinDec))
       local cosH = (cos(zenith) - (sinDec * sin(latitude))) / (cosDec * cos(latitude)) -- Calculate the Sun^s local hour angle
-      if rising and cosH > 1 then return "N/R" -- The sun never rises on this location on the specified date
-      elseif cosH < -1 then return "N/S" end -- The sun never sets on this location on the specified date
+      if rising and cosH > 1 then return -1 --"N/R" -- The sun never rises on this location on the specified date
+      elseif cosH < -1 then return -1 end --"N/S" end -- The sun never sets on this location on the specified date
 
       local H -- Finish calculating H and convert into hours
       if rising then H = 360 - acos(cosH)
@@ -511,9 +503,11 @@ _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'}
       local T = H + RA - (0.06571 * t) - 6.622 -- Calculate local mean time of rising/setting
       local UT = fit_into_range(T - lng_hour, 0, 24) -- Adjust back to UTC
       local LT = UT + local_offset -- Convert UT value to local time zone of latitude/longitude
+---@diagnostic disable-next-line: missing-fields
       return os.time({day = date.day,month = date.month,year = date.year,hour = floor(LT),min = math.modf(frac(LT) * 60)})
     end
 
+---@diagnostic disable-next-line: param-type-mismatch
     local function getTimezone() local now = os.time() return os.difftime(now, os.time(os.date("!*t", now))) end
 
     function utils.sunCalc(time)
@@ -566,7 +560,8 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
           else res= type(id) == 'number' and id or days[id] or months[id] or tonumber(id) end
           _assert(res,"Bad date specifier '%s'",id) return res
         end
-        local w,m,step= w1[1],w1[2],1
+        local step = 1
+        local w,m = w1[1],w1[2]
         local start,stop = w:match("(%w+)%p(%w+)")
         if (start == nil) then return resolve(w) end
         start,stop = resolve(start), resolve(stop)
@@ -574,7 +569,7 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
         if w:find("/") then
           if not w:find("-") then -- 10/2
             step=stop; stop = m.max
-          else step=w:match("/(%d+)") end
+          else step=(w:match("/(%d+)")) end
         end
         step = tonumber(step)
         _assert(start>=m.min and start<=m.max and stop>=m.min and stop<=m.max,"illegal date intervall")
@@ -727,6 +722,7 @@ _MODULES.time={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
     end
     fibaro.toSeconds = toSeconds
 
+---@diagnostic disable-next-line: param-type-mismatch
     local function midnight() local t = os.date("*t"); t.hour,t.min,t.sec = 0,0,0; return os.time(t) end
     fibaro.midnight = midnight
     function fibaro.getWeekNumber(tm) return tonumber(os.date("%V",tm)) end
@@ -1094,87 +1090,86 @@ _MODULES.profiles={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
 --------------------- Alarm ------------------------------------------
 _MODULES = _MODULES or {} -- Global
 _MODULES.alarm={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
-  init = function()
-    local _,_ = fibaro.debugFlags,string.format
-    function fibaro.partitionIdToName(pid)
-      __assert_type(pid,"number")
-      return (api.get("/alarms/v1/partitions/"..pid) or {}).name 
-    end
-
-    function fibaro.partitionNameToId(name)
-      assert(type(name)=='string',"Alarm partition name not a string")
-      for _,p in ipairs(api.get("/alarms/v1/partitions") or {}) do
-        if p.name == name then return p.id end
-      end
-    end
-
--- Returns devices breached in partition 'pid'
-    function fibaro.getBreachedDevicesInPartition(pid)
-      assert(type(pid)=='number',"Alarm partition id not a number")
-      local p,res = api.get("/alarms/v1/partitions/"..pid),{}
-      for _,d in ipairs((p or {}).devices or {}) do
-        if fibaro.getValue(d,"value") then res[#res+1]=d end
-      end
-      return res
-    end
-
--- helper function
-    local function filterPartitions(filter)
-      local res = {}
-      for _,p in ipairs(api.get("/alarms/v1/partitions") or {}) do if filter(p) then res[#res+1]=p.id end end
-      return res
-    end
-
--- Return all partitions ids
-    function fibaro.getAllPartitions() return filterPartitions(function() return true end) end
-
--- Return partitions that are armed
-    function fibaro.getArmedPartitions() return filterPartitions(function(p) return p.armed end) end
-
--- Return partitions that are about to be armed
-    function fibaro.getActivatedPartitions() return filterPartitions(function(p) return p.secondsToArm end) end
-
--- Return breached partitions
-    function fibaro.getBreachedPartitions() return api.get("/alarms/v1/partitions/breached") or {} end
-
---If you want to list all devices that can be part of a alarm partition/zone you can do
-    function fibaro.getAlarmDevices() return api.get("/alarms/v1/devices/") end
-
-    fibaro.ALARM_INTERVAL = 1000
-    local fun
-    local ref
-    local armedPs={}
-    local function watchAlarms()
-      for _,p in ipairs(api.get("/alarms/v1/partitions") or {}) do
-        if p.secondsToArm and not armedPs[p.id] then
-          setTimeout(function() pcall(fun,p.id,p.secondsToArm) end,0)
-        end
-        armedPs[p.id] = p.secondsToArm
-      end
-    end
-    function fibaro.activatedPartitions(callback)
-      __assert_type(callback,"function")
-      fun = callback
-      if fun and ref == nil then
-        ref = setInterval(watchAlarms,fibaro.ALARM_INTERVAL)
-      elseif fun == nil and ref then
-        clearInterval(ref); ref = nil 
-      end
-    end
-
-    function fibaro.activatedPartitionsEvents()
-      fibaro.activatedPartitions(function(id,secs)
-          fibaro._postSourceTrigger({type='alarm',property='activated',id=id,seconds=secs})
-        end)
-    end
-
---[[ Ex. check what partitions have breached devices
-for _,p in ipairs(getAllPartitions()) do
-  local bd = getBreachedDevicesInPartition(p)
-  if bd[1] then print("Partition "..p.." contains breached devices "..json.encode(bd)) end
-end
---]]
+init = function()
+  local _,_ = fibaro.debugFlags,string.format
+  function fibaro.partitionIdToName(pid)
+    __assert_type(pid,"number")
+    return (api.get("/alarms/v1/partitions/"..pid) or {}).name 
   end
+  
+  function fibaro.partitionNameToId(name)
+    assert(type(name)=='string',"Alarm partition name not a string")
+    for _,p in ipairs(api.get("/alarms/v1/partitions") or {}) do
+      if p.name == name then return p.id end
+    end
+  end
+  
+  -- Returns devices breached in partition 'pid'
+  function fibaro.getBreachedDevicesInPartition(pid)
+    assert(type(pid)=='number',"Alarm partition id not a number")
+    local p,res = api.get("/alarms/v1/partitions/"..pid),{}
+    for _,d in ipairs((p or {}).devices or {}) do
+      if fibaro.getValue(d,"value") then res[#res+1]=d end
+    end
+    return res
+  end
+  
+  -- helper function
+  local function filterPartitions(filter)
+    local res = {}
+    for _,p in ipairs(api.get("/alarms/v1/partitions") or {}) do if filter(p) then res[#res+1]=p.id end end
+    return res
+  end
+  
+  -- Return all partitions ids
+  function fibaro.getAllPartitions() return filterPartitions(function() return true end) end
+  
+  -- Return partitions that are armed
+  function fibaro.getArmedPartitions() return filterPartitions(function(p) return p.armed end) end
+  
+  -- Return partitions that are about to be armed
+  function fibaro.getActivatedPartitions() return filterPartitions(function(p) return p.secondsToArm end) end
+  
+  -- Return breached partitions
+  function fibaro.getBreachedPartitions() return api.get("/alarms/v1/partitions/breached") or {} end
+  
+  --If you want to list all devices that can be part of a alarm partition/zone you can do
+  function fibaro.getAlarmDevices() return api.get("/alarms/v1/devices/") end
+
+  function fibaro.armPartition(id)
+    if id == 0 then
+      return api.post("/alarms/v1/partitions/actions/arm")
+    else
+      return api.post("/alarms/v1/partitions/"..id.."/actions/arm")
+    end
+  end
+  
+  function fibaro.unarmPartition(id)
+    if id == 0 then
+      return api.delete("/alarms/v1/partitions/actions/arm")
+    else
+      return api.delete("/alarms/v1/partitions/"..id.."/actions/arm")
+    end
+  end
+
+  function fibaro.tryArmPartition(id)
+    local res,code
+    if id == 0 then
+      res,code = api.post("/alarms/v1/partitions/actions/tryArm")
+      if type(res) == 'table' then
+        local r = {}
+        for _,p in ipairs(res) do r[p.id]=p.breachedDevices end
+        return next(r) and r or nil
+      else
+        return nil
+      end
+    else
+      local res,code = api.post("/alarms/v1/partitions/"..id.."/actions/tryArm")
+      if res.armDelayed and #res.armDelayed > 0 then return {[id]=res.breachedDevices} else return nil end
+    end
+  end
+
+end
 } -- Alarm
 
 --------------------- Weather --------------------------------------------------
@@ -1445,6 +1440,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
               lastRefresh=states.last
               if states.events and #states.events>0 then 
                 for _,e in ipairs(states.events) do
+                  --print("XX",e)
                   fibaro._postRefreshState(e)
                 end
               end
@@ -1952,7 +1948,7 @@ end
             action = "RunAction", 
             mobileDevices = { mobileId }, 
           })
-        timeout = timeout or 20*60
+        timeout = timeout or (20*60)
         local timer = setTimeout(function()
             local r
             r,refs[ref] = refs[ref],nil
@@ -2184,17 +2180,18 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
       end
     end
 
-    local function post(ev,t,log)
+    local function post(ev,t,log,hook,customLog)
       local now = os.time()
       t = type(t)=='string' and toTime(t) or t or 0
       if t < 0 then return elseif t < now then t = t+now end
-      if debugFlags.post and (type(ev)=='function' or not ev._sh) then fibaro.trace(__TAG,format("Posting %s at %s%s",tostring(ev),os.date("%c",t),type(log)=='string' and ("("..log..")") or "")) end
+      if debugFlags.post and (type(ev)=='function' or not ev._sh) then 
+        (customLog or fibaro.trace)(__TAG,format("Posting %s at %s %s",tostring(ev),os.date("%c",t),type(log)=='string' and ("("..log..")") or "")) end
       if type(ev) == 'function' then
-        return setTimeout(function() ev(ev,t) end,1000*(t-now),log)
+        return setTimeout(function() ev(ev) end,1000*(t-now),log),t
       elseif isEvent(ev) then
-        return setTimeout(function() handleEvent(ev,t) end,1000*(t-now),log)
+        return setTimeout(function() if hook then hook() end handleEvent(ev) end,1000*(t-now),log),t
       else
-        error("post(...) not event or function;",tostring(ev))
+        error("post(...) not event or function;"..tostring(ev))
       end
     end
     fibaro.post = post 
@@ -2375,7 +2372,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
       return format("%s => %s",tostring(e.event),tostring(e.rule))
     end
 
-    function handleEvent(ev,firingTime)
+    function handleEvent(ev)
       local hasKeys = fromHash[ev.type] and fromHash[ev.type](ev) or {ev.type}
       for _,hashKey in ipairs(hasKeys) do
         for _,rules in ipairs(handlers[hashKey] or {}) do -- Check all rules of 'type'
@@ -2392,7 +2389,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
               local rule=rules[j]
               if not rule._disabled then 
                 em.stats.matched=em.stats.matched+1
-                if invokeHandler({event = ev, time = firingTime, p=m, rule=rule, __tostring=ruleHandler2string}) == em.BREAK then return end
+                if invokeHandler({event = ev, p=m, rule=rule, __tostring=ruleHandler2string}) == em.BREAK then return end
               end
             end
           end
@@ -2663,6 +2660,7 @@ if debug then                           -- Embedded call...
         local fname = path.."fibaroExtra_"..name..".lua"
         print("Writing",fname)
         local f = io.open(fname,"w+")
+        assert(f,"Can't open "..fname)
         f:write(c)
         f:close()
       end)

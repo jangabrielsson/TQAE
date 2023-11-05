@@ -25,7 +25,8 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
           else res= type(id) == 'number' and id or days[id] or months[id] or tonumber(id) end
           _assert(res,"Bad date specifier '%s'",id) return res
         end
-        local w,m,step= w1[1],w1[2],1
+        local step = 1
+        local w,m = w1[1],w1[2]
         local start,stop = w:match("(%w+)%p(%w+)")
         if (start == nil) then return resolve(w) end
         start,stop = resolve(start), resolve(stop)
@@ -33,7 +34,7 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
         if w:find("/") then
           if not w:find("-") then -- 10/2
             step=stop; stop = m.max
-          else step=w:match("/(%d+)") end
+          else step=(w:match("/(%d+)")) end
         end
         step = tonumber(step)
         _assert(start>=m.min and start<=m.max and stop>=m.min and stop<=m.max,"illegal date intervall")

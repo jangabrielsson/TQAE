@@ -2,6 +2,7 @@ _MODULES = _MODULES or {} -- Global
 _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'},
   init = function()
     local _,utils,format = fibaro.debugFlags,fibaro.utils,string.format
+    ---@return number
     local function sunturnTime(date, rising, latitude, longitude, zenith, local_offset)
       local rad,deg,floor = math.rad,math.deg,math.floor
       local frac = function(n) return n - floor(n) end
@@ -42,8 +43,8 @@ _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'}
       local sinDec = 0.39782 * sin(L) -- Calculate the Sun's declination
       local cosDec = cos(asin(sinDec))
       local cosH = (cos(zenith) - (sinDec * sin(latitude))) / (cosDec * cos(latitude)) -- Calculate the Sun^s local hour angle
-      if rising and cosH > 1 then return "N/R" -- The sun never rises on this location on the specified date
-      elseif cosH < -1 then return "N/S" end -- The sun never sets on this location on the specified date
+      if rising and cosH > 1 then return -1 --"N/R" -- The sun never rises on this location on the specified date
+      elseif cosH < -1 then return -1 end --"N/S" end -- The sun never sets on this location on the specified date
 
       local H -- Finish calculating H and convert into hours
       if rising then H = 360 - acos(cosH)
@@ -52,9 +53,11 @@ _MODULES.sun={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'}
       local T = H + RA - (0.06571 * t) - 6.622 -- Calculate local mean time of rising/setting
       local UT = fit_into_range(T - lng_hour, 0, 24) -- Adjust back to UTC
       local LT = UT + local_offset -- Convert UT value to local time zone of latitude/longitude
+---@diagnostic disable-next-line: missing-fields
       return os.time({day = date.day,month = date.month,year = date.year,hour = floor(LT),min = math.modf(frac(LT) * 60)})
     end
 
+---@diagnostic disable-next-line: param-type-mismatch
     local function getTimezone() local now = os.time() return os.difftime(now, os.time(os.date("!*t", now))) end
 
     function utils.sunCalc(time)

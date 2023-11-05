@@ -15,6 +15,7 @@ _MODULES.time={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
     end
     fibaro.toSeconds = toSeconds
 
+---@diagnostic disable-next-line: param-type-mismatch
     local function midnight() local t = os.date("*t"); t.hour,t.min,t.sec = 0,0,0; return os.time(t) end
     fibaro.midnight = midnight
     function fibaro.getWeekNumber(tm) return tonumber(os.date("%V",tm)) end

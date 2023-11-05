@@ -192,6 +192,7 @@ _MODULES.triggers={ author = "jan@gabrielsson.com", version = '0.4', depends={'b
               lastRefresh=states.last
               if states.events and #states.events>0 then 
                 for _,e in ipairs(states.events) do
+                  --print("XX",e)
                   fibaro._postRefreshState(e)
                 end
               end

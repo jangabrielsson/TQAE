@@ -544,7 +544,7 @@ function EM.createDevice(info) -- Creates device structure
 
   if not cfg.offline then
     assert(not (info.proxy and info.zombie), "Can't have both proxy and zombie")
-    if info.proxy then -- Move out?
+    if info.proxy and not (EM.cfg.noproxy) then -- Move out?
       local l = FB.__fibaro_local(false)
       local stat, res = pcall(EM.createProxy, dev)
       FB.__fibaro_local(l)

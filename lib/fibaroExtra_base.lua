@@ -1,7 +1,7 @@
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={}, 
   init = function()
-    fibaro.FIBARO_EXTRA = "v0.961"
+    fibaro.FIBARO_EXTRA = "v0.964"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -64,22 +64,12 @@ _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={},
 
     local old_tostring = tostring
     fibaro._orgToString = old_tostring
-    if hc3_emulator then 
-      function tostring(obj)
-        if type(obj)=='table' and not hc3_emulator.getmetatable(obj) then
-          if obj.__tostring then return obj.__tostring(obj) 
-          elseif debugFlags.json then return json.encodeFast and json.encodeFast(obj) or json.encode(obj)  end
-        end
-        return old_tostring(obj)
+    function tostring(obj)
+      if type(obj)=='table' and not getmetatable(obj) then
+        if obj.__tostring then return type(obj.__tostring)=='string' and obj.__tostring or obj.__tostring(obj) 
+        elseif debugFlags.json then return json.encodeFast and json.encodeFast(obj) or json.encode(obj)  end
       end
-    else
-      function tostring(obj)
-        if type(obj)=='table' then
-          if obj.__tostring then return obj.__tostring(obj) 
-          elseif debugFlags.json then return json.encodeFast and json.encodeFast(obj) or json.encode(obj)  end
-        end
-        return old_tostring(obj)
-      end
+      return old_tostring(obj)
     end
 
     local _init,_onInit = QuickApp.__init,nil

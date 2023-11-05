@@ -57,7 +57,7 @@ _MODULES.utilities={ author = "jan@gabrielsson.com", version = '0.4', depends={'
     end
 
     do
-      local sortKeys = {"type","device","deviceID","value","oldValue","val","key","arg","event","events","msg","res"}
+      local sortKeys = {"type","device","deviceID","id","value","oldValue","val","key","arg","event","events","msg","res"}
       local sortOrder={}
       for i,s in ipairs(sortKeys) do sortOrder[s]="\n"..string.char(i+64).." "..s end
       local function keyCompare(a,b)
