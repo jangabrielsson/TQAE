@@ -8,12 +8,14 @@ _=loadfile and loadfile("TQAE.lua"){
 
 --%%name="Ping"
 
-hc3_emulator.installQA{id=88,file='TQAEexamples/Pong.lua'}
+hc3_emulator.installQA{file='examples/Pong.lua'}
+--fibaro.sleep(0)
 function QuickApp:pong(ret)
   self:debug("Pong")
   setTimeout(function() fibaro.call(ret,"ping",self.id) end, 2000)
 end
 
 function QuickApp:onInit()
-  fibaro.call(88,"ping",self.id)
+  print("START")
+  fibaro.call(1002,"ping",self.id)
 end

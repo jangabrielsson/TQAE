@@ -87,6 +87,7 @@ end
 local function transformUI(UI) -- { button=<text> } => {type="button", name=<text>}
   traverse(UI,
     function(e)
+      --print(json.encode(e))
       if e.button then e.name,e.type,e.onReleased=e.button,'button',e.onReleased or e.f; e.f=nil
       elseif e.slider then e.name,e.type,e.onChanged=e.slider,'slider',e.onChanged or e.f; e.f=nil
       elseif e.select then e.name,e.type=e.select,'select'
@@ -166,9 +167,17 @@ local function updateUI(self,UI)
   else return "Already updated",200 end
 end
 
+local function createUI2(UI)
+    transformUI(UI)
+    local viewLayout = mkViewLayout(UI)
+    local uiCallbacks = uiStruct2uiCallbacks(UI)
+    return viewLayout,uiCallbacks
+end
+
 fibaro.UI = {
   uiStruct2uiCallbacks = uiStruct2uiCallbacks,
   transformUI = transformUI,
   mkViewLayout = mkViewLayout,
-  updateUI =  updateUI
+  updateUI =  updateUI,
+  createUI = createUI2
 }
