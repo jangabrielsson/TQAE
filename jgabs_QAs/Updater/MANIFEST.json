@@ -1,5 +1,5 @@
 {
- "date":"12/03/23 20:27:25", 
+ "date":"12/06/23 10:16:16", 
  "updates":{
   "896661234567892":{
    "name":"EventRunner4",   
@@ -50,8 +50,8 @@
       "main"      
      ],     
      "quickAppVariables":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"ERname\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugTrigger\",\"text\":\"Triggers:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugPost\",\"text\":\"Post:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugRule\",\"text\":\"Rules:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"Test\",\"text\":\"Test\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"250\"}}}}}",     
-     "uiCallbacks":"[{\"name\":\"debugTrigger\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugPost\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugRule\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"Test\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"}]",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"ERname\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Triggers:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugTrigger\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Post:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugPost\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Rules:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugRule\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Test\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"Test\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"250\"},\"title\":\"quickApp_device_23\"}}}}",     
+     "uiCallbacks":"[{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugTrigger\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugPost\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugRule\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"Test\"}]",     
      "interfaces":[
       "quickApp"      
      ],     
@@ -73,8 +73,8 @@
       "main"      
      ],     
      "quickAppVariables":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"ERname\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugTrigger\",\"text\":\"Triggers:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugPost\",\"text\":\"Post:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugRule\",\"text\":\"Rules:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"Test\",\"text\":\"Test\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"250\"}}}}}",     
-     "uiCallbacks":"[{\"name\":\"debugTrigger\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugPost\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugRule\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"Test\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"}]",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"ERname\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Triggers:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugTrigger\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Post:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugPost\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Rules:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugRule\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Test\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"Test\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"250\"},\"title\":\"quickApp_device_23\"}}}}",     
+     "uiCallbacks":"[{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugTrigger\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugPost\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugRule\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"Test\"}]",     
      "interfaces":[
       "quickApp"      
      ],     
@@ -96,8 +96,8 @@
       "main"      
      ],     
      "quickAppVariables":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"ERname\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugTrigger\",\"text\":\"Triggers:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugPost\",\"text\":\"Post:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugRule\",\"text\":\"Rules:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"Test\",\"text\":\"Test\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"250\"}}}}}",     
-     "uiCallbacks":"[{\"name\":\"debugTrigger\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugPost\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugRule\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"Test\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"}]",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"ERname\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Triggers:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugTrigger\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Post:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugPost\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Rules:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugRule\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Test\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"Test\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"250\"},\"title\":\"quickApp_device_23\"}}}}",     
+     "uiCallbacks":"[{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugTrigger\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugPost\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugRule\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"Test\"}]",     
      "interfaces":[
       "quickApp"      
      ],     
@@ -119,8 +119,8 @@
       "main"      
      ],     
      "quickAppVariables":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"ERname\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugTrigger\",\"text\":\"Triggers:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugPost\",\"text\":\"Post:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugRule\",\"text\":\"Rules:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"Test\",\"text\":\"Test\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"250\"}}}}}",     
-     "uiCallbacks":"[{\"name\":\"debugTrigger\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugPost\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugRule\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"Test\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"}]",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"ERname\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Triggers:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugTrigger\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Post:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugPost\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Rules:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugRule\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Test\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"Test\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"250\"},\"title\":\"quickApp_device_23\"}}}}",     
+     "uiCallbacks":"[{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugTrigger\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugPost\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugRule\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"Test\"}]",     
      "interfaces":[
       "quickApp"      
      ],     
@@ -142,8 +142,8 @@
       "main"      
      ],     
      "quickAppVariables":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"ERname\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugTrigger\",\"text\":\"Triggers:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugPost\",\"text\":\"Post:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugRule\",\"text\":\"Rules:ON\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"Test\",\"text\":\"Test\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"250\"}}}}}",     
-     "uiCallbacks":"[{\"name\":\"debugTrigger\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugPost\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"debugRule\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"},{\"name\":\"Test\",\"eventType\":\"onReleased\",\"callback\":\"FEventRunner4\"}]",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"ERname\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Triggers:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugTrigger\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Post:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugPost\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Rules:ON\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"debugRule\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Test\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"Test\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"250\"},\"title\":\"quickApp_device_23\"}}}}",     
+     "uiCallbacks":"[{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugTrigger\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugPost\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"debugRule\"},{\"callback\":\"FEventRunner4\",\"eventType\":\"onReleased\",\"name\":\"Test\"}]",     
      "interfaces":[
       "quickApp"      
      ],     
@@ -188,8 +188,8 @@
        "value":1       
       }      
      ],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"status\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"allLightsOff\",\"text\":\"Lights On\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"allLightsOff\",\"text\":\"Lights Off\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"installLights\",\"text\":\"Install Lights\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"removeLights\",\"text\":\"Remove Lights\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"installSensors\",\"text\":\"Install Sensors\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"removeSensors\",\"text\":\"Remove Sensors\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"installGroups\",\"text\":\"Install Groups\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"removeGroups\",\"text\":\"Remove Groups\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"installCLIPS\",\"text\":\"Install CLIP sensors\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"removeCLIPS\",\"text\":\"Remove CLIP sensors\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"debug\",\"text\":\"Debug On\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"list\",\"text\":\"List\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"connect\",\"text\":\"Authenticate\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"message\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"pollingTime\",\"text\":\"Polling time: 1000ms\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"max\":\"nil\",\"value\":\"nil\",\"type\":\"slider\",\"min\":\"nil\",\"style\":{\"weight\":\"1.2\"},\"name\":\"pollingSlider\",\"step\":\"nil\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"pollingFactor\",\"text\":\"Poll lights slower: 1x\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.25\"},\"name\":\"b1x\",\"text\":\"1x\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.25\"},\"name\":\"b2x\",\"text\":\"2x\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.25\"},\"name\":\"b3x\",\"text\":\"3x\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.25\"},\"name\":\"b4x\",\"text\":\"4x\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"patch\",\"text\":\"patchQA\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"700\"}}}}}",     
-     "uiCallbacks":"[{\"name\":\"allLightsOff\",\"eventType\":\"onReleased\",\"callback\":\"allLightsOffClicked\"},{\"name\":\"allLightsOff\",\"eventType\":\"onReleased\",\"callback\":\"allLightsOffClicked\"},{\"name\":\"installLights\",\"eventType\":\"onReleased\",\"callback\":\"installLightsClicked\"},{\"name\":\"removeLights\",\"eventType\":\"onReleased\",\"callback\":\"removeLightsClicked\"},{\"name\":\"installSensors\",\"eventType\":\"onReleased\",\"callback\":\"installSensorsClicked\"},{\"name\":\"removeSensors\",\"eventType\":\"onReleased\",\"callback\":\"removeSensorsClicked\"},{\"name\":\"installGroups\",\"eventType\":\"onReleased\",\"callback\":\"installGroupsClicked\"},{\"name\":\"removeGroups\",\"eventType\":\"onReleased\",\"callback\":\"removeGroupsClicked\"},{\"name\":\"installCLIPS\",\"eventType\":\"onReleased\",\"callback\":\"installCLIPSClicked\"},{\"name\":\"removeCLIPS\",\"eventType\":\"onReleased\",\"callback\":\"removeCLIPSClicked\"},{\"name\":\"debug\",\"eventType\":\"onReleased\",\"callback\":\"debugClicked\"},{\"name\":\"list\",\"eventType\":\"onReleased\",\"callback\":\"listClicked\"},{\"name\":\"connect\",\"eventType\":\"onReleased\",\"callback\":\"connectClicked\"},{\"name\":\"pollingSlider\",\"eventType\":\"onChanged\",\"callback\":\"polling\"},{\"name\":\"b1x\",\"eventType\":\"onReleased\",\"callback\":\"pollFactor\"},{\"name\":\"b2x\",\"eventType\":\"onReleased\",\"callback\":\"pollFactor\"},{\"name\":\"b3x\",\"eventType\":\"onReleased\",\"callback\":\"pollFactor\"},{\"name\":\"b4x\",\"eventType\":\"onReleased\",\"callback\":\"pollFactor\"},{\"name\":\"patch\",\"eventType\":\"onReleased\",\"callback\":\"patchQA\"}]",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"status\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"Lights On\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"allLightsOff\"},{\"text\":\"Lights Off\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"allLightsOff\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"Install Lights\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"installLights\"},{\"text\":\"Remove Lights\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"removeLights\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"Install Sensors\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"installSensors\"},{\"text\":\"Remove Sensors\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"removeSensors\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"Install Groups\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"installGroups\"},{\"text\":\"Remove Groups\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"removeGroups\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"Install CLIP sensors\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"installCLIPS\"},{\"text\":\"Remove CLIP sensors\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"removeCLIPS\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"Debug On\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"debug\"},{\"text\":\"List\",\"type\":\"button\",\"style\":{\"weight\":\"0.50\"},\"name\":\"list\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Authenticate\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"connect\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"message\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Polling time: 1000ms\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"pollingTime\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"value\":\"nil\",\"type\":\"slider\",\"min\":\"nil\",\"max\":\"nil\",\"step\":\"nil\",\"style\":{\"weight\":\"1.2\"},\"name\":\"pollingSlider\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Poll lights slower: 1x\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"pollingFactor\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"1x\",\"type\":\"button\",\"style\":{\"weight\":\"0.25\"},\"name\":\"b1x\"},{\"text\":\"2x\",\"type\":\"button\",\"style\":{\"weight\":\"0.25\"},\"name\":\"b2x\"},{\"text\":\"3x\",\"type\":\"button\",\"style\":{\"weight\":\"0.25\"},\"name\":\"b3x\"},{\"text\":\"4x\",\"type\":\"button\",\"style\":{\"weight\":\"0.25\"},\"name\":\"b4x\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"patchQA\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"patch\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"700\"},\"title\":\"quickApp_device_23\"}}}}",     
+     "uiCallbacks":"[{\"callback\":\"allLightsOffClicked\",\"eventType\":\"onReleased\",\"name\":\"allLightsOff\"},{\"callback\":\"allLightsOffClicked\",\"eventType\":\"onReleased\",\"name\":\"allLightsOff\"},{\"callback\":\"installLightsClicked\",\"eventType\":\"onReleased\",\"name\":\"installLights\"},{\"callback\":\"removeLightsClicked\",\"eventType\":\"onReleased\",\"name\":\"removeLights\"},{\"callback\":\"installSensorsClicked\",\"eventType\":\"onReleased\",\"name\":\"installSensors\"},{\"callback\":\"removeSensorsClicked\",\"eventType\":\"onReleased\",\"name\":\"removeSensors\"},{\"callback\":\"installGroupsClicked\",\"eventType\":\"onReleased\",\"name\":\"installGroups\"},{\"callback\":\"removeGroupsClicked\",\"eventType\":\"onReleased\",\"name\":\"removeGroups\"},{\"callback\":\"installCLIPSClicked\",\"eventType\":\"onReleased\",\"name\":\"installCLIPS\"},{\"callback\":\"removeCLIPSClicked\",\"eventType\":\"onReleased\",\"name\":\"removeCLIPS\"},{\"callback\":\"debugClicked\",\"eventType\":\"onReleased\",\"name\":\"debug\"},{\"callback\":\"listClicked\",\"eventType\":\"onReleased\",\"name\":\"list\"},{\"callback\":\"connectClicked\",\"eventType\":\"onReleased\",\"name\":\"connect\"},{\"callback\":\"polling\",\"eventType\":\"onChanged\",\"name\":\"pollingSlider\"},{\"callback\":\"pollFactor\",\"eventType\":\"onReleased\",\"name\":\"b1x\"},{\"callback\":\"pollFactor\",\"eventType\":\"onReleased\",\"name\":\"b2x\"},{\"callback\":\"pollFactor\",\"eventType\":\"onReleased\",\"name\":\"b3x\"},{\"callback\":\"pollFactor\",\"eventType\":\"onReleased\",\"name\":\"b4x\"},{\"callback\":\"patchQA\",\"eventType\":\"onReleased\",\"name\":\"patch\"}]",     
      "interfaces":[
       "quickApp"      
      ],     
@@ -212,8 +212,8 @@
       "main":"$base1/jgabs_QAs/Updater/UpdaterQA.lua"      
      },     
      "keep":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevU\",\"text\":\"<< Updates\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Refresh\",\"text\":\"Refresh\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextU\",\"text\":\"Updates >>\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"update\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevV\",\"text\":\"<< Version\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Install\",\"text\":\"Install\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextV\",\"text\":\"Version >>\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"version\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevQ\",\"text\":\"<< QA\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Update\",\"text\":\"Update\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextQ\",\"text\":\"QA >>\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"qa\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"log\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"400\"}}}}}",     
-     "uiCallbacks":"[{\"name\":\"PrevU\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"Refresh\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"NextU\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"PrevV\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"Install\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"NextV\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"PrevQ\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"Update\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"NextQ\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"}]",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"<< Updates\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevU\"},{\"text\":\"Refresh\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Refresh\"},{\"text\":\"Updates >>\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextU\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"update\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"<< Version\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevV\"},{\"text\":\"Install\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Install\"},{\"text\":\"Version >>\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextV\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"version\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"<< QA\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevQ\"},{\"text\":\"Update\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Update\"},{\"text\":\"QA >>\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextQ\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"qa\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"log\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"400\"},\"title\":\"quickApp_device_23\"}}}}",     
+     "uiCallbacks":"[{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"PrevU\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"Refresh\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"NextU\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"PrevV\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"Install\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"NextV\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"PrevQ\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"Update\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"NextQ\"}]",     
      "interfaces":[
       "quickApp"      
      ],     
@@ -230,8 +230,8 @@
       "main":"$base1/jgabs_QAs/Updater/UpdaterQA.lua"      
      },     
      "keep":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevU\",\"text\":\"<< Updates\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Refresh\",\"text\":\"Refresh\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextU\",\"text\":\"Updates >>\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"update\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevV\",\"text\":\"<< Version\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Install\",\"text\":\"Install\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextV\",\"text\":\"Version >>\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"version\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevQ\",\"text\":\"<< QA\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Update\",\"text\":\"Update\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextQ\",\"text\":\"QA >>\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"qa\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"log\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"400\"}}}}}",     
-     "uiCallbacks":"[{\"name\":\"PrevU\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"Refresh\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"NextU\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"PrevV\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"Install\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"NextV\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"PrevQ\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"Update\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"NextQ\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"}]",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"<< Updates\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevU\"},{\"text\":\"Refresh\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Refresh\"},{\"text\":\"Updates >>\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextU\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"update\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"<< Version\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevV\"},{\"text\":\"Install\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Install\"},{\"text\":\"Version >>\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextV\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"version\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"<< QA\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevQ\"},{\"text\":\"Update\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Update\"},{\"text\":\"QA >>\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextQ\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"qa\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"log\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"400\"},\"title\":\"quickApp_device_23\"}}}}",     
+     "uiCallbacks":"[{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"PrevU\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"Refresh\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"NextU\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"PrevV\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"Install\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"NextV\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"PrevQ\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"Update\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"NextQ\"}]",     
      "interfaces":[
       "quickApp"      
      ],     
@@ -248,8 +248,8 @@
       "main":"$base1/jgabs_QAs/Updater/UpdaterQA.lua"      
      },     
      "keep":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevU\",\"text\":\"<< Updates\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Refresh\",\"text\":\"Refresh\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextU\",\"text\":\"Updates >>\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"update\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevV\",\"text\":\"<< Version\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Install\",\"text\":\"Install\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextV\",\"text\":\"Version >>\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"version\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevQ\",\"text\":\"<< QA\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Update\",\"text\":\"Update\"},{\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextQ\",\"text\":\"QA >>\"}],\"style\":{\"weight\":\"1.2\"},\"type\":\"horizontal\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"qa\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"log\",\"text\":\"...\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"400\"}}}}}",     
-     "uiCallbacks":"[{\"name\":\"PrevU\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"Refresh\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"NextU\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"PrevV\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"Install\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"NextV\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"PrevQ\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"Update\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"},{\"name\":\"NextQ\",\"eventType\":\"onReleased\",\"callback\":\"BTN\"}]",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"<< Updates\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevU\"},{\"text\":\"Refresh\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Refresh\"},{\"text\":\"Updates >>\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextU\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"update\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"<< Version\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevV\"},{\"text\":\"Install\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Install\"},{\"text\":\"Version >>\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextV\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"version\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"type\":\"horizontal\",\"components\":[{\"text\":\"<< QA\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"PrevQ\"},{\"text\":\"Update\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"Update\"},{\"text\":\"QA >>\",\"type\":\"button\",\"style\":{\"weight\":\"0.33\"},\"name\":\"NextQ\"}],\"style\":{\"weight\":\"1.2\"}},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"qa\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"...\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"log\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"400\"},\"title\":\"quickApp_device_23\"}}}}",     
+     "uiCallbacks":"[{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"PrevU\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"Refresh\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"NextU\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"PrevV\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"Install\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"NextV\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"PrevQ\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"Update\"},{\"callback\":\"BTN\",\"eventType\":\"onReleased\",\"name\":\"NextQ\"}]",     
      "interfaces":[
       "quickApp"      
      ],     
@@ -312,7 +312,7 @@
       "main":"$base1/jgabs_QAs/HueSensors.lua"      
      },     
      "keep":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"50\"}}}}}",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"50\"},\"title\":\"quickApp_device_23\"}}}}",     
      "uiCallbacks":"[]",     
      "interfaces":[
       "quickApp"      
@@ -332,7 +332,7 @@
       "main":"$base1/jgabs_QAs/HueSensors.lua"      
      },     
      "keep":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"50\"}}}}}",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"50\"},\"title\":\"quickApp_device_23\"}}}}",     
      "uiCallbacks":"[]",     
      "interfaces":[
       "quickApp"      
@@ -360,8 +360,8 @@
       "main":"$base1/jgabs_QAs/HueConnector.lua"      
      },     
      "keep":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"deviceTable\",\"text\":\"Print device table\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"dump\",\"text\":\"List all Hue devices\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"150\"}}}}}",     
-     "uiCallbacks":"[{\"name\":\"deviceTable\",\"eventType\":\"onReleased\",\"callback\":\"deviceTableClicked\"},{\"name\":\"dump\",\"eventType\":\"onReleased\",\"callback\":\"dumpClicked\"}]",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Print device table\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"deviceTable\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"List all Hue devices\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"dump\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"150\"},\"title\":\"quickApp_device_23\"}}}}",     
+     "uiCallbacks":"[{\"callback\":\"deviceTableClicked\",\"eventType\":\"onReleased\",\"name\":\"deviceTable\"},{\"callback\":\"dumpClicked\",\"eventType\":\"onReleased\",\"name\":\"dump\"}]",     
      "interfaces":[
       "quickApp"      
      ],     
@@ -382,8 +382,8 @@
       "main":"$base1/jgabs_QAs/HueConnector.lua"      
      },     
      "keep":[],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"deviceTable\",\"text\":\"Print device table\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"dump\",\"text\":\"List all Hue devices\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"150\"}}}}}",     
-     "uiCallbacks":"[{\"name\":\"deviceTable\",\"eventType\":\"onReleased\",\"callback\":\"deviceTableClicked\"},{\"name\":\"dump\",\"eventType\":\"onReleased\",\"callback\":\"dumpClicked\"}]",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"info\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"Print device table\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"deviceTable\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"List all Hue devices\",\"type\":\"button\",\"style\":{\"weight\":\"1.2\"},\"name\":\"dump\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"150\"},\"title\":\"quickApp_device_23\"}}}}",     
+     "uiCallbacks":"[{\"callback\":\"deviceTableClicked\",\"eventType\":\"onReleased\",\"name\":\"deviceTable\"},{\"callback\":\"dumpClicked\",\"eventType\":\"onReleased\",\"name\":\"dump\"}]",     
      "interfaces":[
       "quickApp"      
      ],     
@@ -396,9 +396,9 @@
    "type":"com.fibaro.deviceController",   
    "versions":[
     {
-     "version":0.56,     
+     "version":0.62,     
      "vars":{
-      "base1":"https://raw.githubusercontent.com/jangabrielsson/EventRunner5/ER5_0.56"      
+      "base1":"https://raw.githubusercontent.com/jangabrielsson/EventRunner5/ER5_0.62"      
      },     
      "descr":"First version (alpha, not for production)",     
      "files":{
@@ -423,9 +423,9 @@
        "body":{
         "header":{
          "style":{
-          "height":"200"          
+          "height":"0"          
          },         
-         "title":"quickApp_device_5000"         
+         "title":"quickApp_device_1425"         
         },        
         "sections":{
          "items":[
@@ -534,20 +534,20 @@
              "type":"horizontal",             
              "components":[
               {
-               "name":"test1",               
+               "name":"listRuleStats",               
                "type":"button",               
                "style":{
                 "weight":"0.50"                
                },               
-               "text":"Test1"               
+               "text":"List stats"               
               },              
               {
-               "name":"test2",               
+               "name":"Restart",               
                "type":"button",               
                "style":{
                 "weight":"0.50"                
                },               
-               "text":"Test2"               
+               "text":"Restart"               
               }              
              ],             
              "style":{
@@ -564,210 +564,17 @@
            "style":{
             "weight":"1.2"            
            }           
-          }          
-         ]         
-        }        
-       },       
-       "head":{
-        "title":"quickApp_device_5000"        
-       }       
-      }      
-     },     
-     "uiCallbacks":[
-      {
-       "name":"listRules",       
-       "callback":"listRules",       
-       "eventType":"onReleased"       
-      },      
-      {
-       "name":"listRulesExt",       
-       "callback":"listRulesExt",       
-       "eventType":"onReleased"       
-      },      
-      {
-       "name":"listTimers",       
-       "callback":"listTimers",       
-       "eventType":"onReleased"       
-      },      
-      {
-       "name":"listVars",       
-       "callback":"listVariables",       
-       "eventType":"onReleased"       
-      },      
-      {
-       "name":"test1",       
-       "callback":"test1",       
-       "eventType":"onReleased"       
-      },      
-      {
-       "name":"test2",       
-       "callback":"test2",       
-       "eventType":"onReleased"       
-      }      
-     ],     
-     "interfaces":[
-      "quickApp"      
-     ],     
-     "mainfile":"$base1/EventRunner5.lua"     
-    },    
-    {
-     "version":0.58,     
-     "vars":{
-      "base1":"https://raw.githubusercontent.com/jangabrielsson/EventRunner5/ER5_0.58"      
-     },     
-     "descr":"First version (alpha, not for production)",     
-     "files":{
-      "ERlib":"$base1/ERlib.lua",      
-      "builtins":"$base1/Builtins.lua",      
-      "compiler":"$base1/Compiler.lua",      
-      "engine":"$base1/Engine.lua",      
-      "fibLib":"$base1/fibaroLib.lua",      
-      "main":"$base1/EventRunner5.lua",      
-      "parser":"$base1/Parser.lua",      
-      "rule":"$base1/Rule.lua",      
-      "tokenizer":"$base1/Tokenizer.lua",      
-      "utils":"$base1/Utils.lua",      
-      "vm":"$base1/VM.lua"      
-     },     
-     "keep":[
-      "main"      
-     ],     
-     "quickAppVariables":[],     
-     "viewLayout":{
-      "$jason":{
-       "body":{
-        "header":{
-         "style":{
-          "height":"200"          
-         },         
-         "title":"quickApp_device_5000"         
-        },        
-        "sections":{
-         "items":[
+          },          
           {
            "type":"vertical",           
            "components":[
             {
-             "name":"title",             
+             "name":"stats",             
              "type":"label",             
              "style":{
               "weight":"1.2"              
              },             
-             "text":"EventRunner5"             
-            },            
-            {
-             "type":"space",             
-             "style":{
-              "weight":"0.5"              
-             }             
-            }            
-           ],           
-           "style":{
-            "weight":"1.2"            
-           }           
-          },          
-          {
-           "type":"vertical",           
-           "components":[
-            {
-             "type":"horizontal",             
-             "components":[
-              {
-               "name":"listRules",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"List rules"               
-              },              
-              {
-               "name":"listRulesExt",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"List rules ext."               
-              }              
-             ],             
-             "style":{
-              "weight":"1.2"              
-             }             
-            },            
-            {
-             "type":"space",             
-             "style":{
-              "weight":"0.5"              
-             }             
-            }            
-           ],           
-           "style":{
-            "weight":"1.2"            
-           }           
-          },          
-          {
-           "type":"vertical",           
-           "components":[
-            {
-             "type":"horizontal",             
-             "components":[
-              {
-               "name":"listTimers",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"List timers"               
-              },              
-              {
-               "name":"listVars",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"List variables"               
-              }              
-             ],             
-             "style":{
-              "weight":"1.2"              
-             }             
-            },            
-            {
-             "type":"space",             
-             "style":{
-              "weight":"0.5"              
-             }             
-            }            
-           ],           
-           "style":{
-            "weight":"1.2"            
-           }           
-          },          
-          {
-           "type":"vertical",           
-           "components":[
-            {
-             "type":"horizontal",             
-             "components":[
-              {
-               "name":"test1",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"Test1"               
-              },              
-              {
-               "name":"test2",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"Test2"               
-              }              
-             ],             
-             "style":{
-              "weight":"1.2"              
-             }             
+             "text":""             
             },            
             {
              "type":"space",             
@@ -784,7 +591,7 @@
         }        
        },       
        "head":{
-        "title":"quickApp_device_5000"        
+        "title":"quickApp_device_1425"        
        }       
       }      
      },     
@@ -810,228 +617,13 @@
        "eventType":"onReleased"       
       },      
       {
-       "name":"test1",       
-       "callback":"test1",       
+       "name":"listRuleStats",       
+       "callback":"listRuleStats",       
        "eventType":"onReleased"       
       },      
       {
-       "name":"test2",       
-       "callback":"test2",       
-       "eventType":"onReleased"       
-      }      
-     ],     
-     "interfaces":[
-      "quickApp"      
-     ],     
-     "mainfile":"$base1/EventRunner5.lua"     
-    },    
-    {
-     "version":0.61,     
-     "vars":{
-      "base1":"https://raw.githubusercontent.com/jangabrielsson/EventRunner5/ER5_0.61"      
-     },     
-     "descr":"First version (alpha, not for production)",     
-     "files":{
-      "ERlib":"$base1/ERlib.lua",      
-      "builtins":"$base1/Builtins.lua",      
-      "compiler":"$base1/Compiler.lua",      
-      "engine":"$base1/Engine.lua",      
-      "fibLib":"$base1/fibaroLib.lua",      
-      "main":"$base1/EventRunner5.lua",      
-      "parser":"$base1/Parser.lua",      
-      "rule":"$base1/Rule.lua",      
-      "tokenizer":"$base1/Tokenizer.lua",      
-      "utils":"$base1/Utils.lua",      
-      "vm":"$base1/VM.lua"      
-     },     
-     "keep":[
-      "main"      
-     ],     
-     "quickAppVariables":[],     
-     "viewLayout":{
-      "$jason":{
-       "body":{
-        "header":{
-         "style":{
-          "height":"200"          
-         },         
-         "title":"quickApp_device_5000"         
-        },        
-        "sections":{
-         "items":[
-          {
-           "type":"vertical",           
-           "components":[
-            {
-             "name":"title",             
-             "type":"label",             
-             "style":{
-              "weight":"1.2"              
-             },             
-             "text":"EventRunner5"             
-            },            
-            {
-             "type":"space",             
-             "style":{
-              "weight":"0.5"              
-             }             
-            }            
-           ],           
-           "style":{
-            "weight":"1.2"            
-           }           
-          },          
-          {
-           "type":"vertical",           
-           "components":[
-            {
-             "type":"horizontal",             
-             "components":[
-              {
-               "name":"listRules",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"List rules"               
-              },              
-              {
-               "name":"listRulesExt",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"List rules ext."               
-              }              
-             ],             
-             "style":{
-              "weight":"1.2"              
-             }             
-            },            
-            {
-             "type":"space",             
-             "style":{
-              "weight":"0.5"              
-             }             
-            }            
-           ],           
-           "style":{
-            "weight":"1.2"            
-           }           
-          },          
-          {
-           "type":"vertical",           
-           "components":[
-            {
-             "type":"horizontal",             
-             "components":[
-              {
-               "name":"listTimers",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"List timers"               
-              },              
-              {
-               "name":"listVars",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"List variables"               
-              }              
-             ],             
-             "style":{
-              "weight":"1.2"              
-             }             
-            },            
-            {
-             "type":"space",             
-             "style":{
-              "weight":"0.5"              
-             }             
-            }            
-           ],           
-           "style":{
-            "weight":"1.2"            
-           }           
-          },          
-          {
-           "type":"vertical",           
-           "components":[
-            {
-             "type":"horizontal",             
-             "components":[
-              {
-               "name":"test1",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"Test1"               
-              },              
-              {
-               "name":"test2",               
-               "type":"button",               
-               "style":{
-                "weight":"0.50"                
-               },               
-               "text":"Test2"               
-              }              
-             ],             
-             "style":{
-              "weight":"1.2"              
-             }             
-            },            
-            {
-             "type":"space",             
-             "style":{
-              "weight":"0.5"              
-             }             
-            }            
-           ],           
-           "style":{
-            "weight":"1.2"            
-           }           
-          }          
-         ]         
-        }        
-       },       
-       "head":{
-        "title":"quickApp_device_5000"        
-       }       
-      }      
-     },     
-     "uiCallbacks":[
-      {
-       "name":"listRules",       
-       "callback":"listRules",       
-       "eventType":"onReleased"       
-      },      
-      {
-       "name":"listRulesExt",       
-       "callback":"listRulesExt",       
-       "eventType":"onReleased"       
-      },      
-      {
-       "name":"listTimers",       
-       "callback":"listTimers",       
-       "eventType":"onReleased"       
-      },      
-      {
-       "name":"listVars",       
-       "callback":"listVariables",       
-       "eventType":"onReleased"       
-      },      
-      {
-       "name":"test1",       
-       "callback":"test1",       
-       "eventType":"onReleased"       
-      },      
-      {
-       "name":"test2",       
-       "callback":"test2",       
+       "name":"Restart",       
+       "callback":"restart",       
        "eventType":"onReleased"       
       }      
      ],     
@@ -1061,7 +653,7 @@
      "keep":[
       "main"      
      ],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"version\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"home\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"user\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"150\"}}}}}",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"version\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"home\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"user\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"150\"},\"title\":\"quickApp_device_23\"}}}}",     
      "uiCallbacks":"[]",     
      "interfaces":[
       "quickApp"      
@@ -1083,7 +675,7 @@
      "keep":[
       "main"      
      ],     
-     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"version\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"home\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"},{\"components\":[{\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"user\",\"text\":\"\"},{\"type\":\"space\",\"style\":{\"weight\":\"0.5\"}}],\"style\":{\"weight\":\"1.2\"},\"type\":\"vertical\"}]},\"header\":{\"title\":\"quickApp_device_23\",\"style\":{\"height\":\"150\"}}}}}",     
+     "viewLayout":"{\"$jason\":{\"head\":{\"title\":\"quickApp_device_23\"},\"body\":{\"sections\":{\"items\":[{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"version\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"home\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}},{\"type\":\"vertical\",\"components\":[{\"text\":\"\",\"type\":\"label\",\"style\":{\"weight\":\"1.2\"},\"name\":\"user\"},{\"style\":{\"weight\":\"0.5\"},\"type\":\"space\"}],\"style\":{\"weight\":\"1.2\"}}]},\"header\":{\"style\":{\"height\":\"150\"},\"title\":\"quickApp_device_23\"}}}}",     
      "uiCallbacks":"[]",     
      "interfaces":[
       "quickApp"      
