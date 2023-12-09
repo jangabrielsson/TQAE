@@ -693,7 +693,10 @@ function runQA(id, cont) -- Creates an environment and load file modules and sta
   if env.QuickApp and env.QuickApp.onInit then
     DEBUG("qa", "sys", "Starting QA:%s - ID:%s", info.name, info.id) -- Start QA by "creating instance"
     setTimeout(function()
-      env.QuickApp(info.dev)
+      local stat,err = pcall(env.QuickApp,info.dev)
+      if not stat then 
+        LOG.error("QuickApp:onInit(): %s", err)
+      end
     end, 0)
   elseif env.ACTION then
     EM.postEMEvent({ type = 'sceneLoaded', info = info })
