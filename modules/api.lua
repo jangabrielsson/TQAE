@@ -87,7 +87,7 @@ local GUI_HANDLERS = {
           env.onUIEvent(id,{deviceId=id,elementName=slider,eventType='onChanged',values={tonumber(val)}})
         else 
           local action = qa.uiCallbacks[slider]['onChanged']
-          env.onAction(id,{deviceId=id,actionName=action,args={tonumber(val)}})
+          env.onAction(id,{deviceId=id,actionName=action,args={{values={tonumber(val)}}}})
         end
       end)
     if not stat then LOG.error("%s",err) end
