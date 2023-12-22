@@ -155,9 +155,9 @@ return {
         interfaces = {"quickApp"},
         viewLayout = "generate",
       },
-      { version= 0.70,
+      { version= 0.72,
         vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.70"
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.72"
         },
         descr = "disabling/enabling QA to prevent race condition...",
         mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",

@@ -41,14 +41,14 @@ if hc3_emulator then
 end
 
 local SERIAL = "UPD896661234567894"
-local VERSION = 0.70
+local VERSION = 0.72
 local QAs={}
 local manifest = {}
 local updates,updP = {},0
 local veP = 0
 local qaP = 0
 local fmt = string.format
-local equal = fibaro.utils.equal
+local equal = table.equal
 
 function QuickApp:BTN(ev) btnHandlers[ev.elementName](ev) end -- Avoid (too) global handlers
 
@@ -96,7 +96,7 @@ local function process(data)
   Date = data.date
   updates={}
   local oldData = quickApp:getVariable("MANIFEST")
-  if oldData == "" or not equal(oldData,data) then dirty=true end
+  if oldData == "" or not table.equal(oldData,data) then dirty=true end
   quickApp:setVariable("MANIFEST",data)
   for id,data in pairs(manifest) do
     local name,typ,descr,noUpgrade = data.name,data.type,data.noUpgrade,data.descr
