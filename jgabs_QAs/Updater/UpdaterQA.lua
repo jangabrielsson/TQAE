@@ -41,7 +41,7 @@ if hc3_emulator then
 end
 
 local SERIAL = "UPD896661234567894"
-local VERSION = 0.67
+local VERSION = 0.68
 local QAs={}
 local manifest = {}
 local updates,updP = {},0
@@ -270,6 +270,9 @@ local function Update(ev,updP0,veP0,qaP0)
   local device = api.get("/devices/"..qa.id)
   if not device then errorf("No such QA:%s",qa.id) return end
   local deviceFiles = api.get("/quickApp/"..qa.id.."/files")
+  fibaro.call(qa.id,"setEnabled",false)
+  logf("Disabling QA %s",qa.id)
+  fibaro.sleep(2000)
   for n,u in pairs(files or {}) do fs[#fs+1]={name=n, url=u} end
   fetchFiles(fs,1,function()
       local existMap,filesAltered = {},{}
@@ -338,6 +341,8 @@ local function Update(ev,updP0,veP0,qaP0)
           plugin.restart(qa.id)
           logf("QuickApp %s",action)
         end)
+      fibaro.call(qa.id,"setEnabled",true)
+      logf("Enabling QA %s",qa.id)
       if not stat then
         errorf("Failed updating QA:%s - trying to restore",qa.id)
         for _,f in ipairs(filesAltered) do

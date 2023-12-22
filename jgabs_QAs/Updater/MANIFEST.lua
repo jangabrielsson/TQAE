@@ -131,18 +131,6 @@ return {
     name = "QAUpdater",
     type = "com.fibaro.deviceController",
     versions = {
-      { version= 0.63,
-        vars= {
-          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.63"
-        },
-        descr = "First release",
-        mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
-        files = "generate",
-        keep = {
-        },
-        interfaces = {"quickApp"},
-        viewLayout = "generate",
-      },
       { version= 0.66,
         vars= {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.66"
@@ -160,6 +148,18 @@ return {
           base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.67"
         },
         descr = "support user keep files u_...",
+        mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
+        files = "generate",
+        keep = {
+        },
+        interfaces = {"quickApp"},
+        viewLayout = "generate",
+      },
+      { version= 0.68,
+        vars= {
+          base1 = "https://raw.githubusercontent.com/jangabrielsson/TQAE/UpdaterQA_0.68"
+        },
+        descr = "disabling/enabling QA to prevent race condition...",
         mainfile = "$base1/jgabs_QAs/Updater/UpdaterQA.lua",
         files = "generate",
         keep = {
