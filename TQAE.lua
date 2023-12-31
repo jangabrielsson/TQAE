@@ -543,7 +543,7 @@ function EM.createDevice(info) -- Creates device structure
   EM.addUI(info)
 
   if not cfg.offline then
-    assert(not (info.proxy and info.zombie), "Can't have both proxy and zombie")
+    if info.proxy and info.zombie then error("Can't have both proxy and zombie") end
     if info.proxy and not (EM.cfg.noproxy) then -- Move out?
       local l = FB.__fibaro_local(false)
       local stat, res = pcall(EM.createProxy, dev)
@@ -598,7 +598,10 @@ local function createQA(args) -- Create QA/info struct from file or code string.
   for _, p in ipairs({ "id", "name", "type", "properties", "interfaces" }) do
     if args[p] ~= nil then info[p] = args[p] end
   end
-  EM.createDevice(info) -- assignes info.dev = dev
+  local stat,res = pcall(function()
+    EM.createDevice(info) -- assignes info.dev = dev
+  end)
+  if not stat then print("Error:",res) os.exit() end
   return info
 end
 
@@ -730,5 +733,6 @@ if embedded then                -- Embedded call...
 else
   main(FB)
 end
+
 LOG.sys("End - runtime %.2f min", (EM.osTime() - EM._info.started) / 60)
 os.exit()
