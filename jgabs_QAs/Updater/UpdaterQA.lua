@@ -41,7 +41,7 @@ if hc3_emulator then
 end
 
 local SERIAL = "UPD896661234567894"
-local VERSION = 0.72
+local VERSION = 0.73
 local QAs={}
 local manifest = {}
 local updates,updP = {},0
@@ -49,6 +49,8 @@ local veP = 0
 local qaP = 0
 local fmt = string.format
 local equal = table.equal
+
+function SLEEP() fibaro.sleep(250) end
 
 function QuickApp:BTN(ev) btnHandlers[ev.elementName](ev) end -- Avoid (too) global handlers
 
@@ -289,6 +291,7 @@ local function Update(ev,updP0,veP0,qaP0)
                 error("deleting")
               end
               logf("Deleting file %s",f.name)
+              SLEEP()
             end
           end
           local updates,updNames = {},{}
@@ -302,14 +305,15 @@ local function Update(ev,updP0,veP0,qaP0)
                   errorf("Failed creating file '%s' for QA:%s",f.name,qa.id) 
                   error("creating")
                 end 
-                logf("Creating file %s",f.name) 
+                logf("Creating file %s",f.name)
+                SLEEP()
               else
                 updates[#updates+1]=fd
                 updNames[#updNames+1]=f.name
               end
             end
           end
-          if #updates>0 then -- Write all updates at ones - minimize restarts
+          if #updates>0 then -- Write all updates as one - minimize restarts
             local _,code = api.put("/quickApp/"..qa.id.."/files",updates)
             local oldUs = {}
             for _,f in ipairs(updates) do
@@ -321,11 +325,13 @@ local function Update(ev,updP0,veP0,qaP0)
               error("update")
             end
             logf("Updating files %s",json.encode(updNames)) 
+            SLEEP()
           end
           if data.viewLayout and data.uiCallbacks then
             if type(data.viewLayout) == 'string' then data.viewLayout = json.decode(data.viewLayout) end
             if type(data.uiCallbacks) == 'string' then data.uiCallbacks = json.decode(data.uiCallbacks) end
             api.put("/devices/"..qa.id,{ properties = { viewLayout=data.viewLayout, uiCallbacks=data.uiCallbacks }})
+            SLEEP()
           end
           if data.quickAppVariables then
             local oldVars,oldVarsMap,newVarsMap = __fibaro_get_device_property(qa.id,"quickAppVariables"),{},{}
@@ -337,9 +343,11 @@ local function Update(ev,updP0,veP0,qaP0)
               end
             end
             api.post("/plugins/updateProperty", {deviceId=qa.id, propertyName="quickAppVariables", value=oldVars})
+            SLEEP()
           end
           data.interfaces = data.interfaces or { "quickApp" }
           api.post("/devices/addInterface",{devicesId={qa.id},interfaces=data.interfaces})
+          SLEEP()
           plugin.restart(qa.id)
           logf("QuickApp %s",action)
         end)
