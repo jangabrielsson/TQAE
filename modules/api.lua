@@ -552,7 +552,7 @@ end
 function api.get(cmd, remote) return aHC3call("GET",cmd, nil, remote) end
 function api.post(cmd,data, remote) return aHC3call("POST",cmd,data, remote) end
 function api.put(cmd,data, remote) return aHC3call("PUT",cmd,data, remote) end
-function api.delete(cmd, remote) return aHC3call("DELETE",cmd, remote) end
+function api.delete(cmd, remote) return aHC3call("DELETE",cmd, nil, remote) end
 
 local function returnREST(code,res,client,call)
   if not code or code > 205 then 

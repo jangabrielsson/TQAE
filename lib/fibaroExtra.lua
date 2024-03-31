@@ -22,7 +22,7 @@ fibaro,QuickApp = fibaro or {},QuickApp or {}
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={}, 
   init = function()
-    fibaro.FIBARO_EXTRA = "v0.964"
+    fibaro.FIBARO_EXTRA = "v0.965"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
@@ -637,6 +637,7 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
             end
             nxt = nxt + 60
             timer['%TIMER%']=setTimeout(loop,1000*(nxt-os.time()))
+            timer.expired=nil
           end
           timer = setTimeout(loop,1000*(nxt-os.time()))
         end

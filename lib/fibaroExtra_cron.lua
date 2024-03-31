@@ -102,6 +102,7 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
             end
             nxt = nxt + 60
             timer['%TIMER%']=setTimeout(loop,1000*(nxt-os.time()))
+            timer.expired=nil
           end
           timer = setTimeout(loop,1000*(nxt-os.time()))
         end

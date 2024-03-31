@@ -27,6 +27,7 @@ do
   local function member(k,tab) for i,v in ipairs(tab) do if v==k then return i end end return false end
 
   function QwikAppChild:__init(device) 
+---@diagnostic disable-next-line: undefined-field
     QuickAppChild.__init(self, device)
     self:debug("Instantiating object ",device.name)
     local uid = self:getVariable(childID) or ""
@@ -83,7 +84,7 @@ do
     if c and callbacks then
        c:updateProperty("uiCallbacks",callbacks)
     end
-    if member('quickApp',props.initialInterfaces) then
+    if c and member('quickApp',props.initialInterfaces) then
         local file = {isMain=true,type='lua',isOpen=false,name='main',content=""}
         api.put("/quickApp/"..c.id.."/files/main",file) 
     end
@@ -112,8 +113,10 @@ do
   function QuickApp:createMissingChildren()
     local stat,err = pcall(function()
         local chs = {}
-        for uid,data in pairs(defChildren) do chs[#chs+1]={uid=uid,data=data} end
-        table.sort(chs,function(a,b) return a.uid<b.uid end)
+        for uid,data in pairs(defChildren) do
+          chs[#chs+1]={uid=uid,id=tonumber(uid:match("(%d+)$")),data=data} 
+        end
+        table.sort(chs,function(a,b) return a.id<b.id end)
         for _,ch in ipairs(chs) do
           if not self.children[ch.uid] then
             local props = {
@@ -122,7 +125,8 @@ do
               initialProperties = ch.data.properties or {},
             }
             if ch.data.UI then
-               assert(fibaro.UI,"Please install fibaro.UI extension")
+---@diagnostic disable-next-line: undefined-field
+               assert(type(fibaro.UI)=='table',"Please install fibaro.UI extension")
                local viewLayout,uiCallbacks = fibaro.UI.createUI(ch.data.UI)
                props.initialProperties.viewLayout = viewLayout
                props.initialProperties.uiCallbacks = uiCallbacks
