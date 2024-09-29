@@ -22,7 +22,7 @@ fibaro,QuickApp = fibaro or {},QuickApp or {}
 _MODULES = _MODULES or {} -- Global
 _MODULES.base={ author = "jan@gabrielsson.com", version = '0.4', depends={}, 
   init = function()
-    fibaro.FIBARO_EXTRA = "v0.966"
+    fibaro.FIBARO_EXTRA = "v0.967"
     fibaro.debugFlags  = fibaro.debugFlags or { modules=false }
     fibaro.utils = {}
     _MODULES.base._inited=true
