@@ -14,9 +14,13 @@ _MODULES.error={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
           return f(...) 
           --if t._posthook then t._posthook() end
         end
-        t = oldSetTimout(nf,...)
+        t = {_ref=oldSetTimout(nf,...)}
         return t
       end,setTimeout
+      clearTimeout,oldClearTimout=function(ref)
+        if type(ref)=='table' then ref = ref._ref end
+        oldClearTimout(ref)
+      end,clearTimeout
     elseif not hc3_emulator then -- Patch short-sighthed setTimeout...
       local function timer2str(t)
         return format("[Timer:%d%s %s]",t.n,t.log or "",os.date('%T %D',t.expires or 0))

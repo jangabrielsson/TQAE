@@ -207,6 +207,7 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
     end
 
     function fibaro.removeEvent(pattern,fun)
+      if fun==nil then return fibaro.removeEvent2(pattern) end
       local hashKey = toHash[pattern.type] and toHash[pattern.type](pattern) or pattern.type
       local rules,i,j= handlers[hashKey] or {},1,1
       while j <= #rules do
@@ -217,6 +218,18 @@ _MODULES.event={ author = "jan@gabrielsson.com", version = '0.4', depends={'base
           else i=i+i end
         end
         if #rs==0 then table.remove(rules,j) else j=j+1 end
+      end
+    end
+
+    function fibaro.removeEvent2(rule)
+      for k,rules in pairs(handlers) do
+        for i,r0 in ipairs(rules) do
+          for j,r in ipairs(r0) do
+            if r == rule then table.remove(r0,i) end
+          end
+          if #r0==0 then table.remove(rules,i) end
+        end
+        if #rules==0 then handlers[k]=nil end
       end
     end
 

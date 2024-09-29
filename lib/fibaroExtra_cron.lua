@@ -94,28 +94,38 @@ _MODULES.cron={ author = "jan@gabrielsson.com", version = '0.4', depends={'base'
           local nxt = (os.time() // 60 + 1)*60
           local function loop()
             local stat,res
-            for _,args in pairs(jobs) do
---            setTimeout(function() -- what is better?
-              if args.test() then stat,res = pcall(args.fun,table.unpack(args.args)) else stat=true end
-              if not stat then fibaro.error(__TAG,res) end
---              end,0)
+            for _,job in pairs(jobs) do
+              if job.test() then
+                for ref,entry in pairs(job.handlers) do
+                  stat,res = pcall(entry.fun,table.unpack(entry.args))
+                  if not stat then fibaro.error(__TAG,ref,res) end
+                end
+              end
             end
             nxt = nxt + 60
             timer['%TIMER%']=setTimeout(loop,1000*(nxt-os.time()))
-            timer.expired=nil
           end
           timer = setTimeout(loop,1000*(nxt-os.time()))
         end
         return timer
       end
 
+      local NJOBS = 1
       function fibaro.cron(str,fun,...)
-        jobs[str]={fun=fun,args={...},test=dateTest(str)}
-        return cronLoop()
+        jobs[str] = jobs[str] or {test=dateTest(str),handlers={}}
+        local entry = {fun=fun,args={...}}
+        local ref = string.format("[cron:%d:%s]",NJOBS,str); NJOBS = NJOBS+1
+        jobs[str].handlers[ref] = entry
+        cronLoop()
+        return ref
       end
-      function fibaro.removeCronJob(str)
-        jobs[str]=nil
+      function fibaro.removeCronJob(ref)
+        for str,job in pairs(jobs) do
+          if job.handlers[ref] then job.handlers[ref]=nil end
+          if not next(job.handlers) then jobs[str]=nil end
+        end
       end
+      function fibaro.cronLoop() return cronLoop() end
     end
 
     function fibaro.cron2(str,fun,...) 
