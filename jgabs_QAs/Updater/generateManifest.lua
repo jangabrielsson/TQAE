@@ -46,7 +46,9 @@ local function generateVersion(vs,ctx)
     loadinfo()
     if next(info.UI)~= nil then
       EM.UI.transformUI(info.UI)
-      v.viewLayout = json.encode(EM.UI.mkViewLayout(info.UI))
+      local viewLayout,uiView = EM.UI.mkViewLayout(info.UI)
+      v.viewLayout = json.encode(viewLayout)
+      v.uiView = json.encode(uiView)
       v.uiCallbacks = json.encode(EM.UI.uiStruct2uiCallbacks(info.UI))
     else v.viewLayout = nil end
   end
@@ -78,14 +80,19 @@ local function keyCompare(a,b)
   return av < bv
 end
 
-local otherDirectories = { "../EventRunner5/Update.json" }
+local otherDirectories = { 
+  "../EventRunner5/Update.json" 
+}
 local function addOtherDirectories(out)
   for _,d in ipairs(otherDirectories) do
     local f = io.open(d)
-    local conf = f:read("*a")
-    conf = json.decode(conf)
-    local key, data = next(conf)
-    out[key]=data
+    if f then 
+      local conf = f:read("*a")
+      conf = json.decode(conf)
+      for key, data in pairs(conf) do
+        out[key]=data
+      end
+    end
   end
 end
 
